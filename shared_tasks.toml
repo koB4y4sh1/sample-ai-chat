@@ -1,0 +1,5 @@
+[tool.poe.tasks]
+format = "pnpm run format"
+lint = "pnpm run lint"
+typecheck = "pnpm run typecheck"
+check = "pnpm run check"

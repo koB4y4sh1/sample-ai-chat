@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Zenith AI Chat 開発環境仕様</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --text: #20242a;
+        --muted: #5b6470;
+        --line: #d8dde3;
+        --accent: #1864ab;
+        --code: #eef2f6;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      header {
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      h2 {
+        border-bottom: 1px solid var(--line);
+        margin-top: 40px;
+        padding-bottom: 8px;
+        font-size: 1.35rem;
+      }
+
+      h3 {
+        margin-top: 24px;
+        font-size: 1.05rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      code,
+      pre {
+        font-family:
+          "SFMono-Regular",
+          Consolas,
+          "Liberation Mono",
+          monospace;
+      }
+
+      code {
+        border-radius: 4px;
+        background: var(--code);
+        padding: 0.1em 0.35em;
+        color: var(--text);
+      }
+
+      pre {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 16px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef2f6;
+        color: var(--text);
+      }
+
+      .note {
+        border-left: 4px solid var(--accent);
+        background: var(--panel);
+        padding: 12px 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Zenith AI Chat 開発環境仕様</h1>
+        <p>作成日: 2026-04-24 / 対象: モノレポ初期開発環境</p>
+      </header>
+
+      <section>
+        <h2>目的</h2>
+        <p>
+          FE、BFF、BE、MCPを1つのリポジトリで管理し、開発開始時点からformat、lint、
+          type check、pre-commitを同じ入口で実行できる状態にする。
+        </p>
+      </section>
+
+      <section>
+        <h2>構成</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>領域</th>
+              <th>ディレクトリ</th>
+              <th>技術</th>
+              <th>責務</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>FE</td>
+              <td><code>a2ui</code></td>
+              <td>TypeScript, React, CopilotKit, pnpm</td>
+              <td>チャットUIとCopilotKit runtimeのフロント側統合。</td>
+            </tr>
+            <tr>
+              <td>BFF</td>
+              <td><code>bff</code></td>
+              <td>Python, FastAPI, uv</td>
+              <td>FE向けAPI、認証・セッション・下流サービス呼び出しの集約。</td>
+            </tr>
+            <tr>
+              <td>BE</td>
+              <td><code>ag-ui</code></td>
+              <td>Python, AgentFramework, uv</td>
+              <td>エージェント実行、会話状態、ツール利用方針の制御。</td>
+            </tr>
+            <tr>
+              <td>MCP</td>
+              <td><code>mcp</code></td>
+              <td>Python, FastMCP, uv</td>
+              <td>エージェントから利用するツール群のMCP公開。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>リポジトリ構造</h2>
+        <pre><code>zenith-ai-chat/
+  a2ui/
+  bff/
+    pyproject.toml
+    src/bff/
+  ag-ui/
+    pyproject.toml
+    src/ag_ui/
+  mcp/
+    pyproject.toml
+    src/zenith_mcp/
+  docs/
+    specification.html
+  package.json
+  pnpm-workspace.yaml
+  pyproject.toml
+  biome.json
+  .pre-commit-config.yaml</code></pre>
+      </section>
+
+      <section>
+        <h2>標準コマンド</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>目的</th>
+              <th>コマンド</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>FE依存関係の同期</td>
+              <td><code>pnpm install</code></td>
+            </tr>
+            <tr>
+              <td>Python依存関係の同期</td>
+              <td><code>uv sync --all-packages --dev</code></td>
+            </tr>
+            <tr>
+              <td>整形</td>
+              <td><code>pnpm run format</code></td>
+            </tr>
+            <tr>
+              <td>lint</td>
+              <td><code>pnpm run lint</code></td>
+            </tr>
+            <tr>
+              <td>型検査</td>
+              <td><code>pnpm run typecheck</code></td>
+            </tr>
+            <tr>
+              <td>品質ゲート一括実行</td>
+              <td><code>pnpm run check</code></td>
+            </tr>
+            <tr>
+              <td>pre-commit有効化</td>
+              <td><code>uv run pre-commit install</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>品質ゲート</h2>
+        <h3>TypeScript</h3>
+        <ul>
+          <li><code>biome.json</code>でformat、lint、import整理を統一する。</li>
+          <li><code>a2ui</code>は<code>tsc --noEmit</code>で型検査する。</li>
+          <li>npm lockfileは使用せず、pnpm workspaceのルートロックに集約する。</li>
+        </ul>
+
+        <h3>Python</h3>
+        <ul>
+          <li><code>uv workspace</code>で<code>bff</code>、<code>ag-ui</code>、<code>mcp</code>を管理する。</li>
+          <li><code>ruff</code>でlintとformatを実行する。</li>
+          <li><code>mypy strict</code>で型検査する。</li>
+          <li><code>bandit</code>設定は<code>pyproject.toml</code>に集約する。</li>
+        </ul>
+
+        <h3>Git Hooks</h3>
+        <ul>
+          <li><code>pre-commit</code>は基本検査、<code>uv lock</code>、Biome、Ruff、mypyを実行する。</li>
+          <li>hookはローカル環境の<code>pnpm</code>と<code>uv</code>を使う。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>VS Code</h2>
+        <ul>
+          <li><code>.vscode/settings.json</code>でBiome、Ruff、pytest、Python interpreterを定義する。</li>
+          <li><code>.vscode/tasks.json</code>からinstall、dev、format、lint、typecheck、test、build、pre-commitを実行する。</li>
+          <li><code>.vscode/launch.json</code>はFEのChromeデバッグを提供する。</li>
+          <li>BFF、BE、MCPは実装入口が未確定のため、launch設定はまだ定義しない。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>GitHub</h2>
+        <ul>
+          <li><code>.github/workflows/ci.yml</code>でformat check、lint、type check、test、buildを実行する。</li>
+          <li><code>.github/dependabot.yml</code>でGitHub Actions、npm、uv依存を週次更新対象にする。</li>
+          <li><code>.github/pull_request_template.md</code>でPRごとの検証項目を固定する。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>未確定事項</h2>
+        <div class="note">
+          <p>
+            AgentFrameworkの正確なPythonパッケージ名とAPIは未確定のため、<code>ag-ui</code>
+            のruntime依存関係にはまだ追加していない。確定後に<code>ag-ui/pyproject.toml</code>
+            と実装仕様を更新する。
+          </p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
