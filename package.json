@@ -1,0 +1,26 @@
+{
+  "name": "zenith-ai-chat",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "type": "module",
+  "scripts": {
+    "dev:fe": "pnpm --filter @zenith/a2ui dev",
+    "build": "pnpm --filter @zenith/a2ui build",
+    "clean": "pnpm --filter @zenith/a2ui clean",
+    "format": "pnpm exec biome check --write . && uv run ruff format .",
+    "format:check": "pnpm exec biome format . && uv run ruff format . --check",
+    "lint": "pnpm run lint:ts && pnpm run lint:py",
+    "lint:py": "uv run ruff check .",
+    "lint:ts": "pnpm exec biome check .",
+    "test": "pnpm run test:py",
+    "test:py": "uv run pytest",
+    "typecheck": "pnpm run typecheck:ts && pnpm run typecheck:py",
+    "typecheck:py": "uv run mypy bff/src ag-ui/src mcp/src",
+    "typecheck:ts": "pnpm --filter @zenith/a2ui typecheck",
+    "check": "pnpm run lint && pnpm run typecheck"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.6"
+  }
+}

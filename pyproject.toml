@@ -1,0 +1,83 @@
+[project]
+name = "zenith-ai-chat"
+version = "0.1.0"
+description = "Monorepo for the Zenith AI chat application."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "bandit[toml]>=1.9.3",
+    "mypy>=1.18.2",
+    "pre-commit>=4.5.1",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "ruff>=0.14.3",
+]
+
+[tool.uv.workspace]
+members = ["bff", "ag-ui", "mcp"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+extend-exclude = [
+    ".venv",
+    "a2ui/node_modules",
+    "a2ui/dist",
+]
+
+[tool.ruff.lint]
+select = [
+    "B",
+    "C4",
+    "E",
+    "F",
+    "I",
+    "N",
+    "PERF",
+    "PTH",
+    "RUF",
+    "S",
+    "SIM",
+    "T20",
+    "UP",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**/*.py" = ["S101"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+pretty = true
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = ["bff/src", "ag-ui/src", "mcp/src"]
+exclude = [
+    "^a2ui/",
+    "^docs/",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = [
+    "bff/tests",
+    "ag-ui/tests",
+    "mcp/tests",
+]
+
+[tool.bandit]
+exclude_dirs = [
+    ".venv",
+    "a2ui",
+    "bff/tests",
+    "ag-ui/tests",
+    "mcp/tests",
+]

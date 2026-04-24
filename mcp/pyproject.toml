@@ -1,0 +1,16 @@
+[project]
+name = "zenith-mcp"
+version = "0.1.0"
+description = "FastMCP tool server for Zenith AI Chat."
+requires-python = ">=3.14"
+dependencies = [
+    "fastmcp>=2.0",
+    "pydantic>=2.10",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/zenith_mcp"]
