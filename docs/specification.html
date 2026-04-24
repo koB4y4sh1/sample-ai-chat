@@ -239,6 +239,15 @@
       </section>
 
       <section>
+        <h2>開発プロセス</h2>
+        <ul>
+          <li>日常開発はテスト駆動を標準とし、要求ごとに Red、Green、Refactor を小さく回す。</li>
+          <li>層ごとのテスト責務、完了条件、契約変更時の手順は <code>docs/tdd-specification.md</code> を参照する。</li>
+          <li>scaffold 段階の package を除き、変更した挙動は import smoke test だけで完了扱いにしない。</li>
+        </ul>
+      </section>
+
+      <section>
         <h2>品質ゲート</h2>
         <h3>TypeScript</h3>
         <ul>
