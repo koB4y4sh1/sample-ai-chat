@@ -18,10 +18,10 @@
       "problemMatcher": []
     },
     {
-      "label": "dev:fe",
+      "label": "dev:web",
       "type": "shell",
       "command": "pnpm",
-      "args": ["run", "dev:fe"],
+      "args": ["run", "dev:web"],
       "isBackground": true,
       "problemMatcher": {
         "owner": "zenith-dev-server",

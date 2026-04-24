@@ -6,8 +6,8 @@
       "type": "pwa-chrome",
       "request": "launch",
       "url": "http://localhost:3000",
-      "webRoot": "${workspaceFolder}/a2ui/src",
-      "preLaunchTask": "dev:fe",
+      "webRoot": "${workspaceFolder}/web/src",
+      "preLaunchTask": "dev:web",
       "sourceMaps": true
     }
   ]

@@ -129,7 +129,7 @@
       <section>
         <h2>目的</h2>
         <p>
-          FE、BFF、BE、MCPを1つのリポジトリで管理し、開発開始時点からformat、lint、
+          FE/BFF、AGENT、MCPを1つのリポジトリで管理し、開発開始時点からformat、lint、
           type check、pre-commitを同じ入口で実行できる状態にする。
         </p>
       </section>
@@ -147,22 +147,16 @@
           </thead>
           <tbody>
             <tr>
-              <td>FE</td>
-              <td><code>a2ui</code></td>
-              <td>TypeScript, React, CopilotKit, pnpm</td>
-              <td>チャットUIとCopilotKit runtimeのフロント側統合。</td>
-            </tr>
-            <tr>
-              <td>BFF</td>
-              <td><code>bff</code></td>
-              <td>Python, FastAPI, uv</td>
-              <td>FE向けAPI、認証・セッション・下流サービス呼び出しの集約。</td>
+              <td>FE/BFF</td>
+              <td><code>web</code></td>
+              <td>TypeScript, Next.js, React, CopilotKit, pnpm</td>
+              <td>チャットUI、CopilotKit Runtime、agentへのBFF route handler。</td>
             </tr>
             <tr>
               <td>BE</td>
-              <td><code>ag-ui</code></td>
+              <td><code>agent</code></td>
               <td>Python, AgentFramework, uv</td>
-              <td>エージェント実行、会話状態、ツール利用方針の制御。</td>
+              <td>エージェント実行とagent endpointの公開。</td>
             </tr>
             <tr>
               <td>MCP</td>
@@ -177,13 +171,14 @@
       <section>
         <h2>リポジトリ構造</h2>
         <pre><code>zenith-ai-chat/
-  a2ui/
-  bff/
+  web/
+    app/
+    components/
+    lib/
+    public/
+  agent/
     pyproject.toml
-    src/bff/
-  ag-ui/
-    pyproject.toml
-    src/ag_ui/
+    src/
   mcp/
     pyproject.toml
     src/zenith_mcp/
@@ -207,12 +202,20 @@
           </thead>
           <tbody>
             <tr>
-              <td>FE依存関係の同期</td>
+              <td>JavaScript依存関係の同期</td>
               <td><code>pnpm install</code></td>
             </tr>
             <tr>
               <td>Python依存関係の同期</td>
               <td><code>uv sync --all-packages --dev</code></td>
+            </tr>
+            <tr>
+              <td>agent開発サーバー</td>
+              <td><code>pnpm run dev:agent</code></td>
+            </tr>
+            <tr>
+              <td>Next.js FE/BFF開発サーバー</td>
+              <td><code>pnpm run dev:web</code></td>
             </tr>
             <tr>
               <td>整形</td>
@@ -239,11 +242,12 @@
       </section>
 
       <section>
-        <h2>開発プロセス</h2>
+        <h2>接続仕様</h2>
         <ul>
-          <li>日常開発はテスト駆動を標準とし、要求ごとに Red、Green、Refactor を小さく回す。</li>
-          <li>層ごとのテスト責務、完了条件、契約変更時の手順は <code>docs/tdd-specification.md</code> を参照する。</li>
-          <li>scaffold 段階の package を除き、変更した挙動は import smoke test だけで完了扱いにしない。</li>
+          <li><code>web</code>はNext.js App RouterでUIとBFF route handlerを管理する。</li>
+          <li>チャットUIは<code>/api/copilotkit</code>のCopilotKit Runtimeへ接続する。</li>
+          <li>Next.js BFF routeは<code>AG_UI_BASE_URL</code>の<code>/copilotkit</code>へagent通信を転送する。</li>
+          <li><code>agent</code>は<code>src/main.py</code>でMicrosoft Agent Frameworkのagent endpointを公開する。</li>
         </ul>
       </section>
 
@@ -252,13 +256,13 @@
         <h3>TypeScript</h3>
         <ul>
           <li><code>biome.json</code>でformat、lint、import整理を統一する。</li>
-          <li><code>a2ui</code>は<code>tsc --noEmit</code>で型検査する。</li>
+          <li><code>web</code>は<code>tsc --noEmit</code>で型検査する。</li>
           <li>npm lockfileは使用せず、pnpm workspaceのルートロックに集約する。</li>
         </ul>
 
         <h3>Python</h3>
         <ul>
-          <li><code>uv workspace</code>で<code>bff</code>、<code>ag-ui</code>、<code>mcp</code>を管理する。</li>
+          <li><code>uv workspace</code>で<code>agent</code>と<code>mcp</code>を管理する。</li>
           <li><code>ruff</code>でlintとformatを実行する。</li>
           <li><code>mypy strict</code>で型検査する。</li>
           <li><code>bandit</code>設定は<code>pyproject.toml</code>に集約する。</li>
@@ -267,36 +271,41 @@
         <h3>Git Hooks</h3>
         <ul>
           <li><code>pre-commit</code>は基本検査、<code>uv lock</code>、Biome、Ruff、mypyを実行する。</li>
-          <li>hookはローカル環境の<code>pnpm</code>と<code>uv</code>を使う。</li>
+          <li>hookはローカル環境の<code>pnpm</code>と<code>uv</code>を使用する。</li>
         </ul>
       </section>
 
       <section>
-        <h2>VS Code</h2>
-        <ul>
-          <li><code>.vscode/settings.json</code>でBiome、Ruff、pytest、Python interpreterを定義する。</li>
-          <li><code>.vscode/tasks.json</code>からinstall、dev、format、lint、typecheck、test、build、pre-commitを実行する。</li>
-          <li><code>.vscode/launch.json</code>はFEのChromeデバッグを提供する。</li>
-          <li>BFF、BE、MCPは実装入口が未確定のため、launch設定はまだ定義しない。</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>GitHub</h2>
-        <ul>
-          <li><code>.github/workflows/ci.yml</code>でformat check、lint、type check、test、buildを実行する。</li>
-          <li><code>.github/dependabot.yml</code>でGitHub Actions、npm、uv依存を週次更新対象にする。</li>
-          <li><code>.github/pull_request_template.md</code>でPRごとの検証項目を固定する。</li>
-        </ul>
+        <h2>環境変数</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>変数</th>
+              <th>配置</th>
+              <th>用途</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>AG_UI_BASE_URL</code></td>
+              <td><code>web/.env</code></td>
+              <td>Next.js BFF routeが接続するagent serviceのbase URL。</td>
+            </tr>
+            <tr>
+              <td><code>ZENITH_OPENAI_MODEL</code></td>
+              <td><code>agent/.env</code></td>
+              <td>agent serviceが使用するOpenAI model名。</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
 
       <section>
         <h2>未確定事項</h2>
         <div class="note">
           <p>
-            AgentFrameworkの正確なPythonパッケージ名とAPIは未確定のため、<code>ag-ui</code>
-            のruntime依存関係にはまだ追加していない。確定後に<code>ag-ui/pyproject.toml</code>
-            と実装仕様を更新する。
+            認証、セッション永続化、MCP tool連携の具体的なservice contractは未確定。
+            確定後に<code>web</code>のRoute Handler、<code>agent</code>、<code>mcp</code>の仕様を更新する。
           </p>
         </div>
       </section>

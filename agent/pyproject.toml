@@ -1,14 +1,10 @@
 [project]
-name = "zenith-bff"
+name = "zenith-agent"
 version = "0.1.0"
-description = "FastAPI backend-for-frontend for Zenith AI Chat."
+description = "Agent service for Zenith AI Chat."
 requires-python = ">=3.14"
 dependencies = [
-    "fastapi>=0.115",
-    "httpx>=0.28",
     "pydantic>=2.10",
-    "pydantic-settings>=2.6",
-    "uvicorn[standard]>=0.32",
 ]
 
 [build-system]
@@ -16,4 +12,4 @@ requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/bff"]
+packages = ["src"]

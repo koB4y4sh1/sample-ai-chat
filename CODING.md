@@ -2,9 +2,8 @@
 
 この文書は Zenith AI Chat の実装ルールを定義する。対象は以下のモノレポ構成。
 
-- FE: `a2ui` TypeScript, React, CopilotKit
-- BFF: `bff` Python, FastAPI
-- BE: `ag-ui` Python agent service
+- FE/BFF: `web` TypeScript, Next.js, React, CopilotKit
+- BE: `agent` Python agent service
 - MCP: `mcp` Python, FastMCP
 
 ## 基本方針
@@ -38,7 +37,7 @@ uv run pre-commit run --all-files
 
 ## ディレクトリ責務
 
-### `a2ui`
+### `web`
 
 - React UI と CopilotKit frontend/runtime 統合を置く。
 - BFF以降の内部実装を直接知ってはならない。
@@ -46,14 +45,14 @@ uv run pre-commit run --all-files
 - ユーザー操作、画面状態、入力検証、表示用型を扱う。
 - サーバー側処理をFEに持ち込まない。
 
-### `bff`
+### `web BFF`
 
 - FE向けAPIを提供する。
 - 認証、セッション、リクエスト検証、下流サービス呼び出しの集約を扱う。
 - agentの意思決定やtool実装を持たない。
 - 外部に返すエラー形式を安定させる。
 
-### `ag-ui`
+### `agent`
 
 - agent実行、会話状態、tool選択方針を扱う。
 - FE固有の表示都合を持たない。

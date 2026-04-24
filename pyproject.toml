@@ -17,15 +17,15 @@ dev = [
 ]
 
 [tool.uv.workspace]
-members = ["bff", "ag-ui", "mcp"]
+members = ["agent", "mcp"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py314"
 extend-exclude = [
     ".venv",
-    "a2ui/node_modules",
-    "a2ui/dist",
+    "web/node_modules",
+    "web/dist",
 ]
 
 [tool.ruff.lint]
@@ -59,25 +59,23 @@ strict = true
 pretty = true
 namespace_packages = true
 explicit_package_bases = true
-mypy_path = ["bff/src", "ag-ui/src", "mcp/src"]
+mypy_path = ["agent/src", "mcp/src"]
 exclude = [
-    "^a2ui/",
+    "^web/",
     "^docs/",
 ]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = [
-    "bff/tests",
-    "ag-ui/tests",
+    "agent/tests",
     "mcp/tests",
 ]
 
 [tool.bandit]
 exclude_dirs = [
     ".venv",
-    "a2ui",
-    "bff/tests",
-    "ag-ui/tests",
+    "web",
+    "agent/tests",
     "mcp/tests",
 ]

@@ -54,7 +54,7 @@ repos:
 
       - id: mypy
         name: mypy strict type check
-        entry: uv run mypy bff/src ag-ui/src mcp/src
+        entry: uv run mypy -p src -p zenith_mcp
         language: system
         pass_filenames: false
         types: [python]

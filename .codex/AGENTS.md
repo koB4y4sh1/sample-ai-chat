@@ -4,9 +4,8 @@
 
 Zenith AI Chat is a monorepo with these service boundaries:
 
-- `a2ui`: TypeScript frontend and CopilotKit runtime
-- `bff`: FastAPI backend-for-frontend
-- `ag-ui`: Python agent service
+- `web`: TypeScript frontend and CopilotKit runtime/BFF route handlers
+- `agent`: Python agent service
 - `mcp`: FastMCP tool server
 
 ## Commands

@@ -14,7 +14,7 @@
   },
   "npm.packageManager": "pnpm",
   "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
-  "python.testing.pytestArgs": ["bff/tests", "ag-ui/tests", "mcp/tests"],
+  "python.testing.pytestArgs": ["agent/tests", "mcp/tests"],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
   "ruff.nativeServer": "on",
@@ -25,7 +25,7 @@
     "**/.venv": true,
     "**/node_modules": true
   },
-  "typescript.tsdk": "a2ui/node_modules/typescript/lib",
+  "typescript.tsdk": "web/node_modules/typescript/lib",
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.tabSize": 4

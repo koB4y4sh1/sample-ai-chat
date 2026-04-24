@@ -4,9 +4,8 @@
 
 This repository is a monorepo for Zenith AI Chat.
 
-- FE: `a2ui` TypeScript, React, CopilotKit, pnpm
-- BFF: `bff` Python, FastAPI, uv
-- BE: `ag-ui` Python agent service, uv
+- FE/BFF: `web` TypeScript, Next.js, React, CopilotKit, pnpm
+- BE: `agent` Python agent service, uv
 - MCP: `mcp` Python, FastMCP, uv
 
 ## Required Commands
@@ -24,9 +23,9 @@ This repository is a monorepo for Zenith AI Chat.
 - Use `pnpm`; do not use `npm`.
 - Use `uv`; do not install Python packages with `pip` or `python install`.
 - Keep service boundaries explicit:
-  - `a2ui` talks to `bff`.
-  - `bff` coordinates client-facing API concerns and downstream calls.
-  - `ag-ui` owns agent behavior.
+  - `web` hosts the Next.js frontend and BFF route handlers.
+  - `web` uses CopilotKit to access `ag-ui`.
+  - `agent` owns agent behavior.
   - `mcp` owns tool exposure.
 - Do not add runtime dependencies unless the target package and import name are confirmed.
 - Update `docs/specification.html` when architecture, commands, or service contracts change.

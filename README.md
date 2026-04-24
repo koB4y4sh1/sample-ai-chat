@@ -1,14 +1,13 @@
 # Zenith AI Chat
 
-CopilotKit FE, FastAPI BFF, AgentFramework-based agent service, and FastMCP server
-for a monorepo chat application.
+Next.js frontend/BFF, AgentFramework-based AG-UI service, and FastMCP server for
+a monorepo chat application.
 
 ## Layout
 
 ```text
-a2ui/   TypeScript frontend and CopilotKit runtime
-bff/    FastAPI backend-for-frontend
-ag-ui/  Python agent service
+web/    Next.js frontend and BFF route handlers
+agent/  Python agent service
 mcp/    FastMCP tool server
 docs/   HTML specifications
 ```
@@ -28,6 +27,13 @@ uv sync --all-packages --dev
 uv run pre-commit install
 ```
 
+Copy the environment examples that apply to the services you run.
+
+```bash
+cp web/.env.example web/.env
+cp /.env.example /.env
+```
+
 ## Quality Gates
 
 ```bash
@@ -40,8 +46,14 @@ The root `check` script runs Biome, Ruff, TypeScript type checks, and strict myp
 ## Development
 
 ```bash
-pnpm run dev:fe
+pnpm run dev:web
+pnpm run dev:agent
 ```
 
-Service implementations for `bff`, `ag-ui`, and `mcp` are intentionally scaffolded
-only as packages at this stage. Add service entry points after the API contracts are fixed.
+The request path is now:
+
+- `web` serves the Next.js app and exposes the BFF route at `/api/copilotkit`
+- the Next.js route hosts CopilotKit Runtime and forwards agent runs to `/copilotkit`
+- `` hosts the Microsoft Agent Framework endpoint via `add_agent_framework_fastapi_endpoint`
+
+Set provider credentials in `/.env` before running a real model-backed conversation.

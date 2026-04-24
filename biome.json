@@ -16,8 +16,11 @@
       "!**/__pycache__",
       "!uv.lock",
       "!pnpm-lock.yaml",
-      "!a2ui/pnpm-lock.yaml",
-      "!a2ui/package-lock.json"
+      "!**/*.tsbuildinfo",
+      "!web/.next",
+      "!web/next-env.d.ts",
+      "!web/pnpm-lock.yaml",
+      "!web/package-lock.json"
     ]
   },
   "formatter": {
