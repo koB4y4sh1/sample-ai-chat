@@ -1,0 +1,60 @@
+fail_fast: true
+
+exclude: |
+  (?x)^(
+    a2ui/dist/|
+    a2ui/node_modules/|
+    \.venv/|
+    \.ruff_cache/|
+    \.mypy_cache/
+  )
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: check-added-large-files
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: trailing-whitespace
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.11.2
+    hooks:
+      - id: uv-lock
+        name: Update uv lockfile
+
+  - repo: local
+    hooks:
+      - id: biome-check
+        name: Biome check
+        entry: pnpm exec biome check .
+        language: system
+        pass_filenames: false
+
+      - id: ruff-check
+        name: Ruff lint
+        entry: uv run ruff check --fix .
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      - id: ruff-format
+        name: Ruff format
+        entry: uv run ruff format .
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      - id: mypy
+        name: mypy strict type check
+        entry: uv run mypy bff/src ag-ui/src mcp/src
+        language: system
+        pass_filenames: false
+        types: [python]
