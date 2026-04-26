@@ -1,2 +1,7 @@
 packages:
   - web
+allowBuilds:
+  '@scarf/scarf': true
+  esbuild: true
+  protobufjs: true
+  sharp: true

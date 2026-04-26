@@ -1,0 +1,6 @@
+{
+  "name": "Zenith AI Chat",
+  "description": "A Next.js chat interface powered by CopilotKit and AG-UI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

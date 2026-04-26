@@ -2,8 +2,8 @@ fail_fast: true
 
 exclude: |
   (?x)^(
-    a2ui/dist/|
-    a2ui/node_modules/|
+    web/.next/|
+    web/node_modules/|
     \.venv/|
     \.ruff_cache/|
     \.mypy_cache/
