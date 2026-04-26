@@ -40,10 +40,18 @@ export function FlightOptions({
   title,
   summary,
   flights,
+  onSelect,
+  disabled = false,
+  selectedFlightKeys,
+  toolCallId,
 }: {
   title: string;
   summary?: string;
   flights: Array<Partial<FlightOption>>;
+  onSelect?: (flight: FlightOption) => void;
+  disabled?: boolean;
+  selectedFlightKeys?: Set<string>;
+  toolCallId?: string;
 }) {
   const renderableFlights = flights.filter(isRenderableFlight);
 
@@ -52,6 +60,11 @@ export function FlightOptions({
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
         {summary ? <p className="mt-1 text-sm text-text-secondary">{summary}</p> : null}
+        {disabled ? (
+          <span className="mt-2 inline-flex rounded-full border border-border bg-sidebar-bg px-2 py-0.5 text-[11px] font-medium text-text-secondary">
+            Past message - interactions disabled
+          </span>
+        ) : null}
       </div>
       <div className="space-y-4">
         {renderableFlights.length === 0 ? (
@@ -117,7 +130,18 @@ export function FlightOptions({
             <div className="p-5">
               <button
                 type="button"
-                className="h-11 w-full rounded-xl border border-border bg-bg text-sm font-semibold text-text-primary transition-colors hover:border-[#4ECDC4]/60 hover:bg-[#4ECDC4]/10"
+                disabled={disabled}
+                onClick={() => onSelect?.(flight)}
+                className={cn(
+                  'h-11 w-full rounded-xl border text-sm font-semibold transition-colors',
+                  disabled
+                    ? selectedFlightKeys?.has(
+                        `${toolCallId}:flight:${flight.id ?? `${flight.airline}-${flight.flightNumber}`}`,
+                      )
+                      ? 'cursor-not-allowed border-[#4ECDC4]/35 bg-[#4ECDC4]/10 text-[#4ECDC4] opacity-80'
+                      : 'cursor-not-allowed border-border bg-bg text-text-secondary opacity-45 grayscale'
+                    : 'border-border bg-bg text-text-primary hover:border-[#4ECDC4]/60 hover:bg-[#4ECDC4]/10',
+                )}
               >
                 Select
               </button>

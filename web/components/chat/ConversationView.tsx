@@ -3,6 +3,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 
 
 interface ConversationViewProps {
   sessionId: string;
+  onActiveToolCallIdsChange?: (toolCallIds: Set<string>) => void;
 }
 
 export interface ConversationViewHandle {
@@ -40,8 +41,37 @@ const saveStoredMessages = (sessionId: string, messages: unknown[]) => {
   localStorage.setItem(getSessionMessagesStorageKey(sessionId), JSON.stringify(messages));
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getLatestAssistantToolCallIds = (messages: unknown[]) => {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (!isRecord(message)) {
+      continue;
+    }
+
+    if (message.role === 'user') {
+      return new Set<string>();
+    }
+
+    if (message.role !== 'assistant') {
+      continue;
+    }
+
+    const toolCalls = Array.isArray(message.toolCalls) ? message.toolCalls : [];
+    return new Set(
+      toolCalls.flatMap((toolCall) =>
+        isRecord(toolCall) && typeof toolCall.id === 'string' ? [toolCall.id] : [],
+      ),
+    );
+  }
+
+  return new Set<string>();
+};
+
 export const ConversationView = forwardRef<ConversationViewHandle, ConversationViewProps>(
-  function ConversationView({ sessionId }: ConversationViewProps, ref) {
+  function ConversationView({ sessionId, onActiveToolCallIdsChange }: ConversationViewProps, ref) {
     const { agent } = useAgent({
       agentId: 'zenith',
       threadId: sessionId,
@@ -73,6 +103,10 @@ export const ConversationView = forwardRef<ConversationViewHandle, ConversationV
 
       saveStoredMessages(sessionId, agent.messages);
     }, [agent.messages, sessionId]);
+
+    useEffect(() => {
+      onActiveToolCallIdsChange?.(getLatestAssistantToolCallIds(agent.messages));
+    }, [agent.messages, onActiveToolCallIdsChange]);
 
     const sendMessage = useCallback(
       async (content: string) => {

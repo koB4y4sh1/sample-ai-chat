@@ -25,8 +25,25 @@ import {
   Table2,
   Users,
 } from 'lucide-react';
+import { useState } from 'react';
 import type { UIBlock, UISpec } from '../../../lib/generative-ui/schemas/declarative';
 import { cn } from '../../../lib/utils';
+
+type SubmitInteraction = (
+  content: string,
+  options?: {
+    toolCallId?: string;
+    interactionKey?: string;
+  },
+) => Promise<void> | void;
+
+type InteractiveBlockProps<T extends UIBlock> = {
+  block: T;
+  onSubmitInteraction?: SubmitInteraction;
+  toolCallId?: string;
+  interactionDisabled?: boolean;
+  selectedInteractionKeys?: Set<string>;
+};
 
 const calloutStyles = {
   neutral: 'border-[#4ECDC4]/35 bg-[#4ECDC4]/10',
@@ -139,6 +156,60 @@ const confirmationActionClass = (
   return 'border-border bg-bg text-text-secondary hover:text-text-primary';
 };
 
+const buildSelectedInteractionKey = (toolCallId: string | undefined, interactionKey: string) =>
+  toolCallId ? `${toolCallId}:${interactionKey}` : interactionKey;
+
+const isInteractionSelected = (
+  selectedInteractionKeys: Set<string> | undefined,
+  toolCallId: string | undefined,
+  interactionKey: string,
+) => selectedInteractionKeys?.has(buildSelectedInteractionKey(toolCallId, interactionKey)) ?? false;
+
+const interactiveButtonClass = ({
+  enabled,
+  selected,
+  activeClass,
+  inactiveClass = 'border-border bg-bg text-text-secondary hover:text-text-primary',
+}: {
+  enabled: boolean;
+  selected: boolean;
+  activeClass: string;
+  inactiveClass?: string;
+}) => {
+  if (enabled) {
+    return activeClass;
+  }
+
+  if (selected) {
+    return 'cursor-not-allowed border-[#4ECDC4]/35 bg-[#4ECDC4]/10 text-[#4ECDC4] opacity-80';
+  }
+
+  return `${inactiveClass} cursor-not-allowed opacity-45 grayscale hover:border-border hover:text-text-secondary`;
+};
+
+const submitInteraction = (
+  onSubmitInteraction: SubmitInteraction | undefined,
+  content: string,
+  options?: {
+    toolCallId?: string;
+    interactionKey?: string;
+    disabled?: boolean;
+  },
+) => {
+  if (options?.disabled) {
+    return;
+  }
+
+  if (!onSubmitInteraction) {
+    return;
+  }
+
+  void onSubmitInteraction(content, {
+    toolCallId: options?.toolCallId,
+    interactionKey: options?.interactionKey,
+  });
+};
+
 function SectionTitle({ children }: { children?: string }) {
   if (!children) {
     return null;
@@ -242,17 +313,53 @@ function CalloutBlock({ block }: { block: Extract<UIBlock, { type: 'callout' }> 
   );
 }
 
-function ActionsBlock({ block }: { block: Extract<UIBlock, { type: 'actions' }> }) {
+function ActionsBlock({
+  block,
+  onSubmitInteraction,
+  toolCallId,
+  interactionDisabled,
+  selectedInteractionKeys,
+}: InteractiveBlockProps<Extract<UIBlock, { type: 'actions' }>>) {
   const actions = Array.isArray(block.actions) ? block.actions : [];
+  const enabled = Boolean(onSubmitInteraction) && !interactionDisabled;
 
   return (
     <section>
       <SectionTitle>{block.title}</SectionTitle>
       <div className="space-y-2">
         {actions.map((action) => (
-          <div
+          <button
             key={action.label}
-            className="flex gap-2 rounded-lg border border-border bg-sidebar-bg px-3 py-2"
+            type="button"
+            disabled={!enabled}
+            onClick={() => {
+              const interactionKey = `action:${action.label}`;
+              submitInteraction(
+                onSubmitInteraction,
+                [
+                  'User selected a generated action.',
+                  `Action group: ${block.title ?? 'Actions'}`,
+                  `Selected action: ${action.label}`,
+                  action.description ? `Action detail: ${action.description}` : '',
+                ]
+                  .filter(Boolean)
+                  .join('\n'),
+                { toolCallId, interactionKey, disabled: !enabled },
+              );
+            }}
+            className={cn(
+              'flex w-full gap-2 rounded-lg border px-3 py-2 text-left transition-colors',
+              interactiveButtonClass({
+                enabled,
+                selected: isInteractionSelected(
+                  selectedInteractionKeys,
+                  toolCallId,
+                  `action:${action.label}`,
+                ),
+                activeClass: 'border-border bg-sidebar-bg hover:border-[#4ECDC4]/60',
+                inactiveClass: 'border-border bg-sidebar-bg text-text-secondary',
+              }),
+            )}
           >
             <CheckSquare className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
             <div className="min-w-0">
@@ -263,7 +370,7 @@ function ActionsBlock({ block }: { block: Extract<UIBlock, { type: 'actions' }> 
                 </p>
               ) : null}
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </section>
@@ -607,7 +714,15 @@ function SourceListBlock({ block }: { block: Extract<UIBlock, { type: 'source_li
   );
 }
 
-function TaskPlanBlock({ block }: { block: Extract<UIBlock, { type: 'task_plan' }> }) {
+function TaskPlanBlock({
+  block,
+  onSubmitInteraction,
+  toolCallId,
+  interactionDisabled,
+  selectedInteractionKeys,
+}: InteractiveBlockProps<Extract<UIBlock, { type: 'task_plan' }>>) {
+  const enabled = Boolean(onSubmitInteraction) && !interactionDisabled;
+
   return (
     <section>
       <SectionTitle>{block.title ?? 'Task plan'}</SectionTitle>
@@ -649,6 +764,42 @@ function TaskPlanBlock({ block }: { block: Extract<UIBlock, { type: 'task_plan' 
                   Owner: {item.owner}
                 </p>
               ) : null}
+              <button
+                type="button"
+                disabled={!enabled}
+                className={cn(
+                  'mt-3 min-h-8 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
+                  interactiveButtonClass({
+                    enabled,
+                    selected: isInteractionSelected(
+                      selectedInteractionKeys,
+                      toolCallId,
+                      `task:${item.label}`,
+                    ),
+                    activeClass:
+                      'border-border bg-bg text-text-secondary hover:border-[#4ECDC4]/60 hover:text-text-primary',
+                  }),
+                )}
+                onClick={() => {
+                  const interactionKey = `task:${item.label}`;
+                  submitInteraction(
+                    onSubmitInteraction,
+                    [
+                      'User selected a task from a generated plan.',
+                      `Plan: ${block.title ?? 'Task plan'}`,
+                      `Task: ${item.label}`,
+                      item.description ? `Task detail: ${item.description}` : '',
+                      item.status ? `Status: ${item.status}` : '',
+                      item.owner ? `Owner: ${item.owner}` : '',
+                    ]
+                      .filter(Boolean)
+                      .join('\n'),
+                    { toolCallId, interactionKey, disabled: !enabled },
+                  );
+                }}
+              >
+                Continue with this
+              </button>
             </div>
           </div>
         ))}
@@ -659,10 +810,13 @@ function TaskPlanBlock({ block }: { block: Extract<UIBlock, { type: 'task_plan' 
 
 function ConfirmationPanelBlock({
   block,
-}: {
-  block: Extract<UIBlock, { type: 'confirmation_panel' }>;
-}) {
+  onSubmitInteraction,
+  toolCallId,
+  interactionDisabled,
+  selectedInteractionKeys,
+}: InteractiveBlockProps<Extract<UIBlock, { type: 'confirmation_panel' }>>) {
   const tone = block.tone ?? 'neutral';
+  const enabled = Boolean(onSubmitInteraction) && !interactionDisabled;
   const actions =
     block.actions.length > 0
       ? block.actions
@@ -694,9 +848,35 @@ function ConfirmationPanelBlock({
           <div key={action.label} className="rounded-lg border border-border bg-bg p-3">
             <button
               type="button"
+              disabled={!enabled}
+              onClick={() => {
+                const interactionKey = `confirmation:${action.label}`;
+                submitInteraction(
+                  onSubmitInteraction,
+                  [
+                    'User responded to a confirmation panel.',
+                    `Panel: ${block.title ?? 'Confirmation'}`,
+                    `Selected action: ${action.label}`,
+                    action.description ? `Action detail: ${action.description}` : '',
+                    `Original request: ${block.body}`,
+                  ]
+                    .filter(Boolean)
+                    .join('\n'),
+                  { toolCallId, interactionKey, disabled: !enabled },
+                );
+              }}
               className={cn(
                 'min-h-10 w-full rounded-lg border px-3 py-2 text-sm font-semibold transition-colors',
-                confirmationActionClass(action, index),
+                interactiveButtonClass({
+                  enabled,
+                  selected: isInteractionSelected(
+                    selectedInteractionKeys,
+                    toolCallId,
+                    `confirmation:${action.label}`,
+                  ),
+                  activeClass: confirmationActionClass(action, index),
+                  inactiveClass: 'border-border bg-bg text-text-secondary',
+                }),
               )}
             >
               {action.label}
@@ -713,33 +893,118 @@ function ConfirmationPanelBlock({
   );
 }
 
-function FormFillBlock({ block }: { block: Extract<UIBlock, { type: 'form_fill' }> }) {
+function FormFillBlock({
+  block,
+  onSubmitInteraction,
+  toolCallId,
+  interactionDisabled,
+  selectedInteractionKeys,
+}: InteractiveBlockProps<Extract<UIBlock, { type: 'form_fill' }>>) {
+  const enabled = Boolean(onSubmitInteraction) && !interactionDisabled;
+  const interactionKey = `form:${block.title ?? 'Form'}`;
+  const selected = isInteractionSelected(selectedInteractionKeys, toolCallId, interactionKey);
+  const [values, setValues] = useState<Record<string, string>>(() =>
+    Object.fromEntries(block.items.map((item) => [item.label, item.value ?? ''])),
+  );
+
+  const submitForm = () => {
+    const lines = block.items.map((item) => {
+      const value = values[item.label]?.trim() || item.placeholder || '';
+      return `- ${item.label}: ${value}`;
+    });
+
+    submitInteraction(
+      onSubmitInteraction,
+      [`User submitted a generated form.`, `Form: ${block.title ?? 'Form'}`, ...lines].join('\n'),
+      { toolCallId, interactionKey, disabled: !enabled },
+    );
+  };
+
   return (
     <section>
       <SectionTitle>{block.title ?? 'Form'}</SectionTitle>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {block.items.map((item) => (
-          <div key={item.label} className="block rounded-xl border border-border bg-sidebar-bg p-3">
-            <span className="flex items-center justify-between gap-2 text-xs font-medium uppercase text-text-secondary">
-              {item.label}
-              {item.required ? <span className="text-amber-400">Required</span> : null}
-            </span>
-            <div className="mt-2 min-h-10 rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary">
-              {item.value ?? (
-                <span className="text-text-secondary">
-                  {item.placeholder ?? item.inputType ?? '-'}
-                </span>
+      <form
+        className="space-y-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          submitForm();
+        }}
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          {block.items.map((item) => (
+            <div
+              key={item.label}
+              className="block rounded-xl border border-border bg-sidebar-bg p-3"
+            >
+              <span className="flex items-center justify-between gap-2 text-xs font-medium uppercase text-text-secondary">
+                {item.label}
+                {item.required ? <span className="text-amber-400">Required</span> : null}
+              </span>
+              {item.inputType === 'textarea' ? (
+                <textarea
+                  aria-label={item.label}
+                  className="mt-2 min-h-24 w-full resize-y rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary outline-none transition-colors placeholder:text-text-secondary focus:border-[#4ECDC4]/70 disabled:cursor-not-allowed disabled:opacity-55"
+                  disabled={!enabled}
+                  placeholder={item.placeholder ?? item.inputType ?? ''}
+                  required={item.required}
+                  value={values[item.label] ?? ''}
+                  onChange={(event) =>
+                    setValues((prev) => ({ ...prev, [item.label]: event.target.value }))
+                  }
+                />
+              ) : (
+                <input
+                  aria-label={item.label}
+                  className="mt-2 h-10 w-full rounded-lg border border-border bg-bg px-3 text-sm text-text-primary outline-none transition-colors placeholder:text-text-secondary focus:border-[#4ECDC4]/70 disabled:cursor-not-allowed disabled:opacity-55"
+                  disabled={!enabled}
+                  placeholder={item.placeholder ?? item.inputType ?? ''}
+                  required={item.required}
+                  type={
+                    item.inputType === 'number' || item.inputType === 'email'
+                      ? item.inputType
+                      : 'text'
+                  }
+                  value={values[item.label] ?? ''}
+                  onChange={(event) =>
+                    setValues((prev) => ({ ...prev, [item.label]: event.target.value }))
+                  }
+                />
               )}
+              {item.status ? (
+                <p className="mt-2 text-xs text-text-secondary">{item.status}</p>
+              ) : null}
             </div>
-            {item.status ? <p className="mt-2 text-xs text-text-secondary">{item.status}</p> : null}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+        <button
+          type="submit"
+          disabled={!enabled}
+          className={cn(
+            'min-h-10 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors',
+            interactiveButtonClass({
+              enabled,
+              selected,
+              activeClass:
+                'border-[#4ECDC4]/50 bg-[#4ECDC4]/15 text-text-primary hover:bg-[#4ECDC4]/20',
+            }),
+          )}
+        >
+          Submit
+        </button>
+      </form>
     </section>
   );
 }
 
-function ChoicePickerBlock({ block }: { block: Extract<UIBlock, { type: 'choice_picker' }> }) {
+function ChoicePickerBlock({
+  block,
+  onSubmitInteraction,
+  toolCallId,
+  interactionDisabled,
+  selectedInteractionKeys,
+}: InteractiveBlockProps<Extract<UIBlock, { type: 'choice_picker' }>>) {
+  const enabled = Boolean(onSubmitInteraction) && !interactionDisabled;
+
   return (
     <section>
       <SectionTitle>{block.title ?? 'Choose an option'}</SectionTitle>
@@ -748,11 +1013,38 @@ function ChoicePickerBlock({ block }: { block: Extract<UIBlock, { type: 'choice_
           <button
             key={item.label}
             type="button"
+            disabled={!enabled}
+            onClick={() => {
+              const interactionKey = `choice:${item.label}`;
+              submitInteraction(
+                onSubmitInteraction,
+                [
+                  'User selected an option from a generated choice picker.',
+                  `Picker: ${block.title ?? 'Choice picker'}`,
+                  `Selected option: ${item.label}`,
+                  item.description ? `Option detail: ${item.description}` : '',
+                  item.status ? `Status: ${item.status}` : '',
+                ]
+                  .filter(Boolean)
+                  .join('\n'),
+                { toolCallId, interactionKey, disabled: !enabled },
+              );
+            }}
             className={cn(
               'min-h-[92px] rounded-xl border p-3 text-left transition-colors hover:border-[#4ECDC4]/60',
-              index === 0
-                ? toneBorderStyles[item.tone ?? 'neutral']
-                : 'border-border bg-sidebar-bg',
+              interactiveButtonClass({
+                enabled,
+                selected: isInteractionSelected(
+                  selectedInteractionKeys,
+                  toolCallId,
+                  `choice:${item.label}`,
+                ),
+                activeClass:
+                  index === 0
+                    ? toneBorderStyles[item.tone ?? 'neutral']
+                    : 'border-border bg-sidebar-bg',
+                inactiveClass: 'border-border bg-sidebar-bg text-text-secondary',
+              }),
             )}
           >
             <div className="flex items-start gap-3">
@@ -783,7 +1075,15 @@ function ChoicePickerBlock({ block }: { block: Extract<UIBlock, { type: 'choice_
   );
 }
 
-function DiffPreviewBlock({ block }: { block: Extract<UIBlock, { type: 'diff_preview' }> }) {
+function DiffPreviewBlock({
+  block,
+  onSubmitInteraction,
+  toolCallId,
+  interactionDisabled,
+  selectedInteractionKeys,
+}: InteractiveBlockProps<Extract<UIBlock, { type: 'diff_preview' }>>) {
+  const enabled = Boolean(onSubmitInteraction) && !interactionDisabled;
+
   return (
     <section>
       <SectionTitle>{block.title ?? 'Diff preview'}</SectionTitle>
@@ -811,6 +1111,71 @@ function DiffPreviewBlock({ block }: { block: Extract<UIBlock, { type: 'diff_pre
               <pre className="min-h-[96px] overflow-x-auto bg-bg p-3 text-xs leading-relaxed text-emerald-300">
                 <code className="whitespace-pre-wrap">{item.after}</code>
               </pre>
+            </div>
+            <div className="flex flex-wrap gap-2 border-t border-border bg-sidebar-bg px-3 py-3">
+              <button
+                type="button"
+                disabled={!enabled}
+                className={cn(
+                  'min-h-9 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors',
+                  interactiveButtonClass({
+                    enabled,
+                    selected: isInteractionSelected(
+                      selectedInteractionKeys,
+                      toolCallId,
+                      `diff:use:${item.label}`,
+                    ),
+                    activeClass:
+                      'border-[#4ECDC4]/50 bg-[#4ECDC4]/15 text-text-primary hover:bg-[#4ECDC4]/20',
+                  }),
+                )}
+                onClick={() => {
+                  const interactionKey = `diff:use:${item.label}`;
+                  submitInteraction(
+                    onSubmitInteraction,
+                    [
+                      'User accepted a generated diff preview.',
+                      `Diff: ${item.label}`,
+                      'Use the revised content below.',
+                      item.after,
+                    ].join('\n'),
+                    { toolCallId, interactionKey, disabled: !enabled },
+                  );
+                }}
+              >
+                Use revised
+              </button>
+              <button
+                type="button"
+                disabled={!enabled}
+                className={cn(
+                  'min-h-9 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors',
+                  interactiveButtonClass({
+                    enabled,
+                    selected: isInteractionSelected(
+                      selectedInteractionKeys,
+                      toolCallId,
+                      `diff:revise:${item.label}`,
+                    ),
+                    activeClass: 'border-border bg-bg text-text-secondary hover:text-text-primary',
+                  }),
+                )}
+                onClick={() => {
+                  const interactionKey = `diff:revise:${item.label}`;
+                  submitInteraction(
+                    onSubmitInteraction,
+                    [
+                      'User requested another revision for a generated diff preview.',
+                      `Diff: ${item.label}`,
+                      'Please revise again while preserving the original intent.',
+                      `Current revised content:\n${item.after}`,
+                    ].join('\n'),
+                    { toolCallId, interactionKey, disabled: !enabled },
+                  );
+                }}
+              >
+                Revise again
+              </button>
             </div>
           </article>
         ))}
@@ -1010,7 +1375,15 @@ function SalesFunnelBlock({ block }: { block: Extract<UIBlock, { type: 'sales_fu
   );
 }
 
-function FlightOptionsBlock({ block }: { block: Extract<UIBlock, { type: 'flight_options' }> }) {
+function FlightOptionsBlock({
+  block,
+  onSubmitInteraction,
+  toolCallId,
+  interactionDisabled,
+  selectedInteractionKeys,
+}: InteractiveBlockProps<Extract<UIBlock, { type: 'flight_options' }>>) {
+  const enabled = Boolean(onSubmitInteraction) && !interactionDisabled;
+
   return (
     <section>
       <SectionTitle>{block.title ?? 'Flight options'}</SectionTitle>
@@ -1071,7 +1444,35 @@ function FlightOptionsBlock({ block }: { block: Extract<UIBlock, { type: 'flight
             <div className="px-4 pb-4">
               <button
                 type="button"
-                className="h-10 w-full rounded-lg border border-border bg-bg text-sm font-semibold text-text-primary transition-colors hover:border-[#4ECDC4]/60"
+                disabled={!enabled}
+                onClick={() => {
+                  const interactionKey = `flight:${flight.id ?? `${flight.airline}-${flight.flightNumber}`}`;
+                  submitInteraction(
+                    onSubmitInteraction,
+                    [
+                      'User selected a flight option.',
+                      `Flight: ${flight.airline} ${flight.flightNumber}`,
+                      `Route: ${flight.origin} to ${flight.destination}`,
+                      `Departure: ${flight.date} ${flight.departureTime}`,
+                      `Arrival: ${flight.arrivalTime}`,
+                      `Price: ${flight.price}`,
+                      `Status: ${flight.status}`,
+                    ].join('\n'),
+                    { toolCallId, interactionKey, disabled: !enabled },
+                  );
+                }}
+                className={cn(
+                  'h-10 w-full rounded-lg border text-sm font-semibold transition-colors',
+                  interactiveButtonClass({
+                    enabled,
+                    selected: isInteractionSelected(
+                      selectedInteractionKeys,
+                      toolCallId,
+                      `flight:${flight.id ?? `${flight.airline}-${flight.flightNumber}`}`,
+                    ),
+                    activeClass: 'border-border bg-bg text-text-primary hover:border-[#4ECDC4]/60',
+                  }),
+                )}
               >
                 Select
               </button>
@@ -1239,7 +1640,19 @@ function SalesDashboardBlock({ block }: { block: Extract<UIBlock, { type: 'sales
   );
 }
 
-function BlockRenderer({ block }: { block: UIBlock }) {
+function BlockRenderer({
+  block,
+  onSubmitInteraction,
+  toolCallId,
+  interactionDisabled,
+  selectedInteractionKeys,
+}: {
+  block: UIBlock;
+  onSubmitInteraction?: SubmitInteraction;
+  toolCallId?: string;
+  interactionDisabled?: boolean;
+  selectedInteractionKeys?: Set<string>;
+}) {
   switch (block.type) {
     case 'metric_grid':
       return <MetricGridBlock block={block} />;
@@ -1250,7 +1663,15 @@ function BlockRenderer({ block }: { block: UIBlock }) {
     case 'callout':
       return <CalloutBlock block={block} />;
     case 'actions':
-      return <ActionsBlock block={block} />;
+      return (
+        <ActionsBlock
+          block={block}
+          onSubmitInteraction={onSubmitInteraction}
+          toolCallId={toolCallId}
+          interactionDisabled={interactionDisabled}
+          selectedInteractionKeys={selectedInteractionKeys}
+        />
+      );
     case 'text':
       return <TextBlock block={block} />;
     case 'divider':
@@ -1280,7 +1701,15 @@ function BlockRenderer({ block }: { block: UIBlock }) {
     case 'flight_card':
       return <FlightCardBlock block={block} />;
     case 'flight_options':
-      return <FlightOptionsBlock block={block} />;
+      return (
+        <FlightOptionsBlock
+          block={block}
+          onSubmitInteraction={onSubmitInteraction}
+          toolCallId={toolCallId}
+          interactionDisabled={interactionDisabled}
+          selectedInteractionKeys={selectedInteractionKeys}
+        />
+      );
     case 'sales_funnel':
       return <SalesFunnelBlock block={block} />;
     case 'sales_dashboard':
@@ -1290,15 +1719,55 @@ function BlockRenderer({ block }: { block: UIBlock }) {
     case 'source_list':
       return <SourceListBlock block={block} />;
     case 'task_plan':
-      return <TaskPlanBlock block={block} />;
+      return (
+        <TaskPlanBlock
+          block={block}
+          onSubmitInteraction={onSubmitInteraction}
+          toolCallId={toolCallId}
+          interactionDisabled={interactionDisabled}
+          selectedInteractionKeys={selectedInteractionKeys}
+        />
+      );
     case 'confirmation_panel':
-      return <ConfirmationPanelBlock block={block} />;
+      return (
+        <ConfirmationPanelBlock
+          block={block}
+          onSubmitInteraction={onSubmitInteraction}
+          toolCallId={toolCallId}
+          interactionDisabled={interactionDisabled}
+          selectedInteractionKeys={selectedInteractionKeys}
+        />
+      );
     case 'form_fill':
-      return <FormFillBlock block={block} />;
+      return (
+        <FormFillBlock
+          block={block}
+          onSubmitInteraction={onSubmitInteraction}
+          toolCallId={toolCallId}
+          interactionDisabled={interactionDisabled}
+          selectedInteractionKeys={selectedInteractionKeys}
+        />
+      );
     case 'choice_picker':
-      return <ChoicePickerBlock block={block} />;
+      return (
+        <ChoicePickerBlock
+          block={block}
+          onSubmitInteraction={onSubmitInteraction}
+          toolCallId={toolCallId}
+          interactionDisabled={interactionDisabled}
+          selectedInteractionKeys={selectedInteractionKeys}
+        />
+      );
     case 'diff_preview':
-      return <DiffPreviewBlock block={block} />;
+      return (
+        <DiffPreviewBlock
+          block={block}
+          onSubmitInteraction={onSubmitInteraction}
+          toolCallId={toolCallId}
+          interactionDisabled={interactionDisabled}
+          selectedInteractionKeys={selectedInteractionKeys}
+        />
+      );
     case 'error_diagnosis':
       return <ErrorDiagnosisBlock block={block} />;
     case 'file_attachment_card':
@@ -1308,7 +1777,21 @@ function BlockRenderer({ block }: { block: UIBlock }) {
   }
 }
 
-export function DeclarativeRenderer({ spec, status }: { spec: UISpec; status: string }) {
+export function DeclarativeRenderer({
+  spec,
+  status,
+  onSubmitInteraction,
+  toolCallId,
+  interactionDisabled = false,
+  selectedInteractionKeys,
+}: {
+  spec: UISpec;
+  status: string;
+  onSubmitInteraction?: SubmitInteraction;
+  toolCallId?: string;
+  interactionDisabled?: boolean;
+  selectedInteractionKeys?: Set<string>;
+}) {
   const isLoading = status === 'inProgress' || status === 'executing';
 
   return (
@@ -1322,6 +1805,11 @@ export function DeclarativeRenderer({ spec, status }: { spec: UISpec; status: st
           {spec.summary ? (
             <p className="mt-2 text-sm leading-relaxed text-text-secondary">{spec.summary}</p>
           ) : null}
+          {interactionDisabled ? (
+            <span className="mt-2 inline-flex rounded-full border border-border bg-sidebar-bg px-2 py-0.5 text-[11px] font-medium text-text-secondary">
+              Past message - interactions disabled
+            </span>
+          ) : null}
         </div>
         {isLoading ? (
           <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
@@ -1331,7 +1819,14 @@ export function DeclarativeRenderer({ spec, status }: { spec: UISpec; status: st
       </div>
       <div className="space-y-4">
         {spec.blocks.map((block) => (
-          <BlockRenderer key={JSON.stringify(block)} block={block} />
+          <BlockRenderer
+            key={JSON.stringify(block)}
+            block={block}
+            onSubmitInteraction={onSubmitInteraction}
+            toolCallId={toolCallId}
+            interactionDisabled={interactionDisabled}
+            selectedInteractionKeys={selectedInteractionKeys}
+          />
         ))}
       </div>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useFrontendTool } from '@copilotkit/react-core/v2';
+import { useCallback, useRef } from 'react';
 import {
   type ShowUiSpecArgs,
   showUiSpecSchema,
@@ -18,6 +19,7 @@ import { FlightOptions } from '../generative-ui/custom';
 import { DeclarativeRenderer } from '../generative-ui/declarative';
 import { EmbeddedAppFrame } from '../generative-ui/open-ended';
 import { ZenithPanel } from '../generative-ui/static';
+import { useGenerativeUIInteraction } from './GenerativeUIInteractionContext';
 
 const fallbackSpec: UISpec = {
   version: '1',
@@ -965,6 +967,20 @@ const resolveUiSpecArgs = (args: ShowUiSpecArgs | { spec?: unknown }): UISpec =>
 };
 
 export function GenerativeUIRegistry() {
+  const { activeToolCallIds, selectedInteractionKeys, submitInteraction } =
+    useGenerativeUIInteraction();
+  const interactiveToolDeps = [activeToolCallIds, selectedInteractionKeys, submitInteraction];
+  const lastValidUiSpecByToolCallIdRef = useRef(new Map<string, UISpec>());
+  const resolveStableUiSpec = useCallback((toolCallId: string, args: ShowUiSpecArgs) => {
+    const spec = resolveUiSpecArgs(args);
+    if (spec !== fallbackSpec) {
+      lastValidUiSpecByToolCallIdRef.current.set(toolCallId, spec);
+      return spec;
+    }
+
+    return lastValidUiSpecByToolCallIdRef.current.get(toolCallId) ?? spec;
+  }, []);
+
   useFrontendTool<ZenithPanelArgs>(
     {
       name: 'show_zenith_panel',
@@ -1012,11 +1028,18 @@ export function GenerativeUIRegistry() {
           blockCount: spec.blocks.length,
         };
       },
-      render: ({ args, status }) => (
-        <DeclarativeRenderer spec={resolveUiSpecArgs(args)} status={status} />
+      render: ({ args, status, toolCallId }) => (
+        <DeclarativeRenderer
+          spec={resolveStableUiSpec(toolCallId, args)}
+          status={status}
+          toolCallId={toolCallId}
+          interactionDisabled={!activeToolCallIds.has(toolCallId)}
+          selectedInteractionKeys={selectedInteractionKeys}
+          onSubmitInteraction={submitInteraction}
+        />
       ),
     },
-    [],
+    interactiveToolDeps,
   );
 
   useFrontendTool<ShowFlightOptionsArgs>(
@@ -1033,15 +1056,35 @@ export function GenerativeUIRegistry() {
         title: args.title,
         flightCount: args.flights?.length ?? 0,
       }),
-      render: ({ args }) => (
+      render: ({ args, toolCallId }) => (
         <FlightOptions
           title={args.title ?? 'Flight options'}
           summary={args.summary}
           flights={args.flights ?? []}
+          disabled={!activeToolCallIds.has(toolCallId)}
+          selectedFlightKeys={selectedInteractionKeys}
+          toolCallId={toolCallId}
+          onSelect={(flight) =>
+            submitInteraction(
+              [
+                'Selected flight option.',
+                `Flight: ${flight.airline} ${flight.flightNumber}`,
+                `Route: ${flight.origin} to ${flight.destination}`,
+                `Departure: ${flight.date} ${flight.departureTime}`,
+                `Arrival: ${flight.arrivalTime}`,
+                `Price: ${flight.price}`,
+                `Status: ${flight.status}`,
+              ].join('\n'),
+              {
+                toolCallId,
+                interactionKey: `flight:${flight.id ?? `${flight.airline}-${flight.flightNumber}`}`,
+              },
+            )
+          }
         />
       ),
     },
-    [],
+    interactiveToolDeps,
   );
 
   useFrontendTool<ShowMcpAppArgs>(

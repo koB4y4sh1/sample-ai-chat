@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { MouseEvent } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ConversationView, type ConversationViewHandle } from './ConversationView';
+import { GenerativeUIInteractionProvider } from './GenerativeUIInteractionContext';
 import { GenerativeUIRegistry } from './GenerativeUIRegistry';
 import { HomeView } from './HomeView';
 import { Sidebar } from './Sidebar';
@@ -139,6 +140,7 @@ export default function App({ activeSessionId = null }: AppProps) {
   const [pendingInitialMessage, setPendingInitialMessage] = useState<PendingInitialMessage | null>(
     loadPendingInitialMessage,
   );
+  const [activeToolCallIds, setActiveToolCallIds] = useState<Set<string>>(new Set());
   const conversationViewHandleRef = useRef<ConversationViewHandle | null>(null);
   const currentSessionId = activeSessionId ?? transientSessionId;
   const currentSessionIdRef = useRef<string | null>(currentSessionId);
@@ -236,6 +238,10 @@ export default function App({ activeSessionId = null }: AppProps) {
     void handle.sendMessage(queuedMessage.content);
   }, []);
 
+  const submitGenerativeUIInteraction = useCallback(async (content: string) => {
+    await conversationViewHandleRef.current?.sendMessage(content);
+  }, []);
+
   const toggleTheme = () => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
 
   const showHome = () => {
@@ -317,46 +323,52 @@ export default function App({ activeSessionId = null }: AppProps) {
       >
         <div className={currentSession ? 'flex h-full min-h-0 flex-1 flex-col' : 'w-full'}>
           <CopilotKitProvider runtimeUrl="/api/copilotkit" useSingleEndpoint showDevConsole={false}>
-            <GenerativeUIRegistry />
-            <AnimatePresence mode="wait">
-              {!currentSession ? (
-                <motion.div
-                  key="home"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.4, ease: 'easeOut' }}
-                  className="w-full max-w-3xl px-6"
-                >
-                  <HomeView onSendMessage={startConversation} />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key={currentSession.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex h-full w-full flex-1 min-h-0 p-6"
-                >
-                  <div className="flex h-full min-h-0 flex-1 flex-col rounded-3xl border border-border bg-sidebar-bg shadow-sm">
-                    <div className="border-b border-border px-6 py-4">
-                      <p className="text-xs uppercase tracking-[0.25em] text-text-secondary">
-                        Active Session
-                      </p>
-                      <h2 className="mt-2 text-xl font-semibold text-text-primary">
-                        {currentSession.title}
-                      </h2>
+            <GenerativeUIInteractionProvider
+              onSubmit={submitGenerativeUIInteraction}
+              activeToolCallIds={activeToolCallIds}
+            >
+              <GenerativeUIRegistry />
+              <AnimatePresence mode="wait">
+                {!currentSession ? (
+                  <motion.div
+                    key="home"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    className="w-full max-w-3xl px-6"
+                  >
+                    <HomeView onSendMessage={startConversation} />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={currentSession.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex h-full w-full flex-1 min-h-0 p-6"
+                  >
+                    <div className="flex h-full min-h-0 flex-1 flex-col rounded-3xl border border-border bg-sidebar-bg shadow-sm">
+                      <div className="border-b border-border px-6 py-4">
+                        <p className="text-xs uppercase tracking-[0.25em] text-text-secondary">
+                          Active Session
+                        </p>
+                        <h2 className="mt-2 text-xl font-semibold text-text-primary">
+                          {currentSession.title}
+                        </h2>
+                      </div>
+                      <div className="flex h-full min-h-0 flex-1">
+                        <ConversationView
+                          ref={attachConversationViewHandle}
+                          sessionId={currentSession.id}
+                          onActiveToolCallIdsChange={setActiveToolCallIds}
+                        />
+                      </div>
                     </div>
-                    <div className="flex h-full min-h-0 flex-1">
-                      <ConversationView
-                        ref={attachConversationViewHandle}
-                        sessionId={currentSession.id}
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </GenerativeUIInteractionProvider>
           </CopilotKitProvider>
         </div>
       </main>
