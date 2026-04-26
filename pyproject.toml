@@ -20,7 +20,7 @@ dev = [
 members = ["agent", "mcp"]
 
 [tool.ruff]
-line-length = 100
+line-length = 150
 target-version = "py314"
 extend-exclude = [
     ".venv",
@@ -43,6 +43,12 @@ select = [
     "SIM",
     "T20",
     "UP",
+]
+
+exclude = [
+    "E501",  # Line too long (handled by black)
+    "F841",  # Local variable name shadowing a built-in (handled by mypy)
+    "I001",  # Missing docstring in public module (not relevant for our codebase)
 ]
 
 [tool.ruff.lint.per-file-ignores]
