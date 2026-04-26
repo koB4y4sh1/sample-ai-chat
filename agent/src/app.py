@@ -99,9 +99,13 @@ def build_agent(settings: Settings) -> Agent:
             "Use Generative UI tools when the user asks for visual, structured, dashboard-like, "
             "or interactive responses. Use show_zenith_panel for simple fixed status cards, "
             "metrics, and action plans. Use show_ui_spec for flexible declarative layouts such "
-            "as metric grids, tables, lists, callouts, and action groups. Use show_mcp_app for "
-            "open-ended embedded app experiences that require an interactive surface. Prefer "
-            "tool calls over describing the UI in plain text when a tool fits the request."
+            "as metric grids, tables, lists, callouts, action groups, key-value summaries, "
+            "progress bars, checklists, timelines, comparisons, risk matrices, decisions, tabs, "
+            "accordions, quotes, status strips, flight cards, and sales funnels. Choose varied "
+            "declarative blocks that fit the user's intent instead of repeating the same layout. "
+            "Use show_mcp_app for open-ended embedded app experiences that require an interactive "
+            "surface. Prefer tool calls over describing the UI in plain text when a tool fits "
+            "the request."
         ),
         client=FoundryChatClient(model=settings.openai_model, credential=AzureCliCredential()),
     )

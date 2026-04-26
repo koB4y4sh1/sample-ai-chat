@@ -32,6 +32,12 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const asString = (value: unknown, fallback = '') => (typeof value === 'string' ? value : fallback);
 
+const asNumber = (value: unknown, fallback = 0) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+
+const asTone = (value: unknown): 'neutral' | 'positive' | 'warning' =>
+  value === 'positive' || value === 'warning' || value === 'neutral' ? value : 'neutral';
+
 const normalizeBlocks = (blocks: unknown[]): UIBlock[] =>
   blocks.flatMap((block): UIBlock[] => {
     if (!isRecord(block)) {
@@ -103,13 +109,9 @@ const normalizeBlocks = (blocks: unknown[]): UIBlock[] =>
           : [];
       }
       case 'callout': {
-        const tone =
-          block.tone === 'positive' || block.tone === 'warning' || block.tone === 'neutral'
-            ? block.tone
-            : 'neutral';
         const body = asString(block.body);
 
-        return body ? [{ type: 'callout', title, tone, body }] : [];
+        return body ? [{ type: 'callout', title, tone: asTone(block.tone), body }] : [];
       }
       case 'actions': {
         const actions = Array.isArray(block.actions)
@@ -133,6 +135,267 @@ const normalizeBlocks = (blocks: unknown[]): UIBlock[] =>
           : [];
 
         return actions.length > 0 ? [{ type: 'actions', title, actions }] : [];
+      }
+      case 'text': {
+        const body = asString(block.body);
+
+        return body ? [{ type: 'text', title, body }] : [];
+      }
+      case 'divider':
+        return [{ type: 'divider', title }];
+      case 'key_value': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label);
+              const value = asString(item.value);
+              if (!label || !value) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  value,
+                  description: asString(item.description) || undefined,
+                },
+              ];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'key_value', title, items }] : [];
+      }
+      case 'progress': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label);
+              if (!label) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  value: asString(item.value) || undefined,
+                  percent: Math.max(0, Math.min(100, asNumber(item.percent))),
+                  tone: asTone(item.tone),
+                },
+              ];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'progress', title, items }] : [];
+      }
+      case 'checklist': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label) || asString(item.text);
+              if (!label) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  description: asString(item.description) || undefined,
+                  status: asString(item.status) || undefined,
+                },
+              ];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'checklist', title, items }] : [];
+      }
+      case 'timeline': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label) || asString(item.text);
+              if (!label) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  description: asString(item.description) || undefined,
+                  status: asString(item.status) || undefined,
+                },
+              ];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'timeline', title, items }] : [];
+      }
+      case 'comparison': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label);
+              const from = asString(item.from);
+              const to = asString(item.to);
+              if (!label || !from || !to) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  from,
+                  to,
+                  description: asString(item.description) || undefined,
+                },
+              ];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'comparison', title, items }] : [];
+      }
+      case 'risk_matrix': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label);
+              if (!label) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  likelihood: asString(item.likelihood) || undefined,
+                  impact: asString(item.impact) || undefined,
+                  score: asString(item.score) || undefined,
+                  tone: asTone(item.tone),
+                },
+              ];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'risk_matrix', title, items }] : [];
+      }
+      case 'decision': {
+        const verdict = asString(block.verdict) || asString(block.value);
+
+        return verdict
+          ? [
+              {
+                type: 'decision',
+                title,
+                verdict,
+                body: asString(block.body) || undefined,
+                tone: asTone(block.tone),
+              },
+            ]
+          : [];
+      }
+      case 'tabs':
+      case 'accordion': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label);
+              const body = asString(item.body) || asString(item.description) || asString(item.text);
+              if (!label || !body) {
+                return [];
+              }
+
+              return [{ label, body }];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: block.type, title, items }] : [];
+      }
+      case 'quote': {
+        const body = asString(block.body);
+
+        return body
+          ? [{ type: 'quote', title, body, subtitle: asString(block.subtitle) || undefined }]
+          : [];
+      }
+      case 'status_strip': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label);
+              const value = asString(item.value) || asString(item.status);
+              if (!label || !value) {
+                return [];
+              }
+
+              return [{ label, value, tone: asTone(item.tone) }];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'status_strip', title, items }] : [];
+      }
+      case 'flight_card': {
+        const from = asString(block.from);
+        const to = asString(block.to);
+
+        return from && to
+          ? [
+              {
+                type: 'flight_card',
+                title,
+                from,
+                to,
+                status: asString(block.status) || undefined,
+                body: asString(block.body) || undefined,
+              },
+            ]
+          : [];
+      }
+      case 'sales_funnel': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label);
+              const value = asString(item.value);
+              if (!label || !value) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  value,
+                  percent: asNumber(item.percent, -1) >= 0 ? asNumber(item.percent) : undefined,
+                },
+              ];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'sales_funnel', title, items }] : [];
       }
       default:
         return [];
@@ -219,7 +482,7 @@ export function GenerativeUIRegistry() {
       name: 'show_ui_spec',
       agentId: 'zenith',
       description:
-        'Render declarative Generative UI from a versioned UI schema. Use this for flexible dashboards, tables, metric grids, lists, callouts, and action groups.',
+        'Render declarative Generative UI from a versioned UI schema. Available block types: metric_grid, list, table, callout, actions, text, divider, key_value, progress, checklist, timeline, comparison, risk_matrix, decision, tabs, accordion, quote, status_strip, flight_card, sales_funnel. Choose diverse blocks that best fit the user request instead of always using the same layout.',
       parameters: showUiSpecSchema,
       followUp: false,
       handler: async (args) => {
