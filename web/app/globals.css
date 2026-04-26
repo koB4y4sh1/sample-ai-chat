@@ -1,0 +1,167 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg: #f9f9f8;
+  --color-sidebar-bg: #ffffff;
+  --color-border: #e5e5e0;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #70706b;
+  --color-brand-start: #ff6b6b;
+  --color-brand-end: #4ecdc4;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    @apply font-sans antialiased bg-bg text-text-primary transition-colors duration-300;
+  }
+
+  body.dark {
+    @apply bg-[#121211] text-slate-100;
+    --color-bg: #121211;
+    --color-sidebar-bg: #1c1c1b;
+    --color-border: #2a2a28;
+    --color-text-primary: #f0f0f0;
+    --color-text-secondary: #a0a09a;
+  }
+}
+
+@layer components {
+  .zenith-copilot-chat {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    flex: 1 1 auto;
+    background: transparent;
+    color: var(--color-text-primary);
+    --cpk-default-font-family: var(--font-sans);
+
+    --background: var(--color-bg);
+    --foreground: var(--color-text-primary);
+    --card: var(--color-sidebar-bg);
+    --card-foreground: var(--color-text-primary);
+    --popover: var(--color-sidebar-bg);
+    --popover-foreground: var(--color-text-primary);
+    --primary: var(--color-text-primary);
+    --primary-foreground: var(--color-sidebar-bg);
+    --secondary: color-mix(in srgb, var(--color-sidebar-bg) 82%, var(--color-text-primary) 18%);
+    --secondary-foreground: var(--color-text-primary);
+    --muted: color-mix(in srgb, var(--color-sidebar-bg) 88%, var(--color-text-primary) 12%);
+    --muted-foreground: var(--color-text-secondary);
+    --accent: color-mix(in srgb, var(--color-sidebar-bg) 84%, var(--color-brand-end) 16%);
+    --accent-foreground: var(--color-text-primary);
+    --border: var(--color-border);
+    --input: var(--color-border);
+    --ring: color-mix(in srgb, var(--color-brand-end) 55%, white 45%);
+    --sidebar: var(--color-sidebar-bg);
+    --sidebar-foreground: var(--color-text-primary);
+    --sidebar-primary: var(--color-text-primary);
+    --sidebar-primary-foreground: var(--color-sidebar-bg);
+    --sidebar-accent: color-mix(in srgb, var(--color-sidebar-bg) 84%, var(--color-brand-start) 16%);
+    --sidebar-accent-foreground: var(--color-text-primary);
+    --sidebar-border: var(--color-border);
+    --sidebar-ring: var(--ring);
+  }
+
+  .zenith-copilot-chat [data-copilotkit] {
+    min-height: 0;
+    background: transparent;
+    color: var(--color-text-primary);
+  }
+
+  .zenith-copilot-chat [data-copilotkit] * {
+    scrollbar-color: color-mix(in srgb, var(--color-text-secondary) 55%, transparent) transparent;
+  }
+
+  .zenith-copilot-chat .prose {
+    color: var(--color-text-primary);
+  }
+
+  .zenith-copilot-chat .prose :where(p, li, strong, em, code, pre, blockquote, h1, h2, h3, h4) {
+    color: inherit;
+  }
+
+  .zenith-copilot-chat .copilotKitMessages {
+    gap: 1.25rem;
+    padding-block: 0.5rem 2rem;
+  }
+
+  .zenith-copilot-chat .copilotKitMessage {
+    color: var(--color-text-primary);
+  }
+
+  .zenith-copilot-chat .copilotKitUserMessage {
+    padding-top: 0;
+  }
+
+  .zenith-copilot-chat .copilotKitUserMessage .prose {
+    margin: 0;
+  }
+
+  .zenith-copilot-chat .copilotKitUserMessage .prose,
+  .zenith-copilot-chat .copilotKitUserMessage .prose * {
+    color: var(--color-text-primary);
+  }
+
+  .zenith-copilot-chat .copilotKitUserMessage .prose {
+    background: color-mix(in srgb, var(--color-sidebar-bg) 90%, var(--color-text-primary) 10%);
+    border: 1px solid var(--color-border);
+    border-radius: 18px;
+    max-width: min(78%, 42rem);
+    padding: 0.625rem 1rem;
+  }
+
+  .zenith-copilot-chat .copilotKitAssistantMessage {
+    max-width: min(100%, 48rem);
+    padding-top: 0;
+  }
+
+  .zenith-copilot-chat .copilotKitAssistantMessage .prose {
+    max-width: none;
+    font-size: 0.95rem;
+    line-height: 1.75;
+  }
+
+  .zenith-copilot-chat .copilotKitInput {
+    background: var(--color-sidebar-bg);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 1px 2px color-mix(in srgb, black 12%, transparent);
+  }
+
+  .zenith-copilot-chat textarea {
+    color: var(--color-text-primary);
+  }
+
+  .zenith-copilot-chat textarea::placeholder {
+    color: var(--color-text-secondary);
+  }
+}
+
+.icon-gradient {
+  @apply text-transparent bg-clip-text bg-linear-to-br from-brand-start to-brand-end;
+}
+
+.bg-accent-gradient {
+  @apply bg-linear-to-br from-brand-start to-brand-end;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300/50 rounded-full;
+}
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-slate-700/50;
+}
