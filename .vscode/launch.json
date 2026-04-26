@@ -9,6 +9,13 @@
       "webRoot": "${workspaceFolder}/web/src",
       "preLaunchTask": "dev:web",
       "sourceMaps": true
+    },
+    {
+      "name": "BE: Agent",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/agent/src/main.py",
+      "console": "integratedTerminal"
     }
   ]
 }

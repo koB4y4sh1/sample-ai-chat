@@ -4,7 +4,14 @@ version = "0.1.0"
 description = "Agent service for Zenith AI Chat."
 requires-python = ">=3.14"
 dependencies = [
+    "agent-framework==1.1.0",
+    "fastapi>=0.115",
     "pydantic>=2.10",
+    "pydantic-settings>=2.6",
+    "python-dotenv>=1.0",
+    "uvicorn[standard]>=0.32",
+    "azure-identity>=1.25.3",
+    "dotenv>=0.9.9",
 ]
 
 [build-system]
