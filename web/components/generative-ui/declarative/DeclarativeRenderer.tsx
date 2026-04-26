@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  AlertTriangle,
   ArrowRight,
   BadgeCheck,
   BadgeDollarSign,
@@ -8,11 +9,18 @@ import {
   CheckSquare,
   ChevronDown,
   Circle,
+  ClipboardCheck,
   Clock3,
+  Code2,
+  FileText,
   GitCompare,
+  Link2,
   ListChecks,
+  Paperclip,
   Plane,
   Quote,
+  Radio,
+  ShieldCheck,
   ShoppingBag,
   Table2,
   Users,
@@ -60,6 +68,75 @@ const statusToneClass = (status: string) => {
     return 'text-amber-500';
   }
   return 'text-text-secondary';
+};
+
+const statusPillClass = (status?: string) => {
+  const normalized = status?.toLowerCase() ?? '';
+  if (
+    normalized.includes('done') ||
+    normalized.includes('complete') ||
+    normalized.includes('approved') ||
+    normalized.includes('resolved') ||
+    normalized.includes('完了') ||
+    normalized.includes('承認')
+  ) {
+    return 'border-emerald-500/35 bg-emerald-500/10 text-emerald-400';
+  }
+  if (
+    normalized.includes('blocked') ||
+    normalized.includes('failed') ||
+    normalized.includes('error') ||
+    normalized.includes('critical') ||
+    normalized.includes('失敗') ||
+    normalized.includes('エラー')
+  ) {
+    return 'border-red-500/35 bg-red-500/10 text-red-400';
+  }
+  if (
+    normalized.includes('pending') ||
+    normalized.includes('review') ||
+    normalized.includes('warning') ||
+    normalized.includes('確認') ||
+    normalized.includes('注意')
+  ) {
+    return 'border-amber-500/35 bg-amber-500/10 text-amber-400';
+  }
+  return 'border-border bg-sidebar-bg text-text-secondary';
+};
+
+const confirmationActionVariant = (
+  action: Extract<UIBlock, { type: 'confirmation_panel' }>['actions'][number],
+  index: number,
+) => {
+  if (action.variant) {
+    return action.variant;
+  }
+
+  const normalized = action.label.toLowerCase();
+  if (
+    normalized.includes('cancel') ||
+    normalized.includes('reject') ||
+    normalized.includes('delete') ||
+    normalized.includes('abort')
+  ) {
+    return 'danger';
+  }
+
+  return index === 0 ? 'primary' : 'secondary';
+};
+
+const confirmationActionClass = (
+  action: Extract<UIBlock, { type: 'confirmation_panel' }>['actions'][number],
+  index: number,
+) => {
+  const variant = confirmationActionVariant(action, index);
+  if (variant === 'danger') {
+    return 'border-red-500/35 bg-red-500/10 text-red-300 hover:bg-red-500/15';
+  }
+  if (variant === 'primary') {
+    return 'border-[#4ECDC4]/50 bg-[#4ECDC4]/15 text-text-primary hover:bg-[#4ECDC4]/20';
+  }
+  return 'border-border bg-bg text-text-secondary hover:text-text-primary';
 };
 
 function SectionTitle({ children }: { children?: string }) {
@@ -466,6 +543,428 @@ function StatusStripBlock({ block }: { block: Extract<UIBlock, { type: 'status_s
   );
 }
 
+function AnswerCardBlock({ block }: { block: Extract<UIBlock, { type: 'answer_card' }> }) {
+  const tone = block.tone ?? 'neutral';
+  const items = Array.isArray(block.items) ? block.items : [];
+
+  return (
+    <section className={cn('rounded-xl border p-4', toneBorderStyles[tone])}>
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#4ECDC4]/30 bg-[#4ECDC4]/10 text-[#4ECDC4]">
+          <ShieldCheck className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          {block.title ? (
+            <h4 className="text-sm font-semibold text-text-primary">{block.title}</h4>
+          ) : null}
+          <p className="mt-1 text-sm leading-relaxed text-text-secondary">{block.body}</p>
+          {items.length > 0 ? (
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {items.map((item) => (
+                <div key={item.label} className="rounded-lg border border-border bg-bg p-3">
+                  <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                  {item.description ? (
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                      {item.description}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SourceListBlock({ block }: { block: Extract<UIBlock, { type: 'source_list' }> }) {
+  return (
+    <section>
+      <SectionTitle>{block.title ?? 'Sources'}</SectionTitle>
+      <div className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+        {block.items.map((item) => (
+          <div key={`${item.label}-${item.path ?? item.url ?? ''}`} className="flex gap-3 p-3">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#4ECDC4]/10 text-[#4ECDC4]">
+              {item.url ? <Link2 className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-text-primary">{item.label}</p>
+              <p className="mt-0.5 truncate text-xs text-text-secondary">
+                {item.path ?? item.url ?? 'Referenced context'}
+                {item.line ? `:${item.line}` : ''}
+              </p>
+              {item.description ? (
+                <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                  {item.description}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TaskPlanBlock({ block }: { block: Extract<UIBlock, { type: 'task_plan' }> }) {
+  return (
+    <section>
+      <SectionTitle>{block.title ?? 'Task plan'}</SectionTitle>
+      <div className="space-y-2">
+        {block.items.map((item, index) => (
+          <div
+            key={`${item.label}-${item.status ?? ''}-${item.owner ?? ''}`}
+            className="grid grid-cols-[28px_1fr] gap-3"
+          >
+            <div className="flex flex-col items-center">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[#4ECDC4]/35 bg-[#4ECDC4]/10 text-xs font-semibold text-[#4ECDC4]">
+                {index + 1}
+              </div>
+              {index < block.items.length - 1 ? (
+                <div className="mt-1 h-full w-px bg-border" />
+              ) : null}
+            </div>
+            <div className="min-w-0 rounded-lg border border-border bg-sidebar-bg p-3">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                {item.status ? (
+                  <span
+                    className={cn(
+                      'rounded-full border px-2 py-0.5 text-[11px] font-medium',
+                      statusPillClass(item.status),
+                    )}
+                  >
+                    {item.status}
+                  </span>
+                ) : null}
+              </div>
+              {item.description ? (
+                <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                  {item.description}
+                </p>
+              ) : null}
+              {item.owner ? (
+                <p className="mt-2 text-[11px] uppercase text-text-secondary">
+                  Owner: {item.owner}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ConfirmationPanelBlock({
+  block,
+}: {
+  block: Extract<UIBlock, { type: 'confirmation_panel' }>;
+}) {
+  const tone = block.tone ?? 'neutral';
+  const actions =
+    block.actions.length > 0
+      ? block.actions
+      : [
+          { label: 'Approve', variant: 'primary' as const },
+          { label: 'Cancel', variant: 'danger' as const },
+        ];
+
+  return (
+    <section className={cn('overflow-hidden rounded-xl border', toneBorderStyles[tone])}>
+      <div className="flex items-start gap-3 border-b border-border/70 bg-bg/35 p-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#4ECDC4]/30 bg-[#4ECDC4]/10 text-[#4ECDC4]">
+          <ClipboardCheck className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium uppercase text-amber-300">
+              Approval required
+            </span>
+          </div>
+          {block.title ? (
+            <h4 className="text-base font-semibold text-text-primary">{block.title}</h4>
+          ) : null}
+          <p className="mt-1 text-sm leading-relaxed text-text-secondary">{block.body}</p>
+        </div>
+      </div>
+      <div className="grid gap-3 p-4 sm:grid-cols-2">
+        {actions.map((action, index) => (
+          <div key={action.label} className="rounded-lg border border-border bg-bg p-3">
+            <button
+              type="button"
+              className={cn(
+                'min-h-10 w-full rounded-lg border px-3 py-2 text-sm font-semibold transition-colors',
+                confirmationActionClass(action, index),
+              )}
+            >
+              {action.label}
+            </button>
+            {action.description ? (
+              <p className="mt-2 text-xs leading-relaxed text-text-secondary">
+                {action.description}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FormFillBlock({ block }: { block: Extract<UIBlock, { type: 'form_fill' }> }) {
+  return (
+    <section>
+      <SectionTitle>{block.title ?? 'Form'}</SectionTitle>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {block.items.map((item) => (
+          <div key={item.label} className="block rounded-xl border border-border bg-sidebar-bg p-3">
+            <span className="flex items-center justify-between gap-2 text-xs font-medium uppercase text-text-secondary">
+              {item.label}
+              {item.required ? <span className="text-amber-400">Required</span> : null}
+            </span>
+            <div className="mt-2 min-h-10 rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary">
+              {item.value ?? (
+                <span className="text-text-secondary">
+                  {item.placeholder ?? item.inputType ?? '-'}
+                </span>
+              )}
+            </div>
+            {item.status ? <p className="mt-2 text-xs text-text-secondary">{item.status}</p> : null}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ChoicePickerBlock({ block }: { block: Extract<UIBlock, { type: 'choice_picker' }> }) {
+  return (
+    <section>
+      <SectionTitle>{block.title ?? 'Choose an option'}</SectionTitle>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {block.items.map((item, index) => (
+          <button
+            key={item.label}
+            type="button"
+            className={cn(
+              'min-h-[92px] rounded-xl border p-3 text-left transition-colors hover:border-[#4ECDC4]/60',
+              index === 0
+                ? toneBorderStyles[item.tone ?? 'neutral']
+                : 'border-border bg-sidebar-bg',
+            )}
+          >
+            <div className="flex items-start gap-3">
+              <Radio className="mt-0.5 h-4 w-4 shrink-0 text-[#4ECDC4]" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                {item.description ? (
+                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                    {item.description}
+                  </p>
+                ) : null}
+                {item.status ? (
+                  <span
+                    className={cn(
+                      'mt-2 inline-flex rounded-full border px-2 py-0.5 text-[11px]',
+                      statusPillClass(item.status),
+                    )}
+                  >
+                    {item.status}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function DiffPreviewBlock({ block }: { block: Extract<UIBlock, { type: 'diff_preview' }> }) {
+  return (
+    <section>
+      <SectionTitle>{block.title ?? 'Diff preview'}</SectionTitle>
+      <div className="space-y-3">
+        {block.items.map((item) => (
+          <article key={item.label} className="overflow-hidden rounded-xl border border-border">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-sidebar-bg px-3 py-2">
+              <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-text-primary">
+                <Code2 className="h-4 w-4 shrink-0 text-[#4ECDC4]" />
+                <span className="truncate">{item.label}</span>
+              </span>
+              {item.language ? (
+                <span className="text-xs text-text-secondary">{item.language}</span>
+              ) : null}
+            </div>
+            {item.description ? (
+              <p className="border-b border-border px-3 py-2 text-xs text-text-secondary">
+                {item.description}
+              </p>
+            ) : null}
+            <div className="grid gap-px bg-border md:grid-cols-2">
+              <pre className="min-h-[96px] overflow-x-auto bg-bg p-3 text-xs leading-relaxed text-red-300">
+                <code className="whitespace-pre-wrap">{item.before}</code>
+              </pre>
+              <pre className="min-h-[96px] overflow-x-auto bg-bg p-3 text-xs leading-relaxed text-emerald-300">
+                <code className="whitespace-pre-wrap">{item.after}</code>
+              </pre>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ErrorDiagnosisBlock({ block }: { block: Extract<UIBlock, { type: 'error_diagnosis' }> }) {
+  return (
+    <section className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
+      <div className="mb-3 flex items-start gap-3">
+        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
+        <div>
+          <SectionTitle>{block.title ?? 'Diagnosis'}</SectionTitle>
+          {block.body ? (
+            <p className="text-sm leading-relaxed text-text-secondary">{block.body}</p>
+          ) : null}
+        </div>
+      </div>
+      <div className="space-y-2">
+        {block.items.map((item) => (
+          <div key={item.label} className="rounded-lg border border-border bg-bg p-3">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+              {item.severity ? (
+                <span
+                  className={cn(
+                    'rounded-full border px-2 py-0.5 text-[11px]',
+                    statusPillClass(item.severity),
+                  )}
+                >
+                  {item.severity}
+                </span>
+              ) : null}
+            </div>
+            {item.description ? (
+              <p className="mt-1 text-xs leading-relaxed text-text-secondary">{item.description}</p>
+            ) : null}
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {item.cause ? (
+                <div className="rounded-lg bg-sidebar-bg p-2">
+                  <p className="text-[11px] uppercase text-text-secondary">Cause</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-primary">{item.cause}</p>
+                </div>
+              ) : null}
+              {item.reproduction ? (
+                <div className="rounded-lg bg-sidebar-bg p-2">
+                  <p className="text-[11px] uppercase text-text-secondary">Reproduction</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                    {item.reproduction}
+                  </p>
+                </div>
+              ) : null}
+              {item.fix ? (
+                <div className="rounded-lg bg-sidebar-bg p-2">
+                  <p className="text-[11px] uppercase text-text-secondary">Fix</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-primary">{item.fix}</p>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FileAttachmentCardBlock({
+  block,
+}: {
+  block: Extract<UIBlock, { type: 'file_attachment_card' }>;
+}) {
+  return (
+    <section>
+      <SectionTitle>{block.title ?? 'Attachments'}</SectionTitle>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {block.items.map((item) => (
+          <div
+            key={`${item.label}-${item.filePath ?? ''}`}
+            className="rounded-xl border border-border bg-sidebar-bg p-3"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#4ECDC4]/10 text-[#4ECDC4]">
+                <Paperclip className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-text-primary">
+                  {item.fileName ?? item.label}
+                </p>
+                {item.filePath ? (
+                  <p className="mt-0.5 truncate text-xs text-text-secondary">{item.filePath}</p>
+                ) : null}
+                <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-text-secondary">
+                  {item.mimeType ? <span>{item.mimeType}</span> : null}
+                  {item.size ? <span>{item.size}</span> : null}
+                  {item.status ? (
+                    <span
+                      className={cn(
+                        'rounded-full border px-2 py-0.5',
+                        statusPillClass(item.status),
+                      )}
+                    >
+                      {item.status}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ProgressTrackerBlock({
+  block,
+}: {
+  block: Extract<UIBlock, { type: 'progress_tracker' }>;
+}) {
+  return (
+    <section>
+      <SectionTitle>{block.title ?? 'Progress'}</SectionTitle>
+      <div className="grid gap-3">
+        {block.items.map((item) => (
+          <div key={item.label} className="rounded-xl border border-border bg-sidebar-bg p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                {item.description ? (
+                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                    {item.description}
+                  </p>
+                ) : null}
+              </div>
+              <span className="shrink-0 text-sm font-semibold text-text-primary">
+                {item.percent}%
+              </span>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-bg">
+              <div
+                className={toneDotStyles[item.tone ?? 'neutral']}
+                style={{ height: '100%', width: `${item.percent}%` }}
+              />
+            </div>
+            {item.status ? <p className="mt-2 text-xs text-text-secondary">{item.status}</p> : null}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function FlightCardBlock({ block }: { block: Extract<UIBlock, { type: 'flight_card' }> }) {
   return (
     <section className="rounded-lg border border-border p-4">
@@ -786,6 +1285,26 @@ function BlockRenderer({ block }: { block: UIBlock }) {
       return <SalesFunnelBlock block={block} />;
     case 'sales_dashboard':
       return <SalesDashboardBlock block={block} />;
+    case 'answer_card':
+      return <AnswerCardBlock block={block} />;
+    case 'source_list':
+      return <SourceListBlock block={block} />;
+    case 'task_plan':
+      return <TaskPlanBlock block={block} />;
+    case 'confirmation_panel':
+      return <ConfirmationPanelBlock block={block} />;
+    case 'form_fill':
+      return <FormFillBlock block={block} />;
+    case 'choice_picker':
+      return <ChoicePickerBlock block={block} />;
+    case 'diff_preview':
+      return <DiffPreviewBlock block={block} />;
+    case 'error_diagnosis':
+      return <ErrorDiagnosisBlock block={block} />;
+    case 'file_attachment_card':
+      return <FileAttachmentCardBlock block={block} />;
+    case 'progress_tracker':
+      return <ProgressTrackerBlock block={block} />;
   }
 }
 

@@ -25,14 +25,50 @@ export const uiBlockSchema = z.object({
       'flight_options',
       'sales_funnel',
       'sales_dashboard',
+      'answer_card',
+      'source_list',
+      'task_plan',
+      'confirmation_panel',
+      'form_fill',
+      'choice_picker',
+      'diff_preview',
+      'diff',
+      'text_diff',
+      'revision_diff',
+      'proofreading_diff',
+      'error_diagnosis',
+      'file_attachment_card',
+      'progress_tracker',
     ])
     .describe('The UI block type to render.'),
   title: z.string().optional().describe('Optional block title.'),
   tone: z.enum(['neutral', 'positive', 'warning']).optional().describe('Block tone.'),
   body: z.string().optional().describe('Main body text.'),
+  description: z.string().optional().describe('Optional supporting text.'),
   subtitle: z.string().optional().describe('Secondary title or supporting text.'),
   verdict: z.string().optional().describe('Decision or final result label.'),
   ordered: z.boolean().optional().describe('Whether a list block should be ordered.'),
+  severity: z.string().optional().describe('Severity label for diagnostic blocks.'),
+  cause: z.string().optional().describe('Cause text for diagnostic blocks.'),
+  reproduction: z.string().optional().describe('Reproduction steps for diagnostic blocks.'),
+  fix: z.string().optional().describe('Fix text for diagnostic blocks.'),
+  before: z.string().optional().describe('Before content for diff preview blocks.'),
+  after: z.string().optional().describe('After content for diff preview blocks.'),
+  from: z.string().optional().describe('Before value alias for diff and comparison blocks.'),
+  to: z.string().optional().describe('After value alias for diff and comparison blocks.'),
+  original: z.string().optional().describe('Original content alias for diff preview blocks.'),
+  input: z.string().optional().describe('Input content alias for diff preview blocks.'),
+  source: z.string().optional().describe('Source content alias for diff preview blocks.'),
+  current: z.string().optional().describe('Current content alias for diff preview blocks.'),
+  revised: z.string().optional().describe('Revised content alias for diff preview blocks.'),
+  corrected: z.string().optional().describe('Corrected content alias for diff preview blocks.'),
+  edited: z.string().optional().describe('Edited content alias for diff preview blocks.'),
+  proposed: z.string().optional().describe('Proposed content alias for diff preview blocks.'),
+  output: z.string().optional().describe('Output content alias for diff preview blocks.'),
+  updated: z.string().optional().describe('Updated content alias for diff preview blocks.'),
+  oldText: z.string().optional().describe('Old text alias for diff preview blocks.'),
+  newText: z.string().optional().describe('New text alias for diff preview blocks.'),
+  language: z.string().optional().describe('Language label for code or diff blocks.'),
   items: z
     .array(
       z.object({
@@ -65,6 +101,37 @@ export const uiBlockSchema = z.object({
         customer: z.string().optional(),
         region: z.string().optional(),
         total: z.string().optional(),
+        url: z.string().optional(),
+        path: z.string().optional(),
+        line: z.string().optional(),
+        fileName: z.string().optional(),
+        filePath: z.string().optional(),
+        mimeType: z.string().optional(),
+        size: z.string().optional(),
+        severity: z.string().optional(),
+        cause: z.string().optional(),
+        reproduction: z.string().optional(),
+        fix: z.string().optional(),
+        before: z.string().optional(),
+        after: z.string().optional(),
+        original: z.string().optional(),
+        input: z.string().optional(),
+        source: z.string().optional(),
+        current: z.string().optional(),
+        revised: z.string().optional(),
+        corrected: z.string().optional(),
+        edited: z.string().optional(),
+        proposed: z.string().optional(),
+        output: z.string().optional(),
+        updated: z.string().optional(),
+        oldText: z.string().optional(),
+        newText: z.string().optional(),
+        body: z.string().optional(),
+        language: z.string().optional(),
+        required: z.boolean().optional(),
+        placeholder: z.string().optional(),
+        inputType: z.string().optional(),
+        checked: z.boolean().optional(),
       }),
     )
     .optional()
@@ -76,6 +143,8 @@ export const uiBlockSchema = z.object({
       z.object({
         label: z.string(),
         description: z.string().optional(),
+        tone: z.enum(['neutral', 'positive', 'warning']).optional(),
+        variant: z.enum(['primary', 'secondary', 'danger']).optional(),
       }),
     )
     .optional()
@@ -349,6 +418,128 @@ export type SalesDashboardBlock = {
   }>;
 };
 
+export type AnswerCardBlock = {
+  type: 'answer_card';
+  title?: string;
+  body: string;
+  tone?: 'neutral' | 'positive' | 'warning';
+  items?: Array<{
+    label: string;
+    description?: string;
+  }>;
+};
+
+export type SourceListBlock = {
+  type: 'source_list';
+  title?: string;
+  items: Array<{
+    label: string;
+    url?: string;
+    path?: string;
+    line?: string;
+    description?: string;
+  }>;
+};
+
+export type TaskPlanBlock = {
+  type: 'task_plan';
+  title?: string;
+  items: Array<{
+    label: string;
+    status?: string;
+    owner?: string;
+    description?: string;
+  }>;
+};
+
+export type ConfirmationPanelBlock = {
+  type: 'confirmation_panel';
+  title?: string;
+  body: string;
+  tone?: 'neutral' | 'positive' | 'warning';
+  actions: Array<{
+    label: string;
+    description?: string;
+    tone?: 'neutral' | 'positive' | 'warning';
+    variant?: 'primary' | 'secondary' | 'danger';
+  }>;
+};
+
+export type FormFillBlock = {
+  type: 'form_fill';
+  title?: string;
+  items: Array<{
+    label: string;
+    value?: string;
+    placeholder?: string;
+    inputType?: string;
+    required?: boolean;
+    status?: string;
+  }>;
+};
+
+export type ChoicePickerBlock = {
+  type: 'choice_picker';
+  title?: string;
+  items: Array<{
+    label: string;
+    description?: string;
+    status?: string;
+    tone?: 'neutral' | 'positive' | 'warning';
+  }>;
+};
+
+export type DiffPreviewBlock = {
+  type: 'diff_preview';
+  title?: string;
+  items: Array<{
+    label: string;
+    before: string;
+    after: string;
+    language?: string;
+    description?: string;
+  }>;
+};
+
+export type ErrorDiagnosisBlock = {
+  type: 'error_diagnosis';
+  title?: string;
+  body?: string;
+  items: Array<{
+    label: string;
+    severity?: string;
+    cause?: string;
+    reproduction?: string;
+    fix?: string;
+    description?: string;
+  }>;
+};
+
+export type FileAttachmentCardBlock = {
+  type: 'file_attachment_card';
+  title?: string;
+  items: Array<{
+    label: string;
+    fileName?: string;
+    filePath?: string;
+    mimeType?: string;
+    size?: string;
+    status?: string;
+  }>;
+};
+
+export type ProgressTrackerBlock = {
+  type: 'progress_tracker';
+  title?: string;
+  items: Array<{
+    label: string;
+    percent: number;
+    status?: string;
+    description?: string;
+    tone?: 'neutral' | 'positive' | 'warning';
+  }>;
+};
+
 export type UIBlock =
   | MetricGridBlock
   | ListBlock
@@ -371,7 +562,17 @@ export type UIBlock =
   | FlightCardBlock
   | FlightOptionsBlock
   | SalesFunnelBlock
-  | SalesDashboardBlock;
+  | SalesDashboardBlock
+  | AnswerCardBlock
+  | SourceListBlock
+  | TaskPlanBlock
+  | ConfirmationPanelBlock
+  | FormFillBlock
+  | ChoicePickerBlock
+  | DiffPreviewBlock
+  | ErrorDiagnosisBlock
+  | FileAttachmentCardBlock
+  | ProgressTrackerBlock;
 
 export type UISpec = {
   version: '1';

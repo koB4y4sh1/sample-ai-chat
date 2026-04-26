@@ -46,6 +46,57 @@ const asTone = (value: unknown): 'neutral' | 'positive' | 'warning' =>
 const asTrend = (value: unknown): 'up' | 'down' | 'neutral' | undefined =>
   value === 'up' || value === 'down' || value === 'neutral' ? value : undefined;
 
+const pickFirstString = (record: Record<string, unknown>, keys: string[]) => {
+  for (const key of keys) {
+    const value = asString(record[key]);
+    if (value) {
+      return value;
+    }
+  }
+
+  return '';
+};
+
+const diffBeforeKeys = ['before', 'from', 'original', 'oldText', 'input', 'source', 'current'];
+const diffAfterKeys = [
+  'after',
+  'to',
+  'revised',
+  'corrected',
+  'edited',
+  'proposed',
+  'newText',
+  'output',
+  'updated',
+];
+
+const labelLooksLikeBefore = (label: string) => {
+  const normalized = label.toLowerCase();
+  return (
+    normalized.includes('before') ||
+    normalized.includes('original') ||
+    normalized.includes('old') ||
+    normalized.includes('source') ||
+    label.includes('\u539f\u6587') ||
+    label.includes('\u5909\u66f4\u524d') ||
+    label.includes('\u4fee\u6b63\u524d')
+  );
+};
+
+const labelLooksLikeAfter = (label: string) => {
+  const normalized = label.toLowerCase();
+  return (
+    normalized.includes('after') ||
+    normalized.includes('revised') ||
+    normalized.includes('corrected') ||
+    normalized.includes('edited') ||
+    normalized.includes('new') ||
+    label.includes('\u6821\u6b63') ||
+    label.includes('\u4fee\u6b63\u5f8c') ||
+    label.includes('\u5909\u66f4\u5f8c')
+  );
+};
+
 const normalizeBlocks = (blocks: unknown[]): UIBlock[] =>
   blocks.flatMap((block): UIBlock[] => {
     if (!isRecord(block)) {
@@ -550,6 +601,319 @@ const normalizeBlocks = (blocks: unknown[]): UIBlock[] =>
             ]
           : [];
       }
+      case 'answer_card': {
+        const body = asString(block.body);
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label) || asString(item.text);
+              if (!label) {
+                return [];
+              }
+
+              return [{ label, description: asString(item.description) || undefined }];
+            })
+          : [];
+
+        return body ? [{ type: 'answer_card', title, body, tone: asTone(block.tone), items }] : [];
+      }
+      case 'source_list': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label) || asString(item.text) || asString(item.path);
+              if (!label) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  url: asString(item.url) || undefined,
+                  path: asString(item.path) || asString(item.filePath) || undefined,
+                  line: asString(item.line) || undefined,
+                  description: asString(item.description) || undefined,
+                },
+              ];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'source_list', title, items }] : [];
+      }
+      case 'task_plan': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label) || asString(item.text);
+              if (!label) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  status: asString(item.status) || undefined,
+                  owner: asString(item.owner) || undefined,
+                  description: asString(item.description) || undefined,
+                },
+              ];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'task_plan', title, items }] : [];
+      }
+      case 'confirmation_panel': {
+        const body =
+          asString(block.body) || asString(block.description) || asString(block.subtitle);
+        const rawActions = Array.isArray(block.actions)
+          ? block.actions
+          : Array.isArray(block.items)
+            ? block.items
+            : [];
+        const actions = rawActions.flatMap((action) => {
+          if (!isRecord(action)) {
+            return [];
+          }
+
+          const label = asString(action.label) || asString(action.text) || asString(action.value);
+          if (!label) {
+            return [];
+          }
+
+          const variant: 'primary' | 'secondary' | 'danger' | undefined =
+            action.variant === 'primary' ||
+            action.variant === 'secondary' ||
+            action.variant === 'danger'
+              ? action.variant
+              : undefined;
+
+          return [
+            {
+              label,
+              description: asString(action.description) || undefined,
+              tone: asTone(action.tone),
+              variant,
+            },
+          ];
+        });
+
+        return body
+          ? [{ type: 'confirmation_panel', title, body, tone: asTone(block.tone), actions }]
+          : [];
+      }
+      case 'form_fill': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label);
+              if (!label) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  value: asString(item.value) || undefined,
+                  placeholder: asString(item.placeholder) || undefined,
+                  inputType: asString(item.inputType) || undefined,
+                  required: item.required === true,
+                  status: asString(item.status) || undefined,
+                },
+              ];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'form_fill', title, items }] : [];
+      }
+      case 'choice_picker': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label) || asString(item.text);
+              if (!label) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  description: asString(item.description) || undefined,
+                  status: asString(item.status) || undefined,
+                  tone: asTone(item.tone),
+                },
+              ];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'choice_picker', title, items }] : [];
+      }
+      case 'diff':
+      case 'text_diff':
+      case 'revision_diff':
+      case 'proofreading_diff':
+      case 'diff_preview': {
+        const rawItems = Array.isArray(block.items) ? block.items.filter(isRecord) : [];
+        const items = rawItems.flatMap((item) => {
+          if (!isRecord(item)) {
+            return [];
+          }
+
+          const label = asString(item.label) || title || 'Diff preview';
+          const before = pickFirstString(item, diffBeforeKeys);
+          const after = pickFirstString(item, diffAfterKeys);
+          if (!before || !after) {
+            return [];
+          }
+
+          return [
+            {
+              label,
+              before,
+              after,
+              language: asString(item.language) || undefined,
+              description: asString(item.description) || undefined,
+            },
+          ];
+        });
+        const beforeFromLabeledItem =
+          rawItems
+            .filter((item) => labelLooksLikeBefore(asString(item.label)))
+            .map((item) => asString(item.value) || asString(item.text) || asString(item.body))
+            .find(Boolean) ?? '';
+        const afterFromLabeledItem =
+          rawItems
+            .filter((item) => labelLooksLikeAfter(asString(item.label)))
+            .map((item) => asString(item.value) || asString(item.text) || asString(item.body))
+            .find(Boolean) ?? '';
+        const before = pickFirstString(block, diffBeforeKeys) || beforeFromLabeledItem;
+        const after = pickFirstString(block, diffAfterKeys) || afterFromLabeledItem;
+        if (items.length === 0 && (before || after || block.body || block.description)) {
+          return [
+            {
+              type: 'diff_preview',
+              title,
+              items: [
+                {
+                  label: title ?? 'Diff preview',
+                  before: before || 'Before content was not provided.',
+                  after: after || 'After content was not provided.',
+                  language: asString(block.language) || undefined,
+                  description: asString(block.description) || asString(block.body) || undefined,
+                },
+              ],
+            },
+          ];
+        }
+
+        return items.length > 0 ? [{ type: 'diff_preview', title, items }] : [];
+      }
+      case 'error_diagnosis': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label) || asString(item.text);
+              if (!label) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  severity: asString(item.severity) || asString(item.status) || undefined,
+                  cause: asString(item.cause) || undefined,
+                  reproduction: asString(item.reproduction) || undefined,
+                  fix: asString(item.fix) || undefined,
+                  description: asString(item.description) || undefined,
+                },
+              ];
+            })
+          : [];
+        const body = asString(block.body) || asString(block.description) || undefined;
+        const fallbackLabel = title || asString(block.label) || 'Diagnosis';
+        if (items.length === 0 && (body || block.cause || block.fix || block.reproduction)) {
+          items.push({
+            label: fallbackLabel,
+            severity: asString(block.severity) || asString(block.tone) || undefined,
+            cause: asString(block.cause) || undefined,
+            reproduction: asString(block.reproduction) || undefined,
+            fix: asString(block.fix) || undefined,
+            description: body,
+          });
+        }
+
+        return items.length > 0 ? [{ type: 'error_diagnosis', title, body, items }] : [];
+      }
+      case 'file_attachment_card': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label) || asString(item.fileName) || asString(item.path);
+              if (!label) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  fileName: asString(item.fileName) || undefined,
+                  filePath: asString(item.filePath) || asString(item.path) || undefined,
+                  mimeType: asString(item.mimeType) || undefined,
+                  size: asString(item.size) || undefined,
+                  status: asString(item.status) || undefined,
+                },
+              ];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'file_attachment_card', title, items }] : [];
+      }
+      case 'progress_tracker': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label) || asString(item.text);
+              if (!label) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  percent: Math.max(0, Math.min(100, asNumber(item.percent))),
+                  status: asString(item.status) || undefined,
+                  description: asString(item.description) || undefined,
+                  tone: asTone(item.tone),
+                },
+              ];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'progress_tracker', title, items }] : [];
+      }
       default:
         return [];
     }
@@ -635,7 +999,7 @@ export function GenerativeUIRegistry() {
       name: 'show_ui_spec',
       agentId: 'zenith',
       description:
-        'Render declarative Generative UI from a versioned UI schema. Available block types: metric_grid, list, table, callout, actions, text, divider, key_value, progress, checklist, timeline, comparison, risk_matrix, decision, tabs, accordion, quote, status_strip, flight_card, flight_options, sales_funnel, sales_dashboard. Use flight_options for polished travel search cards and sales_dashboard for a complete KPI dashboard with charts and orders. Choose diverse, high-quality blocks that best fit the user request instead of always using the same layout.',
+        'Render declarative Generative UI from a versioned UI schema. Available block types: metric_grid, list, table, callout, actions, text, divider, key_value, progress, checklist, timeline, comparison, risk_matrix, decision, tabs, accordion, quote, status_strip, flight_card, flight_options, sales_funnel, sales_dashboard, answer_card, source_list, task_plan, confirmation_panel, form_fill, choice_picker, diff_preview, error_diagnosis, file_attachment_card, progress_tracker. Use chat-business blocks for chat answers, citations, execution plans, confirmations, forms, choices, diffs, diagnostics, attachments, and progress. For diff_preview, always include before/after content; original/corrected/revised aliases are accepted for proofreading. Use flight_options for polished travel search cards and sales_dashboard for a complete KPI dashboard with charts and orders. Choose diverse, high-quality blocks that best fit the user request instead of always using the same layout.',
       parameters: showUiSpecSchema,
       followUp: false,
       handler: async (args) => {
