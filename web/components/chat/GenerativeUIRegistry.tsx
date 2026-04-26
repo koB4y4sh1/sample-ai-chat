@@ -8,8 +8,13 @@ import {
   type UISpec,
   uiSpecSchema,
 } from '../../lib/generative-ui/schemas/declarative';
+import {
+  type ShowFlightOptionsArgs,
+  showFlightOptionsSchema,
+} from '../../lib/generative-ui/schemas/flight-options';
 import { type ShowMcpAppArgs, showMcpAppSchema } from '../../lib/generative-ui/schemas/open-ended';
 import { type ZenithPanelArgs, zenithPanelSchema } from '../../lib/generative-ui/schemas/static';
+import { FlightOptions } from '../generative-ui/custom';
 import { DeclarativeRenderer } from '../generative-ui/declarative';
 import { EmbeddedAppFrame } from '../generative-ui/open-ended';
 import { ZenithPanel } from '../generative-ui/static';
@@ -37,6 +42,9 @@ const asNumber = (value: unknown, fallback = 0) =>
 
 const asTone = (value: unknown): 'neutral' | 'positive' | 'warning' =>
   value === 'positive' || value === 'warning' || value === 'neutral' ? value : 'neutral';
+
+const asTrend = (value: unknown): 'up' | 'down' | 'neutral' | undefined =>
+  value === 'up' || value === 'down' || value === 'neutral' ? value : undefined;
 
 const normalizeBlocks = (blocks: unknown[]): UIBlock[] =>
   blocks.flatMap((block): UIBlock[] => {
@@ -372,6 +380,60 @@ const normalizeBlocks = (blocks: unknown[]): UIBlock[] =>
             ]
           : [];
       }
+      case 'flight_options': {
+        const items = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const airline = asString(item.airline) || asString(item.label);
+              const flightNumber = asString(item.flightNumber) || asString(item.value);
+              const origin = asString(item.origin) || asString(item.from);
+              const destination = asString(item.destination) || asString(item.to);
+              const date = asString(item.date);
+              const departureTime = asString(item.departureTime);
+              const arrivalTime = asString(item.arrivalTime);
+              const duration = asString(item.duration);
+              const status = asString(item.status);
+              const price = asString(item.price);
+
+              if (
+                !airline ||
+                !flightNumber ||
+                !origin ||
+                !destination ||
+                !date ||
+                !departureTime ||
+                !arrivalTime ||
+                !duration ||
+                !status ||
+                !price
+              ) {
+                return [];
+              }
+
+              return [
+                {
+                  id: asString(item.id) || undefined,
+                  airline,
+                  airlineLogo: asString(item.airlineLogo) || undefined,
+                  flightNumber,
+                  origin,
+                  destination,
+                  date,
+                  departureTime,
+                  arrivalTime,
+                  duration,
+                  status,
+                  price,
+                },
+              ];
+            })
+          : [];
+
+        return items.length > 0 ? [{ type: 'flight_options', title, items }] : [];
+      }
       case 'sales_funnel': {
         const items = Array.isArray(block.items)
           ? block.items.flatMap((item) => {
@@ -396,6 +458,97 @@ const normalizeBlocks = (blocks: unknown[]): UIBlock[] =>
           : [];
 
         return items.length > 0 ? [{ type: 'sales_funnel', title, items }] : [];
+      }
+      case 'sales_dashboard': {
+        const kpis = Array.isArray(block.kpis)
+          ? block.kpis.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label);
+              const value = asString(item.value);
+              if (!label || !value) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  value,
+                  subtitle: asString(item.subtitle) || undefined,
+                  trend: asTrend(item.trend),
+                  trendValue: asString(item.trendValue) || undefined,
+                },
+              ];
+            })
+          : [];
+        const regionData = Array.isArray(block.regionData)
+          ? block.regionData.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label);
+              if (!label) {
+                return [];
+              }
+
+              return [
+                {
+                  label,
+                  value: Math.max(0, Math.min(100, asNumber(item.value))),
+                  color: asString(item.color) || undefined,
+                },
+              ];
+            })
+          : [];
+        const monthlyData = Array.isArray(block.monthlyData)
+          ? block.monthlyData.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const label = asString(item.label);
+              if (!label) {
+                return [];
+              }
+
+              return [{ label, value: Math.max(0, asNumber(item.value)) }];
+            })
+          : [];
+        const orders = Array.isArray(block.items)
+          ? block.items.flatMap((item) => {
+              if (!isRecord(item)) {
+                return [];
+              }
+
+              const id = asString(item.id);
+              const customer = asString(item.customer) || asString(item.label);
+              const region = asString(item.region);
+              const total = asString(item.total) || asString(item.value);
+              const status = asString(item.status);
+              if (!id || !customer || !region || !total || !status) {
+                return [];
+              }
+
+              return [{ id, customer, region, total, status }];
+            })
+          : [];
+
+        return kpis.length > 0 && regionData.length > 0 && monthlyData.length > 0
+          ? [
+              {
+                type: 'sales_dashboard',
+                title: asString(block.periodTitle) || title || 'Sales Dashboard',
+                dateRange: asString(block.dateRange) || undefined,
+                kpis,
+                regionData,
+                monthlyData,
+                orders,
+              },
+            ]
+          : [];
       }
       default:
         return [];
@@ -482,7 +635,7 @@ export function GenerativeUIRegistry() {
       name: 'show_ui_spec',
       agentId: 'zenith',
       description:
-        'Render declarative Generative UI from a versioned UI schema. Available block types: metric_grid, list, table, callout, actions, text, divider, key_value, progress, checklist, timeline, comparison, risk_matrix, decision, tabs, accordion, quote, status_strip, flight_card, sales_funnel. Choose diverse blocks that best fit the user request instead of always using the same layout.',
+        'Render declarative Generative UI from a versioned UI schema. Available block types: metric_grid, list, table, callout, actions, text, divider, key_value, progress, checklist, timeline, comparison, risk_matrix, decision, tabs, accordion, quote, status_strip, flight_card, flight_options, sales_funnel, sales_dashboard. Use flight_options for polished travel search cards and sales_dashboard for a complete KPI dashboard with charts and orders. Choose diverse, high-quality blocks that best fit the user request instead of always using the same layout.',
       parameters: showUiSpecSchema,
       followUp: false,
       handler: async (args) => {
@@ -497,6 +650,31 @@ export function GenerativeUIRegistry() {
       },
       render: ({ args, status }) => (
         <DeclarativeRenderer spec={resolveUiSpecArgs(args)} status={status} />
+      ),
+    },
+    [],
+  );
+
+  useFrontendTool<ShowFlightOptionsArgs>(
+    {
+      name: 'show_flight_options',
+      agentId: 'zenith',
+      description:
+        'Render polished flight search result cards. Use this instead of returning JSON or show_ui_spec when the user asks for flight options, travel search results, airline cards, or SFO to JFK style flight listings.',
+      parameters: showFlightOptionsSchema,
+      followUp: false,
+      handler: async (args) => ({
+        rendered: true,
+        type: 'flight-options',
+        title: args.title,
+        flightCount: args.flights?.length ?? 0,
+      }),
+      render: ({ args }) => (
+        <FlightOptions
+          title={args.title ?? 'Flight options'}
+          summary={args.summary}
+          flights={args.flights ?? []}
+        />
       ),
     },
     [],

@@ -22,7 +22,9 @@ export const uiBlockSchema = z.object({
       'quote',
       'status_strip',
       'flight_card',
+      'flight_options',
       'sales_funnel',
+      'sales_dashboard',
     ])
     .describe('The UI block type to render.'),
   title: z.string().optional().describe('Optional block title.'),
@@ -49,6 +51,20 @@ export const uiBlockSchema = z.object({
         likelihood: z.string().optional(),
         impact: z.string().optional(),
         score: z.string().optional(),
+        id: z.string().optional(),
+        airline: z.string().optional(),
+        airlineLogo: z.string().optional(),
+        flightNumber: z.string().optional(),
+        origin: z.string().optional(),
+        destination: z.string().optional(),
+        date: z.string().optional(),
+        departureTime: z.string().optional(),
+        arrivalTime: z.string().optional(),
+        duration: z.string().optional(),
+        price: z.string().optional(),
+        customer: z.string().optional(),
+        region: z.string().optional(),
+        total: z.string().optional(),
       }),
     )
     .optional()
@@ -64,6 +80,39 @@ export const uiBlockSchema = z.object({
     )
     .optional()
     .describe('Action items for an actions block.'),
+  periodTitle: z.string().optional().describe('Sales dashboard period title.'),
+  dateRange: z.string().optional().describe('Sales dashboard date range.'),
+  kpis: z
+    .array(
+      z.object({
+        label: z.string(),
+        value: z.string(),
+        subtitle: z.string().optional(),
+        trend: z.enum(['up', 'down', 'neutral']).optional(),
+        trendValue: z.string().optional(),
+      }),
+    )
+    .optional()
+    .describe('KPI cards for a sales dashboard.'),
+  regionData: z
+    .array(
+      z.object({
+        label: z.string(),
+        value: z.number().min(0).max(100),
+        color: z.string().optional(),
+      }),
+    )
+    .optional()
+    .describe('Revenue share by region.'),
+  monthlyData: z
+    .array(
+      z.object({
+        label: z.string(),
+        value: z.number().min(0),
+      }),
+    )
+    .optional()
+    .describe('Monthly values for a compact bar chart.'),
 });
 
 export const uiSpecSchema = z.object({
@@ -242,6 +291,25 @@ export type FlightCardBlock = {
   body?: string;
 };
 
+export type FlightOptionsBlock = {
+  type: 'flight_options';
+  title?: string;
+  items: Array<{
+    id?: string;
+    airline: string;
+    airlineLogo?: string;
+    flightNumber: string;
+    origin: string;
+    destination: string;
+    date: string;
+    departureTime: string;
+    arrivalTime: string;
+    duration: string;
+    status: string;
+    price: string;
+  }>;
+};
+
 export type SalesFunnelBlock = {
   type: 'sales_funnel';
   title?: string;
@@ -249,6 +317,35 @@ export type SalesFunnelBlock = {
     label: string;
     value: string;
     percent?: number;
+  }>;
+};
+
+export type SalesDashboardBlock = {
+  type: 'sales_dashboard';
+  title: string;
+  dateRange?: string;
+  kpis: Array<{
+    label: string;
+    value: string;
+    subtitle?: string;
+    trend?: 'up' | 'down' | 'neutral';
+    trendValue?: string;
+  }>;
+  regionData: Array<{
+    label: string;
+    value: number;
+    color?: string;
+  }>;
+  monthlyData: Array<{
+    label: string;
+    value: number;
+  }>;
+  orders: Array<{
+    id: string;
+    customer: string;
+    region: string;
+    total: string;
+    status: string;
   }>;
 };
 
@@ -272,7 +369,9 @@ export type UIBlock =
   | QuoteBlock
   | StatusStripBlock
   | FlightCardBlock
-  | SalesFunnelBlock;
+  | FlightOptionsBlock
+  | SalesFunnelBlock
+  | SalesDashboardBlock;
 
 export type UISpec = {
   version: '1';
