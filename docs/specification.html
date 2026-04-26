@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Zenith AI Chat 開発環境仕様</title>
+    <title>Zenith AI Chat 仕様書</title>
     <style>
       :root {
         color-scheme: light;
@@ -122,15 +122,15 @@
   <body>
     <main>
       <header>
-        <h1>Zenith AI Chat 開発環境仕様</h1>
-        <p>作成日: 2026-04-24 / 対象: モノレポ初期開発環境</p>
+        <h1>Zenith AI Chat 仕様書</h1>
+        <p>作成日: 2026-04-24 / 更新日: 2026-04-25 / 対象: web, agent, mcp</p>
       </header>
 
       <section>
         <h2>目的</h2>
         <p>
-          FE/BFF、AGENT、MCPを1つのリポジトリで管理し、開発開始時点からformat、lint、
-          type check、pre-commitを同じ入口で実行できる状態にする。
+          Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由してagentへ接続し、
+          通常のテキスト応答とGenerative UI応答を同じ会話画面に表示するチャットアプリである。
         </p>
       </section>
 
@@ -150,49 +150,294 @@
               <td>FE/BFF</td>
               <td><code>web</code></td>
               <td>TypeScript, Next.js, React, CopilotKit, pnpm</td>
-              <td>チャットUI、CopilotKit Runtime、agentへのBFF route handler。</td>
+              <td>チャットUI、CopilotKit Runtime endpoint、agentへのBFF route handler</td>
             </tr>
             <tr>
               <td>BE</td>
               <td><code>agent</code></td>
-              <td>Python, AgentFramework, uv</td>
-              <td>エージェント実行とagent endpointの公開。</td>
+              <td>Python, Microsoft Agent Framework, uv</td>
+              <td>agentの実行、agent endpointの公開、LLMへの指示管理</td>
             </tr>
             <tr>
               <td>MCP</td>
               <td><code>mcp</code></td>
               <td>Python, FastMCP, uv</td>
-              <td>エージェントから利用するツール群のMCP公開。</td>
+              <td>agentから利用する外部tool群の公開</td>
             </tr>
           </tbody>
         </table>
       </section>
 
       <section>
-        <h2>リポジトリ構造</h2>
-        <pre><code>zenith-ai-chat/
-  web/
-    app/
-    components/
-    lib/
-    public/
-  agent/
-    pyproject.toml
-    src/
-  mcp/
-    pyproject.toml
-    src/zenith_mcp/
-  docs/
-    specification.html
-  package.json
-  pnpm-workspace.yaml
-  pyproject.toml
-  biome.json
-  .pre-commit-config.yaml</code></pre>
+        <h2>接続仕様</h2>
+        <ul>
+          <li><code>web</code>はNext.js App RouterでUIとBFF route handlerを管理する。</li>
+          <li>チャットUIは<code>/api/copilotkit</code>のCopilotKit Runtimeへ接続する。</li>
+          <li>Next.js BFF routeは<code>AG_UI_BASE_URL</code>の<code>/copilotkit</code>へagent通信を転送する。</li>
+          <li><code>agent</code>は<code>src/main.py</code>でMicrosoft Agent Frameworkのagent endpointを公開する。</li>
+          <li>
+            Generative UIはCopilotKit v2のfrontend toolとして<code>web</code>側で登録する。
+            現在は<code>show_zenith_panel</code>、<code>show_ui_spec</code>、<code>show_mcp_app</code>を公開する。
+          </li>
+        </ul>
       </section>
 
       <section>
-        <h2>標準コマンド</h2>
+        <h2>Generative UIの結論</h2>
+        <p>
+          このアプリのGenerative UIは、agentがUI部品そのものを直接生成するのではなく、
+          agentがfrontend toolを呼び出し、<code>web</code>がReact component、宣言的schema renderer、
+          またはsandboxed iframeで描画する仕組みである。
+        </p>
+        <div class="note">
+          <p>
+            つまり、LLMは「どのUIを、どのデータで出すか」を決める。
+            実際のDOM、CSS、React componentはfrontendが所有する。
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2>なぜ表示できるのか</h2>
+        <ol>
+          <li>
+            <code>App.tsx</code>で<code>CopilotKitProvider</code>を配置し、
+            CopilotKitがチャット、agent通信、tool callを扱えるcontextを作る。
+          </li>
+          <li>
+            <code>GenerativeUIRegistry.tsx</code>が<code>useFrontendTool</code>を呼び、
+            static、declarative、open-endedの3種類のfrontend toolをCopilotKitへ登録する。
+          </li>
+          <li>
+            frontend toolには<code>zod</code> schemaで引数仕様を渡す。
+            CopilotKit Runtimeはこのtool仕様をagentへ渡せる。
+          </li>
+          <li>
+            agentのinstructionで、用途に応じて<code>show_zenith_panel</code>、
+            <code>show_ui_spec</code>、<code>show_mcp_app</code>を使い分けるよう指定している。
+          </li>
+          <li>
+            agentがtool callを返すと、CopilotKitが対応するfrontend toolの<code>render</code>を実行する。
+            その結果、チャットメッセージ内に<code>ZenithPanel</code>が表示される。
+          </li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>実行フロー</h2>
+        <pre><code>ユーザー
+  ↓
+CopilotChat
+  ↓
+CopilotKitProvider
+  ↓
+/api/copilotkit
+  ↓
+AG_UI_BASE_URL/copilotkit
+  ↓
+agent
+  ↓ tool call: show_zenith_panel(args) | show_ui_spec(args) | show_mcp_app(args)
+CopilotKit Runtime
+  ↓
+web frontend tool registry
+  ↓
+React component | DeclarativeRenderer | sandboxed iframe
+  ↓
+チャット画面にカードUIとして表示</code></pre>
+      </section>
+
+      <section>
+        <h2>Frontend Tool仕様</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>tool</th>
+              <th>方式</th>
+              <th>用途</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>show_zenith_panel</code></td>
+              <td>Static Generative UI</td>
+              <td>固定componentによるステータスカード、メトリクス、アクションプラン</td>
+            </tr>
+            <tr>
+              <td><code>show_ui_spec</code></td>
+              <td>Declarative Generative UI</td>
+              <td>versioned UI schemaによるmetric grid、list、table、callout、actions</td>
+            </tr>
+            <tr>
+              <td><code>show_mcp_app</code></td>
+              <td>Open-Ended Generative UI</td>
+              <td>MCP Apps風のsandboxed iframe surface</td>
+            </tr>
+          </tbody>
+        </table>
+        <h3>Static Tool詳細</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>項目</th>
+              <th>仕様</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>tool名</td>
+              <td><code>show_zenith_panel</code></td>
+            </tr>
+            <tr>
+              <td>agent</td>
+              <td><code>zenith</code></td>
+            </tr>
+            <tr>
+              <td>登録場所</td>
+              <td><code>web/components/chat/GenerativeUIRegistry.tsx</code></td>
+            </tr>
+            <tr>
+              <td>表示component</td>
+              <td><code>ZenithPanel</code></td>
+            </tr>
+            <tr>
+              <td>用途</td>
+              <td>視覚サマリー、ステータスカード、メトリクス、アクションプラン、dashboard風応答</td>
+            </tr>
+            <tr>
+              <td>follow-up</td>
+              <td><code>false</code>。tool実行後に追加のLLM応答を要求しない。</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>引数schema</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>field</th>
+              <th>type</th>
+              <th>制約</th>
+              <th>用途</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>title</code></td>
+              <td><code>string</code></td>
+              <td>必須</td>
+              <td>パネル見出し</td>
+            </tr>
+            <tr>
+              <td><code>summary</code></td>
+              <td><code>string</code></td>
+              <td>必須</td>
+              <td>概要文</td>
+            </tr>
+            <tr>
+              <td><code>tone</code></td>
+              <td><code>neutral | positive | warning</code></td>
+              <td>default: <code>neutral</code></td>
+              <td>表示色とラベル</td>
+            </tr>
+            <tr>
+              <td><code>metrics</code></td>
+              <td><code>{ label, value, delta? }[]</code></td>
+              <td>最大4件</td>
+              <td>数値や状態のタイル表示</td>
+            </tr>
+            <tr>
+              <td><code>nextActions</code></td>
+              <td><code>string[]</code></td>
+              <td>最大5件</td>
+              <td>次のアクション一覧</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>実装ファイル</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>ファイル</th>
+              <th>役割</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>web/components/chat/App.tsx</code></td>
+              <td><code>CopilotKitProvider</code>を配置し、<code>GenerativeUIRegistry</code>をprovider配下へ登録する。</td>
+            </tr>
+            <tr>
+              <td><code>web/components/chat/GenerativeUIRegistry.tsx</code></td>
+              <td>Generative UI frontend toolsをCopilotKitへ登録する。</td>
+            </tr>
+            <tr>
+              <td><code>web/components/generative-ui/declarative/DeclarativeRenderer.tsx</code></td>
+              <td><code>show_ui_spec</code>のUI schemaをReact componentへ変換する。</td>
+            </tr>
+            <tr>
+              <td><code>web/components/generative-ui/open-ended/EmbeddedAppFrame.tsx</code></td>
+              <td><code>show_mcp_app</code>のiframe surfaceを描画する。</td>
+            </tr>
+            <tr>
+              <td><code>web/app/api/generative-ui/mcp-apps/[appId]/route.ts</code></td>
+              <td>Open-Ended UI用のsandboxed app HTMLを配信する。</td>
+            </tr>
+            <tr>
+              <td><code>agent/src/app.py</code></td>
+              <td>agent instructionで、Generative UI toolの使い分け条件を定義する。</td>
+            </tr>
+            <tr>
+              <td><code>web/components/chat/App.test.tsx</code></td>
+              <td>テスト環境で<code>useFrontendTool</code>をmockし、既存チャットテストを維持する。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>公式docsとの対応</h2>
+        <ul>
+          <li>
+            CopilotKitは、LLMやagentをアプリ内のユーザー操作に接続するための仕組みを提供する。
+          </li>
+          <li>
+            CopilotKit docsでは、Generative UIはagentの状態やtool呼び出しをUIとして描画する用途で説明されている。
+          </li>
+          <li>
+            この実装は、agent stateを逐次描画する<code>useCoAgentStateRender</code>方式ではなく、
+            frontend toolの<code>render</code>でtool callをチャット内UIへ変換する方式である。
+          </li>
+          <li>
+            参照: <a href="https://docs.copilotkit.ai/llms-full.txt">CopilotKit official docs llms-full.txt</a>
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>起動と確認</h2>
+        <pre><code>pnpm run dev:agent
+pnpm run dev:web</code></pre>
+        <p>ブラウザで<code>http://localhost:3000</code>を開き、次のように依頼する。</p>
+        <pre><code>Generative UIで、現在のプロジェクト状況をステータスカードとして表示して。
+メトリクスを3つ、次のアクションを3つ含めて。</code></pre>
+      </section>
+
+      <section>
+        <h2>制約</h2>
+        <ul>
+          <li>toolを呼ぶかどうかはLLMの判断に依存するため、promptではGenerative UIやステータスカードを明示する。</li>
+          <li>StaticとDeclarativeでは、UIの見た目はfrontend側のcomponentとrendererに制限される。</li>
+          <li>Open-Endedでは、raw HTMLをagentから直接受け取らず、許可済みappIdのsandboxed iframeのみ表示する。</li>
+          <li>agentのinstructionを変更した後は、起動中の<code>dev:agent</code>を再起動する必要がある。</li>
+          <li>新しいUI種類を増やす場合は、frontend toolを追加するか、既存toolのschemaとrenderを拡張する。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>品質確認</h2>
         <table>
           <thead>
             <tr>
@@ -210,15 +455,7 @@
               <td><code>uv sync --all-packages --dev</code></td>
             </tr>
             <tr>
-              <td>agent開発サーバー</td>
-              <td><code>pnpm run dev:agent</code></td>
-            </tr>
-            <tr>
-              <td>Next.js FE/BFF開発サーバー</td>
-              <td><code>pnpm run dev:web</code></td>
-            </tr>
-            <tr>
-              <td>整形</td>
+              <td>format</td>
               <td><code>pnpm run format</code></td>
             </tr>
             <tr>
@@ -226,88 +463,15 @@
               <td><code>pnpm run lint</code></td>
             </tr>
             <tr>
-              <td>型検査</td>
+              <td>type check</td>
               <td><code>pnpm run typecheck</code></td>
             </tr>
             <tr>
-              <td>品質ゲート一括実行</td>
+              <td>full quality gate</td>
               <td><code>pnpm run check</code></td>
             </tr>
-            <tr>
-              <td>pre-commit有効化</td>
-              <td><code>uv run pre-commit install</code></td>
-            </tr>
           </tbody>
         </table>
-      </section>
-
-      <section>
-        <h2>接続仕様</h2>
-        <ul>
-          <li><code>web</code>はNext.js App RouterでUIとBFF route handlerを管理する。</li>
-          <li>チャットUIは<code>/api/copilotkit</code>のCopilotKit Runtimeへ接続する。</li>
-          <li>Next.js BFF routeは<code>AG_UI_BASE_URL</code>の<code>/copilotkit</code>へagent通信を転送する。</li>
-          <li><code>agent</code>は<code>src/main.py</code>でMicrosoft Agent Frameworkのagent endpointを公開する。</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>品質ゲート</h2>
-        <h3>TypeScript</h3>
-        <ul>
-          <li><code>biome.json</code>でformat、lint、import整理を統一する。</li>
-          <li><code>web</code>は<code>tsc --noEmit</code>で型検査する。</li>
-          <li>npm lockfileは使用せず、pnpm workspaceのルートロックに集約する。</li>
-        </ul>
-
-        <h3>Python</h3>
-        <ul>
-          <li><code>uv workspace</code>で<code>agent</code>と<code>mcp</code>を管理する。</li>
-          <li><code>ruff</code>でlintとformatを実行する。</li>
-          <li><code>mypy strict</code>で型検査する。</li>
-          <li><code>bandit</code>設定は<code>pyproject.toml</code>に集約する。</li>
-        </ul>
-
-        <h3>Git Hooks</h3>
-        <ul>
-          <li><code>pre-commit</code>は基本検査、<code>uv lock</code>、Biome、Ruff、mypyを実行する。</li>
-          <li>hookはローカル環境の<code>pnpm</code>と<code>uv</code>を使用する。</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>環境変数</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>変数</th>
-              <th>配置</th>
-              <th>用途</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>AG_UI_BASE_URL</code></td>
-              <td><code>web/.env</code></td>
-              <td>Next.js BFF routeが接続するagent serviceのbase URL。</td>
-            </tr>
-            <tr>
-              <td><code>ZENITH_OPENAI_MODEL</code></td>
-              <td><code>agent/.env</code></td>
-              <td>agent serviceが使用するOpenAI model名。</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-
-      <section>
-        <h2>未確定事項</h2>
-        <div class="note">
-          <p>
-            認証、セッション永続化、MCP tool連携の具体的なservice contractは未確定。
-            確定後に<code>web</code>のRoute Handler、<code>agent</code>、<code>mcp</code>の仕様を更新する。
-          </p>
-        </div>
       </section>
     </main>
   </body>
