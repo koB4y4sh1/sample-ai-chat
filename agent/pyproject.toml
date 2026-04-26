@@ -12,6 +12,7 @@ dependencies = [
     "uvicorn[standard]>=0.32",
     "azure-identity>=1.25.3",
     "dotenv>=0.9.9",
+    "dedent>=0.8.0",
 ]
 
 [build-system]
