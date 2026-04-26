@@ -1,21 +1,20 @@
 'use client';
 
 import { Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { type ChatControlsState, HOME_PROMPT_SUGGESTIONS } from '../../lib/chat-controls';
 import { ModelSelector } from '../common/ModelSelector';
 import { ToolSelector } from '../common/ToolSelector';
 import { ChatInput } from './ChatInput';
 
 interface HomeViewProps {
   onSendMessage: (msg: string) => void;
+  controls: ChatControlsState;
+  onControlsChange: (controls: ChatControlsState) => void;
 }
 
-export function HomeView({ onSendMessage }: HomeViewProps) {
-  const [selectedModel, setSelectedModel] = useState('zenith');
-  const [selectedTools, setSelectedTools] = useState<string[]>([]);
-
+export function HomeView({ onSendMessage, controls, onControlsChange }: HomeViewProps) {
   return (
-    <div className="flex flex-col items-center gap-12 py-10 text-center">
+    <div className="flex h-[min(760px,calc(100vh-6rem))] flex-col items-center gap-8 overflow-y-auto py-10 text-center">
       <div className="flex flex-col items-center gap-6">
         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent-gradient shadow-lg">
           <Sparkles className="h-6 w-6 text-white" />
@@ -31,10 +30,38 @@ export function HomeView({ onSendMessage }: HomeViewProps) {
       <ChatInput
         onSend={(message) => onSendMessage(message.trim())}
         placeholder="Ask anything..."
-        toolSelector={<ToolSelector value={selectedTools} onChange={setSelectedTools} />}
-        modelSelector={<ModelSelector value={selectedModel} onChange={setSelectedModel} />}
+        toolSelector={
+          <ToolSelector
+            value={controls.selectedTools}
+            onChange={(selectedTools) => onControlsChange({ ...controls, selectedTools })}
+          />
+        }
+        modelSelector={
+          <ModelSelector
+            value={controls.selectedModel}
+            onChange={(selectedModel) => onControlsChange({ ...controls, selectedModel })}
+          />
+        }
         className="w-full"
       />
+
+      <div className="grid w-full max-w-3xl grid-cols-1 gap-3 text-left sm:grid-cols-2">
+        {HOME_PROMPT_SUGGESTIONS.map((suggestion) => (
+          <button
+            key={suggestion.title}
+            type="button"
+            onClick={() => onSendMessage(suggestion.message)}
+            className="rounded-xl border border-border bg-sidebar-bg p-4 text-left transition-colors hover:border-text-secondary/40 hover:bg-bg focus:outline-none focus:ring-2 focus:ring-text-secondary/20"
+          >
+            <span className="block text-sm font-semibold text-text-primary">
+              {suggestion.title}
+            </span>
+            <span className="mt-1 block text-xs leading-relaxed text-text-secondary">
+              {suggestion.description}
+            </span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

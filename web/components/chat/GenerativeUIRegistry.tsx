@@ -969,7 +969,12 @@ const resolveUiSpecArgs = (args: ShowUiSpecArgs | { spec?: unknown }): UISpec =>
 export function GenerativeUIRegistry() {
   const { activeToolCallIds, selectedInteractionKeys, submitInteraction } =
     useGenerativeUIInteraction();
-  const interactiveToolDeps = [activeToolCallIds, selectedInteractionKeys, submitInteraction];
+  const staticToolDeps = [null, null, null] as const;
+  const interactiveToolDeps = [
+    activeToolCallIds,
+    selectedInteractionKeys,
+    submitInteraction,
+  ] as const;
   const lastValidUiSpecByToolCallIdRef = useRef(new Map<string, UISpec>());
   const resolveStableUiSpec = useCallback((toolCallId: string, args: ShowUiSpecArgs) => {
     const spec = resolveUiSpecArgs(args);
@@ -1007,7 +1012,7 @@ export function GenerativeUIRegistry() {
         />
       ),
     },
-    [],
+    staticToolDeps,
   );
 
   useFrontendTool<ShowUiSpecArgs>(
@@ -1110,7 +1115,7 @@ export function GenerativeUIRegistry() {
         />
       ),
     },
-    [],
+    staticToolDeps,
   );
 
   return null;

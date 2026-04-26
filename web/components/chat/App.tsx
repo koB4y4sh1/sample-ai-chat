@@ -1,10 +1,20 @@
 'use client';
 
-import { CopilotKitProvider } from '@copilotkit/react-core/v2';
+import {
+  CopilotKitProvider,
+  useAgentContext,
+  useConfigureSuggestions,
+} from '@copilotkit/react-core/v2';
 import { AnimatePresence, motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import type { MouseEvent } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  buildChatControlContext,
+  CHAT_SUGGESTIONS,
+  type ChatControlsState,
+  DEFAULT_CHAT_CONTROLS,
+} from '../../lib/chat-controls';
 import { ConversationView, type ConversationViewHandle } from './ConversationView';
 import { GenerativeUIInteractionProvider } from './GenerativeUIInteractionContext';
 import { GenerativeUIRegistry } from './GenerativeUIRegistry';
@@ -26,6 +36,7 @@ const SESSIONS_STORAGE_KEY = 'zenith_sessions';
 const THEME_STORAGE_KEY = 'theme';
 const PENDING_INITIAL_MESSAGE_STORAGE_KEY = 'zenith_pending_initial_message';
 const SESSION_MESSAGES_STORAGE_PREFIX = 'zenith_session_messages:';
+const CHAT_CONTROLS_STORAGE_KEY = 'zenith_chat_controls';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -127,6 +138,59 @@ const removeStoredSessionMessages = (sessionId: string) => {
   localStorage.removeItem(`${SESSION_MESSAGES_STORAGE_PREFIX}${sessionId}`);
 };
 
+const loadStoredChatControls = (): ChatControlsState => {
+  if (typeof window === 'undefined') {
+    return DEFAULT_CHAT_CONTROLS;
+  }
+
+  const saved = localStorage.getItem(CHAT_CONTROLS_STORAGE_KEY);
+  if (!saved) {
+    return DEFAULT_CHAT_CONTROLS;
+  }
+
+  try {
+    const parsed = JSON.parse(saved);
+    if (!isRecord(parsed)) {
+      return DEFAULT_CHAT_CONTROLS;
+    }
+
+    return {
+      selectedModel:
+        typeof parsed.selectedModel === 'string'
+          ? (parsed.selectedModel as ChatControlsState['selectedModel'])
+          : DEFAULT_CHAT_CONTROLS.selectedModel,
+      selectedTools: Array.isArray(parsed.selectedTools)
+        ? (parsed.selectedTools.filter(
+            (tool) => typeof tool === 'string',
+          ) as ChatControlsState['selectedTools'])
+        : DEFAULT_CHAT_CONTROLS.selectedTools,
+    };
+  } catch {
+    return DEFAULT_CHAT_CONTROLS;
+  }
+};
+
+function ChatControlsBridge({ controls }: { controls: ChatControlsState }) {
+  useAgentContext({
+    description: 'Current Zenith chat controls selected by the user',
+    value: buildChatControlContext(controls),
+  });
+
+  useConfigureSuggestions(
+    {
+      consumerAgentId: 'zenith',
+      available: 'after-first-message',
+      suggestions: CHAT_SUGGESTIONS.map((suggestion) => ({
+        title: suggestion.title,
+        message: suggestion.message,
+      })),
+    },
+    [controls.selectedModel, controls.selectedTools.join(',')],
+  );
+
+  return null;
+}
+
 interface AppProps {
   activeSessionId?: string | null;
 }
@@ -141,6 +205,7 @@ export default function App({ activeSessionId = null }: AppProps) {
     loadPendingInitialMessage,
   );
   const [activeToolCallIds, setActiveToolCallIds] = useState<Set<string>>(new Set());
+  const [chatControls, setChatControls] = useState<ChatControlsState>(DEFAULT_CHAT_CONTROLS);
   const conversationViewHandleRef = useRef<ConversationViewHandle | null>(null);
   const currentSessionId = activeSessionId ?? transientSessionId;
   const currentSessionIdRef = useRef<string | null>(currentSessionId);
@@ -157,6 +222,7 @@ export default function App({ activeSessionId = null }: AppProps) {
       setTheme(storedTheme);
     }
 
+    setChatControls(loadStoredChatControls());
     setHasLoadedClientState(true);
   }, []);
 
@@ -180,6 +246,14 @@ export default function App({ activeSessionId = null }: AppProps) {
 
     saveStoredSessions(sessions);
   }, [hasLoadedClientState, sessions]);
+
+  useEffect(() => {
+    if (!hasLoadedClientState) {
+      return;
+    }
+
+    localStorage.setItem(CHAT_CONTROLS_STORAGE_KEY, JSON.stringify(chatControls));
+  }, [chatControls, hasLoadedClientState]);
 
   useEffect(() => {
     if (!hasLoadedClientState) {
@@ -323,6 +397,7 @@ export default function App({ activeSessionId = null }: AppProps) {
       >
         <div className={currentSession ? 'flex h-full min-h-0 flex-1 flex-col' : 'w-full'}>
           <CopilotKitProvider runtimeUrl="/api/copilotkit" useSingleEndpoint showDevConsole={false}>
+            <ChatControlsBridge controls={chatControls} />
             <GenerativeUIInteractionProvider
               onSubmit={submitGenerativeUIInteraction}
               activeToolCallIds={activeToolCallIds}
@@ -338,7 +413,11 @@ export default function App({ activeSessionId = null }: AppProps) {
                     transition={{ duration: 0.4, ease: 'easeOut' }}
                     className="w-full max-w-3xl px-6"
                   >
-                    <HomeView onSendMessage={startConversation} />
+                    <HomeView
+                      onSendMessage={startConversation}
+                      controls={chatControls}
+                      onControlsChange={setChatControls}
+                    />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -346,14 +425,11 @@ export default function App({ activeSessionId = null }: AppProps) {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="flex h-full w-full flex-1 min-h-0 p-6"
+                    className="flex h-full w-full flex-1 min-h-0 "
                   >
-                    <div className="flex h-full min-h-0 flex-1 flex-col rounded-3xl border border-border bg-sidebar-bg shadow-sm">
-                      <div className="border-b border-border px-6 py-4">
-                        <p className="text-xs uppercase tracking-[0.25em] text-text-secondary">
-                          Active Session
-                        </p>
-                        <h2 className="mt-2 text-xl font-semibold text-text-primary">
+                    <div className="flex h-full min-h-0 flex-1 flex-col border border-border bg-sidebar-bg shadow-sm">
+                      <div className="border-b border-border px-5 py-2">
+                        <h2 className="text-base font-semibold text-text-primary">
                           {currentSession.title}
                         </h2>
                       </div>
@@ -361,6 +437,8 @@ export default function App({ activeSessionId = null }: AppProps) {
                         <ConversationView
                           ref={attachConversationViewHandle}
                           sessionId={currentSession.id}
+                          controls={chatControls}
+                          onControlsChange={setChatControls}
                           onActiveToolCallIdsChange={setActiveToolCallIds}
                         />
                       </div>

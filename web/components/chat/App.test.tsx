@@ -5,6 +5,49 @@ import React, { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
+type MockMessage = {
+  id: string;
+  role?: string;
+  content: unknown;
+};
+
+type MockCopilotChatInputRenderProps = {
+  textArea: React.ReactNode;
+  sendButton: React.ReactNode;
+  startTranscribeButton: React.ReactNode;
+};
+
+type MockCopilotChatInputProps = {
+  children?: React.ReactNode | ((props: MockCopilotChatInputRenderProps) => React.ReactNode);
+  className?: string;
+  onSubmitMessage?: (message: string) => void;
+  onChange?: (message: string) => void;
+  textArea?: {
+    placeholder?: string;
+  };
+  value?: string;
+};
+
+type MockCopilotChatViewProps = {
+  input?: string | React.ComponentType<MockCopilotChatInputProps> | { className?: string };
+  messages?: MockMessage[];
+  welcomeScreen?: (props: {
+    input: React.ReactNode;
+    suggestionView: React.ReactNode;
+  }) => React.ReactNode;
+  onSubmitMessage?: (message: string) => void;
+};
+
+type MockCopilotChatProps = {
+  className?: string;
+  labels?: {
+    chatInputPlaceholder?: string;
+    modalHeaderTitle?: string;
+  };
+  onSubmitMessage?: (message: string) => void;
+  welcomeScreen?: MockCopilotChatViewProps['welcomeScreen'];
+};
+
 const agentListeners = new Set<() => void>();
 const notifyAgentListeners = () => {
   for (const listener of agentListeners) {
@@ -12,13 +55,13 @@ const notifyAgentListeners = () => {
   }
 };
 const agent = {
-  addMessage: vi.fn((message: any) => {
+  addMessage: vi.fn((message: MockMessage) => {
     agent.messages = [...agent.messages, message];
     notifyAgentListeners();
   }),
   isRunning: false,
-  messages: [] as any[],
-  setMessages: vi.fn((messages: any[]) => {
+  messages: [] as MockMessage[],
+  setMessages: vi.fn((messages: MockMessage[]) => {
     agent.messages = messages;
     notifyAgentListeners();
   }),
@@ -61,7 +104,7 @@ vi.mock('@copilotkit/react-core/v2', async () => {
       onChange,
       textArea,
       value = '',
-    }: any) {
+    }: MockCopilotChatInputProps) {
       const [draft, setDraft] = React.useState(value);
 
       const submit = () => {
@@ -160,7 +203,7 @@ vi.mock('@copilotkit/react-core/v2', async () => {
     },
   );
 
-  const readMessageContent = (content: any) => {
+  const readMessageContent = (content: unknown) => {
     if (typeof content === 'string') {
       return content;
     }
@@ -177,8 +220,13 @@ vi.mock('@copilotkit/react-core/v2', async () => {
   };
 
   const MockCopilotChatView = Object.assign(
-    function MockCopilotChatView({ input, messages = [], welcomeScreen, onSubmitMessage }: any) {
-      let inputElement = null;
+    function MockCopilotChatView({
+      input,
+      messages = [],
+      welcomeScreen,
+      onSubmitMessage,
+    }: MockCopilotChatViewProps) {
+      let inputElement: React.ReactNode = null;
 
       if (typeof input === 'function') {
         inputElement = React.createElement(input, { onSubmitMessage });
@@ -199,7 +247,7 @@ vi.mock('@copilotkit/react-core/v2', async () => {
       return (
         <div>
           <div>
-            {messages.map((message: any) => (
+            {messages.map((message) => (
               <div key={message.id}>{readMessageContent(message.content)}</div>
             ))}
           </div>
@@ -218,7 +266,12 @@ vi.mock('@copilotkit/react-core/v2', async () => {
   );
 
   const MockCopilotChat = Object.assign(
-    function MockCopilotChat({ className, labels, onSubmitMessage, welcomeScreen }: any) {
+    function MockCopilotChat({
+      className,
+      labels,
+      onSubmitMessage,
+      welcomeScreen,
+    }: MockCopilotChatProps) {
       const [draft, setDraft] = React.useState('');
       useAgentMock();
 
@@ -229,7 +282,7 @@ vi.mock('@copilotkit/react-core/v2', async () => {
       const inputElement = (
         <div className={className}>
           <div>
-            {agent.messages.map((message: any) => (
+            {agent.messages.map((message) => (
               <div key={message.id}>{readMessageContent(message.content)}</div>
             ))}
           </div>
@@ -287,6 +340,8 @@ vi.mock('@copilotkit/react-core/v2', async () => {
       OnRunStatusChanged: 'OnRunStatusChanged',
     },
     useAgent: () => useAgentMock(),
+    useAgentContext: vi.fn(),
+    useConfigureSuggestions: vi.fn(),
     useCopilotKit: () => useCopilotKitMock(),
     useFrontendTool: vi.fn(),
   };

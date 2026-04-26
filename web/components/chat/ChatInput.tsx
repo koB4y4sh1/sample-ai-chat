@@ -1,6 +1,6 @@
 import { ArrowUp, Mic } from 'lucide-react';
 import type React from 'react';
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/utils';
 
 interface ChatInputProps {
@@ -10,6 +10,17 @@ interface ChatInputProps {
   toolSelector?: React.ReactNode;
   className?: string;
 }
+
+const resizeTextareaElement = (textarea: HTMLTextAreaElement | null) => {
+  if (!textarea) {
+    return;
+  }
+
+  const maxHeight = 200;
+  textarea.style.height = 'auto';
+  textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+  textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
+};
 
 export function ChatInput({
   onSend,
@@ -21,20 +32,15 @@ export function ChatInput({
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const resizeTextarea = () => {
-    requestAnimationFrame(() => {
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
-      }
-    });
-  };
+  useLayoutEffect(() => {
+    void input;
+    resizeTextareaElement(textareaRef.current);
+  }, [input]);
 
   const handleSend = () => {
     if (input.trim()) {
       onSend(input);
       setInput('');
-      resizeTextarea();
     }
   };
 
@@ -53,12 +59,12 @@ export function ChatInput({
           value={input}
           onChange={(event) => {
             setInput(event.target.value);
-            resizeTextarea();
+            resizeTextareaElement(event.currentTarget);
           }}
           onKeyDown={onKeyDown}
           placeholder={placeholder}
-          rows={4}
-          className="min-h-28 w-full bg-transparent border-none focus:ring-0 text-text-primary placeholder-text-secondary px-2 py-2 resize-none leading-relaxed text-[15px]"
+          rows={1}
+          className="min-h-9 w-full bg-transparent border-none focus:ring-0 text-text-primary placeholder-text-secondary px-2 py-2 resize-none leading-relaxed text-[15px]"
         />
 
         <div className="mt-4 flex items-end justify-between gap-3 border-t border-border pt-3">

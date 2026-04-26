@@ -1,15 +1,74 @@
 import { CopilotChatInput, type CopilotChatInputProps } from '@copilotkit/react-core/v2';
+import { Paperclip } from 'lucide-react';
+import type React from 'react';
+import { forwardRef, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import type { ChatModelId, ChatToolId } from '../../lib/chat-controls';
+import { cn } from '../../lib/utils';
 import { ModelSelector } from '../common/ModelSelector';
 import { ToolSelector } from '../common/ToolSelector';
 
 interface ZenithComposerProps extends Omit<CopilotChatInputProps, 'children'> {
   placeholder: string;
-  selectedModel: string;
-  setSelectedModel: (model: string) => void;
-  selectedTools: string[];
-  setSelectedTools: (tools: string[]) => void;
+  selectedModel: ChatModelId;
+  setSelectedModel: (model: ChatModelId) => void;
+  selectedTools: ChatToolId[];
+  setSelectedTools: (tools: ChatToolId[]) => void;
   anchored?: boolean;
+  sticky?: boolean;
 }
+
+const resizeTextareaElement = (textarea: HTMLTextAreaElement | null) => {
+  if (!textarea) {
+    return;
+  }
+
+  const maxHeight = 200;
+  textarea.style.height = 'auto';
+  textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+  textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
+};
+
+const AutoResizeTextArea = forwardRef<
+  HTMLTextAreaElement,
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>
+>(function AutoResizeTextArea({ className, onChange, value, ...props }, forwardedRef) {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const setTextareaRef = useCallback(
+    (node: HTMLTextAreaElement | null) => {
+      textareaRef.current = node;
+
+      if (typeof forwardedRef === 'function') {
+        forwardedRef(node);
+      } else if (forwardedRef) {
+        forwardedRef.current = node;
+      }
+    },
+    [forwardedRef],
+  );
+
+  useLayoutEffect(() => {
+    void value;
+    resizeTextareaElement(textareaRef.current);
+  }, [value]);
+
+  return (
+    <textarea
+      {...props}
+      ref={setTextareaRef}
+      value={value}
+      onChange={(event) => {
+        onChange?.(event);
+        resizeTextareaElement(event.currentTarget);
+      }}
+      rows={1}
+      className={cn(
+        className,
+        'min-h-9 w-full resize-none bg-transparent px-2 py-2 text-[15px] leading-relaxed text-text-primary placeholder:text-text-secondary focus:ring-0',
+      )}
+    />
+  );
+});
 
 export const ZenithComposer = Object.assign(function ZenithComposer({
   placeholder,
@@ -18,39 +77,124 @@ export const ZenithComposer = Object.assign(function ZenithComposer({
   selectedTools,
   setSelectedTools,
   anchored = false,
+  sticky = false,
   className,
   ...props
 }: ZenithComposerProps) {
+  const composerRootRef = useRef<HTMLDivElement | null>(null);
+  const submitWithCurrentControls = (value: string) => {
+    props.onSubmitMessage?.(value);
+  };
+  const textAreaSlot = useMemo(
+    () =>
+      forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(
+        function ZenithAutoResizeTextArea(textAreaProps, ref) {
+          return <AutoResizeTextArea {...textAreaProps} ref={ref} placeholder={placeholder} />;
+        },
+      ),
+    [placeholder],
+  );
+  const updateComposerHeight = useCallback(() => {
+    const composerRoot = composerRootRef.current;
+    if (!composerRoot) {
+      return;
+    }
+
+    const chatRoot = composerRoot.closest<HTMLElement>('.zenith-copilot-chat');
+    if (chatRoot) {
+      chatRoot.style.setProperty(
+        '--zenith-composer-height',
+        `${Math.ceil(composerRoot.getBoundingClientRect().height)}px`,
+      );
+    }
+
+    const shellRoot = composerRoot.closest<HTMLElement>('.zenith-conversation-shell');
+    if (shellRoot) {
+      shellRoot.style.setProperty(
+        '--zenith-composer-height',
+        `${Math.ceil(composerRoot.getBoundingClientRect().height)}px`,
+      );
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    const composerRoot = composerRootRef.current;
+    if (!composerRoot) {
+      return;
+    }
+
+    updateComposerHeight();
+
+    const observer = new ResizeObserver(updateComposerHeight);
+    observer.observe(composerRoot);
+    window.addEventListener('resize', updateComposerHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateComposerHeight);
+    };
+  }, [updateComposerHeight]);
+
   return (
     <CopilotChatInput
       {...props}
+      onSubmitMessage={submitWithCurrentControls}
       positioning="static"
       bottomAnchored={anchored}
       showDisclaimer={false}
       className={className}
-      textArea={{
-        className:
-          'min-h-28 w-full resize-none bg-transparent px-2 py-2 text-[15px] leading-relaxed text-text-primary placeholder:text-text-secondary focus:ring-0',
-        placeholder,
-        rows: 4,
-      }}
+      textArea={textAreaSlot}
       sendButton="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-gradient text-white shadow-sm"
       startTranscribeButton="rounded-full p-2 text-text-secondary transition-colors hover:text-text-primary"
+      addMenuButton="rounded-full p-2 text-text-secondary transition-colors hover:text-text-primary disabled:opacity-40"
     >
-      {({ textArea, sendButton, startTranscribeButton }) => (
-        <div className="mx-auto w-full max-w-3xl">
-          <div className="mx-auto rounded-[28px] border border-border bg-sidebar-bg px-4 pt-4 pb-3 shadow-xs transition-colors focus-within:border-text-secondary/40">
-            <div className="px-2">{textArea}</div>
+      {({
+        textArea,
+        sendButton,
+        startTranscribeButton,
+        addMenuButton,
+        onAddFile,
+        containerRef,
+        keyboardHeight,
+      }) => (
+        <div
+          ref={(node) => {
+            composerRootRef.current = node;
+            if (typeof containerRef === 'function') {
+              containerRef(node);
+            } else if (containerRef) {
+              containerRef.current = node;
+            }
+          }}
+          className={cn(
+            anchored ? 'absolute inset-x-0 bottom-0 z-20 px-4 pb-5 pt-3 sm:px-6' : 'relative z-20',
+            !anchored && sticky && 'sticky bottom-0 mt-auto bg-sidebar-bg px-4 pb-5 pt-3 sm:px-6',
+            !anchored && !sticky && 'mt-auto px-4 pb-5 pt-3 sm:px-6',
+            className,
+          )}
+          style={{
+            transform:
+              typeof keyboardHeight === 'number' && keyboardHeight > 0
+                ? `translateY(-${keyboardHeight}px)`
+                : undefined,
+            transition: 'transform 0.2s ease-out',
+          }}
+        >
+          <div className="mx-auto w-full max-w-3xl">
+            <div className="mx-auto rounded-[28px] border border-border bg-sidebar-bg px-4 pt-4 pb-3 shadow-xs transition-colors focus-within:border-text-secondary/40">
+              <div className="px-2">{textArea}</div>
 
-            <div className="mt-4 flex items-end justify-between gap-3 border-t border-border pt-3">
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <ToolSelector value={selectedTools} onChange={setSelectedTools} />
-                <ModelSelector value={selectedModel} onChange={setSelectedModel} />
-              </div>
+              <div className="mt-4 flex items-end justify-between gap-3 border-t border-border pt-3">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <ToolSelector value={selectedTools} onChange={setSelectedTools} />
+                  <ModelSelector value={selectedModel} onChange={setSelectedModel} />
+                </div>
 
-              <div className="flex items-center gap-2">
-                {startTranscribeButton}
-                {sendButton}
+                <div className="flex items-center gap-2">
+                  {onAddFile ? addMenuButton : <FallbackAttachButton />}
+                  {startTranscribeButton}
+                  {sendButton}
+                </div>
               </div>
             </div>
           </div>
@@ -59,3 +203,16 @@ export const ZenithComposer = Object.assign(function ZenithComposer({
     </CopilotChatInput>
   );
 }, CopilotChatInput);
+
+function FallbackAttachButton() {
+  return (
+    <button
+      type="button"
+      disabled
+      className="rounded-full p-2 text-text-secondary opacity-40"
+      aria-label="Attachments are not available"
+    >
+      <Paperclip className="h-5 w-5" />
+    </button>
+  );
+}
