@@ -1,0 +1,187 @@
+'use client';
+
+import { CheckSquare, ListChecks, Table2 } from 'lucide-react';
+import type { UIBlock, UISpec } from '../../../lib/generative-ui/schemas/declarative';
+import { cn } from '../../../lib/utils';
+
+const calloutStyles = {
+  neutral: 'border-[#4ECDC4]/35 bg-[#4ECDC4]/10',
+  positive: 'border-emerald-500/35 bg-emerald-500/10',
+  warning: 'border-amber-500/35 bg-amber-500/10',
+};
+
+function SectionTitle({ children }: { children?: string }) {
+  if (!children) {
+    return null;
+  }
+
+  return <h4 className="mb-2 text-xs font-semibold uppercase text-text-secondary">{children}</h4>;
+}
+
+function MetricGridBlock({ block }: { block: Extract<UIBlock, { type: 'metric_grid' }> }) {
+  const items = Array.isArray(block.items) ? block.items : [];
+
+  return (
+    <section>
+      <SectionTitle>{block.title}</SectionTitle>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {items.map((item) => (
+          <div
+            key={`${item.label}-${item.value}`}
+            className="min-w-0 rounded-lg border border-border bg-sidebar-bg px-3 py-2"
+          >
+            <p className="truncate text-[11px] font-medium uppercase text-text-secondary">
+              {item.label}
+            </p>
+            <div className="mt-1 flex min-w-0 items-baseline gap-2">
+              <span className="truncate text-lg font-semibold text-text-primary">{item.value}</span>
+              {item.delta ? (
+                <span className="truncate text-xs text-text-secondary">{item.delta}</span>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ListBlock({ block }: { block: Extract<UIBlock, { type: 'list' }> }) {
+  const ListTag = block.ordered ? 'ol' : 'ul';
+  const items = Array.isArray(block.items) ? block.items : [];
+
+  return (
+    <section>
+      <SectionTitle>{block.title}</SectionTitle>
+      <ListTag className="space-y-2">
+        {items.map((item) => (
+          <li key={item} className="flex gap-2 text-sm leading-relaxed text-text-primary">
+            <ListChecks className="mt-0.5 h-4 w-4 shrink-0 text-[#4ECDC4]" />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ListTag>
+    </section>
+  );
+}
+
+function TableBlock({ block }: { block: Extract<UIBlock, { type: 'table' }> }) {
+  const columns = Array.isArray(block.columns) ? block.columns : [];
+  const rows = Array.isArray(block.rows) ? block.rows : [];
+
+  return (
+    <section>
+      <SectionTitle>{block.title}</SectionTitle>
+      <div className="overflow-x-auto rounded-lg border border-border">
+        <table className="w-full min-w-[420px] border-collapse text-left text-sm">
+          <thead className="bg-sidebar-bg text-xs uppercase text-text-secondary">
+            <tr>
+              {columns.map((column) => (
+                <th key={column} className="border-b border-border px-3 py-2 font-semibold">
+                  {column}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.join('-')}>
+                {columns.map((column, columnIndex) => (
+                  <td key={column} className="border-b border-border px-3 py-2">
+                    {row[columnIndex] ?? ''}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function CalloutBlock({ block }: { block: Extract<UIBlock, { type: 'callout' }> }) {
+  const tone = block.tone ?? 'neutral';
+
+  return (
+    <section className={cn('rounded-lg border p-3', calloutStyles[tone])}>
+      {block.title ? (
+        <h4 className="mb-1 text-sm font-semibold text-text-primary">{block.title}</h4>
+      ) : null}
+      <p className="text-sm leading-relaxed text-text-secondary">{block.body ?? ''}</p>
+    </section>
+  );
+}
+
+function ActionsBlock({ block }: { block: Extract<UIBlock, { type: 'actions' }> }) {
+  const actions = Array.isArray(block.actions) ? block.actions : [];
+
+  return (
+    <section>
+      <SectionTitle>{block.title}</SectionTitle>
+      <div className="space-y-2">
+        {actions.map((action) => (
+          <div
+            key={action.label}
+            className="flex gap-2 rounded-lg border border-border bg-sidebar-bg px-3 py-2"
+          >
+            <CheckSquare className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-text-primary">{action.label}</p>
+              {action.description ? (
+                <p className="mt-0.5 text-xs leading-relaxed text-text-secondary">
+                  {action.description}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BlockRenderer({ block }: { block: UIBlock }) {
+  switch (block.type) {
+    case 'metric_grid':
+      return <MetricGridBlock block={block} />;
+    case 'list':
+      return <ListBlock block={block} />;
+    case 'table':
+      return <TableBlock block={block} />;
+    case 'callout':
+      return <CalloutBlock block={block} />;
+    case 'actions':
+      return <ActionsBlock block={block} />;
+  }
+}
+
+export function DeclarativeRenderer({ spec, status }: { spec: UISpec; status: string }) {
+  const isLoading = status === 'inProgress' || status === 'executing';
+
+  return (
+    <div className="my-3 w-full max-w-2xl rounded-lg border border-border bg-bg p-4">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Table2 className="h-4 w-4 shrink-0 text-[#4ECDC4]" />
+            <h3 className="truncate text-base font-semibold text-text-primary">{spec.title}</h3>
+          </div>
+          {spec.summary ? (
+            <p className="mt-2 text-sm leading-relaxed text-text-secondary">{spec.summary}</p>
+          ) : null}
+        </div>
+        {isLoading ? (
+          <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+        ) : (
+          <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+        )}
+      </div>
+      <div className="space-y-4">
+        {spec.blocks.map((block) => (
+          <BlockRenderer key={JSON.stringify(block)} block={block} />
+        ))}
+      </div>
+    </div>
+  );
+}
