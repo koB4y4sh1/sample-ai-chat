@@ -4,13 +4,22 @@ version = "0.1.0"
 description = "FastMCP tool server for Zenith AI Chat."
 requires-python = ">=3.14"
 dependencies = [
-    "fastmcp>=2.0",
+    "fastmcp>=2.13.0",
     "pydantic>=2.10",
 ]
+
+[project.scripts]
+zenith-mcp = "server:main"
+zenith-mcp-http = "server:main_http"
+zenith-mcp-document-review = "servers.document_review.server:main"
+zenith-mcp-listing-assist = "servers.listing_assist.server:main"
+zenith-mcp-quote-compare = "servers.quote_compare.server:main"
+zenith-mcp-submission-pack = "servers.submission_pack.server:main"
 
 [build-system]
 requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/zenith_mcp"]
+only-include = ["src/server.py", "src/servers", "src/shared"]
+sources = ["src"]

@@ -54,7 +54,7 @@ repos:
 
       - id: mypy
         name: mypy strict type check
-        entry: uv run mypy -p src -p zenith_mcp
+        entry: pnpm run typecheck:py
         language: system
         pass_filenames: false
         types: [python]
