@@ -61,6 +61,13 @@ Issue、PR 説明、作業メモ、または設計メモのいずれかに残せ
 - BFF 通信はモックまたは契約に沿ったスタブで置き換える。
 - コンポーネント内部の state 実装には依存しない。
 
+### CopilotKit
+
+- CopilotKit 連携を変更する場合は、runtime 内部ではなく外側から観測できる契約を Red で固定する。
+- 対象契約は、`/api/copilotkit` の request/response、agent context、provider/model による endpoint 選択、frontend tool の登録、tool render に渡る入力、チャットUIの表示変化とする。
+- CopilotKit Runtime は境界として扱い、テストでは mock または契約に沿った stub で置き換えてよい。
+- Generative UI の追加や変更では、tool 名、入力 schema、表示結果、失敗時の扱いを受け入れ条件に含める。
+
 ### web BFF
 
 - エンドポイント単位で request、response、エラー形式を固定する。
@@ -127,6 +134,14 @@ Refactor では仕様を増やさない。仕様を増やす場合は新しい R
 - 関連ドキュメントが必要に応じて更新されている。
 - フォーマット、lint、型検査に通る。
 - PR やコミット説明から、何を保証した変更か読み取れる。
+
+## 品質ゲートエラーの追従
+
+- Ruff、Biome、`tsc`、mypy の診断は、TDD サイクルの Green 条件を阻害する作業項目として扱う。
+- 今回変更で発生または露出した診断は、対象テストが Green になった後に解消し、同じコマンドを再実行して確認する。
+- 自動修正後も残る診断は、テスト失敗と同じく原因を 1 件ずつ切り分ける。
+- unrelated な既存診断が残る場合は、作業範囲外として記録し、全体品質ゲートが通ったとは扱わない。
+- rule の ignore 追加や診断抑制は、対象範囲と理由を明示できる場合だけ許可する。
 
 ## 推奨コマンド
 

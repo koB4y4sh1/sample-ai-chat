@@ -12,6 +12,22 @@
     "**/__pycache__": true,
     "**/node_modules": true
   },
+  "github.copilot.chat.localeOverride": "ja",
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "file": ".github/instructions/commit-message.instructions.md"
+    }
+  ],
+  "github.copilot.chat.pullRequestDescriptionGeneration.instructions": [
+    {
+      "file": ".github/instructions/pull-request-description.instructions.md"
+    }
+  ],
+  "github.copilot.chat.reviewSelection.instructions": [
+    {
+      "file": ".github/instructions/code-review.instructions.md"
+    }
+  ],
   "npm.packageManager": "pnpm",
   "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
   "python.testing.pytestArgs": ["agent/tests", "mcp/tests"],

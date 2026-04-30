@@ -83,6 +83,13 @@ uv run pre-commit run --all-files
 - UI表示用型とAPI DTOを混同しない。
 - path aliasやimport順序は既存設定とBiomeに従う。
 
+## CopilotKit TDD
+
+- CopilotKit 連携を変更する場合は、実装前に観測可能な契約をテストで固定する。
+- 優先して固定する契約は、チャットUIの挙動、`/api/copilotkit` の request/response、agent context の値、provider/model からの endpoint 選択、frontend tool の登録と render 入力である。
+- CopilotKit runtime の内部状態や実装順序には依存しない。runtime は境界として扱い、必要に応じて mock または契約に沿った stub に置き換える。
+- Generative UI や frontend tool の変更は、tool 名、入力 schema、表示結果、失敗時の扱いを Red で固定してから実装する。
+
 ## Python
 
 - formatter/linter は Ruff を使う。
@@ -128,6 +135,13 @@ uv run pre-commit run --all-files
 - `uv run pre-commit run --all-files`
 
 pre-commitが自動修正した場合は、修正後に同じhookを再実行する。
+
+## Lint エラー追従
+
+- Ruff、Biome、`tsc`、mypy の診断は作業項目として扱い、今回変更で発生または露出したものは完了前に解消する。
+- 自動修正できるものは `pnpm run format` または個別の `uv run ruff check --fix .`、`pnpm exec biome check --write .` を使い、修正後に同じ検査を再実行する。
+- 既存の unrelated な failing diagnostic が残る場合は、対象外であることと実行したコマンド、残った診断を記録する。全体 Green とは表現しない。
+- rule の無効化や ignore 追加は最後の手段とし、理由、対象範囲、代替策を設定ファイルまたは近傍コメントに残す。
 
 ## 依存関係
 

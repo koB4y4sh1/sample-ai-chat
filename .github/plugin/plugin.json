@@ -1,0 +1,10 @@
+{
+  "name": "zenith-dev-tools",
+  "description": "Zenith AI Chat の TDD、CopilotKit 契約、品質ゲートのための開発支援設定。",
+  "version": "0.1.0",
+  "author": {
+    "name": "Zenith AI Chat"
+  },
+  "skills": "../skills/",
+  "hooks": "../hooks/quality-gate.json"
+}

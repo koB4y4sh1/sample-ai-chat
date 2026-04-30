@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "pnpm run lint",
+        "windows": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"pnpm run lint\"",
+        "timeout": 120
+      }
+    ]
+  }
+}
