@@ -31,6 +31,7 @@ def test_main_app_mounts_mfa_and_lang_chain_apps(monkeypatch) -> None:
         health = client.get("/health")
         mfa_health = client.get("/mfa/health")
         lang_chain_health = client.get("/lang-chain/health")
+        review_health = client.get("/lang-chain/review/health")
 
     assert health.status_code == 200
     assert health.json() == {
@@ -40,3 +41,4 @@ def test_main_app_mounts_mfa_and_lang_chain_apps(monkeypatch) -> None:
     }
     assert mfa_health.json() == {"status": "ok", "agent_runtime": "mfa"}
     assert lang_chain_health.json() == {"status": "ok", "agent_runtime": "lang-chain"}
+    assert review_health.status_code == 404

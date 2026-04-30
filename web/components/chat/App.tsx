@@ -11,7 +11,7 @@ import type { MouseEvent } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   buildChatControlContext,
-  CHAT_SUGGESTIONS,
+  buildToolAwareSuggestions,
   type ChatControlsState,
   DEFAULT_CHAT_CONTROLS,
   getModelOption,
@@ -184,7 +184,7 @@ function ChatControlsBridge({ controls }: { controls: ChatControlsState }) {
     {
       consumerAgentId: 'zenith',
       available: 'after-first-message',
-      suggestions: CHAT_SUGGESTIONS.map((suggestion) => ({
+      suggestions: buildToolAwareSuggestions(controls.selectedTools).map((suggestion) => ({
         title: suggestion.title,
         message: suggestion.message,
       })),

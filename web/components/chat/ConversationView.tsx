@@ -156,6 +156,31 @@ function ZenithScrollToBottomButton({
   );
 }
 
+function ToolLogPanel({ logs, isRunning }: { logs: string[]; isRunning: boolean }) {
+  if (!isRunning || logs.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label="Agent processing steps"
+      className="pointer-events-none absolute inset-x-0 bottom-[calc(var(--zenith-composer-height,7.25rem)+0.5rem)] z-20 flex justify-center px-4"
+    >
+      <div className="flex max-w-2xl flex-wrap items-center gap-1.5 rounded-xl border border-border/50 bg-sidebar-bg/90 px-3 py-2 text-xs text-text-secondary shadow-sm backdrop-blur-sm">
+        <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent-primary" />
+        {logs.map((log, i) => (
+          <span key={log} className="opacity-80">
+            {log}
+            {i < logs.length - 1 ? ' →' : ''}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const getLatestAssistantToolCallIds = (messages: unknown[]) => {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const message = messages[index];
@@ -249,6 +274,11 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
     const [editingDraft, setEditingDraft] = useState<EditingDraft | null>(null);
     const [showScrollToBottom, setShowScrollToBottom] = useState(false);
     agentMessagesRef.current = agent.messages;
+
+    const toolLogs =
+      isRecord(agent.state) && Array.isArray((agent.state as Record<string, unknown>).tool_logs)
+        ? ((agent.state as Record<string, unknown>).tool_logs as string[])
+        : [];
 
     const updateScrollButton = useCallback(() => {
       const scrollContainer = scrollContainerRef.current;
@@ -513,6 +543,7 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
             <ZenithScrollToBottomButton onClick={() => scrollToConversationBottom()} />
           </div>
         ) : null}
+        <ToolLogPanel logs={toolLogs} isRunning={agent.isRunning} />
         {editingDraft ? (
           <div className="absolute inset-0 z-40 flex items-end justify-center bg-black/20 px-4 py-6 backdrop-blur-[1px] sm:items-center">
             <div className="w-full max-w-2xl rounded-2xl border border-border bg-sidebar-bg p-4 shadow-2xl">

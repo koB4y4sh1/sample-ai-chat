@@ -148,3 +148,55 @@ export const HOME_PROMPT_SUGGESTIONS = [
       '次の作業を実行する前に confirmation_panel で、実行内容、影響範囲、取り消し方法、承認アクションを表示して。\n\n',
   },
 ] as const;
+
+const TOOL_SUGGESTION_MAP: Partial<
+  Record<ChatToolId, ReadonlyArray<{ title: string; message: string }>>
+> = {
+  'web-search': [
+    { title: '最新情報を検索', message: 'この話題に関する最新情報をWeb検索して要約してください。' },
+    {
+      title: '比較情報を調べる',
+      message: 'この選択肢についてWeb検索で比較情報を集めて整理してください。',
+    },
+  ],
+  'code-review': [
+    {
+      title: '実装手順',
+      message: 'この内容を実装する場合の手順、影響範囲、確認コマンドを整理してください。',
+    },
+    {
+      title: 'リスク確認',
+      message: 'この方針のリスク、壊れやすい点、追加で確認すべきテストを挙げてください。',
+    },
+  ],
+  'generative-ui': [
+    {
+      title: 'UIで整理',
+      message: '今の内容をGenerative UIで、判断材料、タスク、確認事項に分けて表示してください。',
+    },
+  ],
+  'file-analysis': [
+    {
+      title: 'ファイルを分析',
+      message: '添付ファイルの内容を分析し、重要なポイントと問題点を整理してください。',
+    },
+  ],
+};
+
+const BASE_SUGGESTIONS = [
+  { title: '根拠を確認', message: '今の回答の根拠、前提、未確定事項を整理してください。' },
+  { title: '次のアクション', message: 'この内容から次に取るべきアクションを3つ提案してください。' },
+];
+
+export const buildToolAwareSuggestions = (
+  selectedTools: ChatToolId[],
+): ReadonlyArray<{ title: string; message: string }> => {
+  const toolSpecific = selectedTools.flatMap((id) => TOOL_SUGGESTION_MAP[id] ?? []);
+  const seen = new Set<string>();
+  const unique = [...BASE_SUGGESTIONS, ...toolSpecific].filter(({ title }) => {
+    if (seen.has(title)) return false;
+    seen.add(title);
+    return true;
+  });
+  return unique.slice(0, 4);
+};

@@ -16,6 +16,7 @@ dependencies = [
     "langchain>=1.2.16",
     "langgraph>=1.1.10",
     "langchain-azure-ai>=1.2.3",
+    "langchain-mcp-adapters>=0.2.2",
 ]
 
 [build-system]
