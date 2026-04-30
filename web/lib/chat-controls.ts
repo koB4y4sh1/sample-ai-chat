@@ -2,28 +2,22 @@ import { Bot, Code2, FileSearch, Image as ImageIcon, LayoutDashboard, Search } f
 
 export const MODEL_OPTIONS = [
   {
-    id: 'zenith-balanced',
-    name: 'Balanced',
-    icon: 'BA',
-    description: 'General work, chat, and UI generation.',
+    id: 'openai',
+    provider: 'openai',
+    model: 'gpt-5.4-nano',
+    agentId: 'zenith',
+    name: 'OpenAI',
+    icon: 'OA',
+    description: 'Azure Foundry OpenAI agent endpoint.',
   },
   {
-    id: 'zenith-fast',
-    name: 'Fast',
-    icon: 'FA',
-    description: 'Shorter answers and lower latency.',
-  },
-  {
-    id: 'zenith-reasoning',
-    name: 'Reasoning',
-    icon: 'RE',
-    description: 'Deeper analysis and safer plans.',
-  },
-  {
-    id: 'zenith-ui',
-    name: 'UI Builder',
-    icon: 'UI',
-    description: 'Prefer Generative UI and visual layouts.',
+    id: 'anthropic',
+    provider: 'anthropic',
+    model: 'claude-sonnet-4-5',
+    agentId: 'zenith',
+    name: 'Anthropic',
+    icon: 'AN',
+    description: 'Azure Foundry Anthropic agent endpoint.',
   },
 ] as const;
 
@@ -75,17 +69,19 @@ export type ChatControlsState = {
 };
 
 export const DEFAULT_CHAT_CONTROLS: ChatControlsState = {
-  selectedModel: 'zenith-balanced',
+  selectedModel: 'openai',
   selectedTools: ['generative-ui'],
 };
 
 export const getModelOption = (modelId: string) =>
   MODEL_OPTIONS.find((model) => model.id === modelId) ?? MODEL_OPTIONS[0];
 
+export const isChatModelId = (modelId: string): modelId is ChatModelId =>
+  MODEL_OPTIONS.some((model) => model.id === modelId);
+
 export const getToolOption = (toolId: string) => TOOL_OPTIONS.find((tool) => tool.id === toolId);
 
-export const buildChatControlContext = ({ selectedModel, selectedTools }: ChatControlsState) => ({
-  model: getModelOption(selectedModel),
+export const buildChatControlContext = ({ selectedTools }: ChatControlsState) => ({
   enabledTools: selectedTools.flatMap((toolId) => {
     const tool = getToolOption(toolId);
     return tool ? [{ id: tool.id, name: tool.name, description: tool.description }] : [];

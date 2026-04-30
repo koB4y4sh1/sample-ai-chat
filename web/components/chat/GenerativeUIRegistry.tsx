@@ -966,7 +966,11 @@ const resolveUiSpecArgs = (args: ShowUiSpecArgs | { spec?: unknown }): UISpec =>
   return resolveUiSpec(args);
 };
 
-export function GenerativeUIRegistry() {
+interface GenerativeUIRegistryProps {
+  agentId: string;
+}
+
+export function GenerativeUIRegistry({ agentId }: GenerativeUIRegistryProps) {
   const { activeToolCallIds, selectedInteractionKeys, submitInteraction } =
     useGenerativeUIInteraction();
   const staticToolDeps = [null, null, null] as const;
@@ -989,7 +993,7 @@ export function GenerativeUIRegistry() {
   useFrontendTool<ZenithPanelArgs>(
     {
       name: 'show_zenith_panel',
-      agentId: 'zenith',
+      agentId,
       description:
         'Render a fixed Zenith status panel. Use this for simple visual summaries, status cards, metrics, and action plans.',
       parameters: zenithPanelSchema,
@@ -1018,7 +1022,7 @@ export function GenerativeUIRegistry() {
   useFrontendTool<ShowUiSpecArgs>(
     {
       name: 'show_ui_spec',
-      agentId: 'zenith',
+      agentId,
       description:
         'Render declarative Generative UI from a versioned UI schema. Available block types: metric_grid, list, table, callout, actions, text, divider, key_value, progress, checklist, timeline, comparison, risk_matrix, decision, tabs, accordion, quote, status_strip, flight_card, flight_options, sales_funnel, sales_dashboard, answer_card, source_list, task_plan, confirmation_panel, form_fill, choice_picker, diff_preview, error_diagnosis, file_attachment_card, progress_tracker. Use chat-business blocks for chat answers, citations, execution plans, confirmations, forms, choices, diffs, diagnostics, attachments, and progress. For diff_preview, always include before/after content; original/corrected/revised aliases are accepted for proofreading. Use flight_options for polished travel search cards and sales_dashboard for a complete KPI dashboard with charts and orders. Choose diverse, high-quality blocks that best fit the user request instead of always using the same layout.',
       parameters: showUiSpecSchema,
@@ -1050,7 +1054,7 @@ export function GenerativeUIRegistry() {
   useFrontendTool<ShowFlightOptionsArgs>(
     {
       name: 'show_flight_options',
-      agentId: 'zenith',
+      agentId,
       description:
         'Render polished flight search result cards. Use this instead of returning JSON or show_ui_spec when the user asks for flight options, travel search results, airline cards, or SFO to JFK style flight listings.',
       parameters: showFlightOptionsSchema,
@@ -1095,7 +1099,7 @@ export function GenerativeUIRegistry() {
   useFrontendTool<ShowMcpAppArgs>(
     {
       name: 'show_mcp_app',
-      agentId: 'zenith',
+      agentId,
       description:
         'Render an open-ended MCP App style surface in a sandboxed iframe. Use this for interactive embedded app experiences that do not fit the predefined static or declarative UI blocks.',
       parameters: showMcpAppSchema,

@@ -1,31 +1,21 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+if __package__:
+    from .app import create_app
+else:
+    import sys
+    from pathlib import Path
 
-from .app import add_agent_framework_fastapi_endpoint, build_agent, get_settings, parse_cors_origins
-
-
-def create_app() -> FastAPI:
-    settings = get_settings()
-    app = FastAPI(title="Zenith AG-UI")
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=parse_cors_origins(settings.cors_origins),
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
-    add_agent_framework_fastapi_endpoint(
-        app=app,
-        agent=build_agent(settings),
-        path="/copilotkit",
-    )
-
-    @app.get("/health")
-    async def healthcheck() -> dict[str, str]:
-        return {"status": "ok"}
-
-    return app
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from src.app import create_app
 
 
-__all__ = ["add_agent_framework_fastapi_endpoint", "build_agent", "create_app"]
+def main() -> None:
+    import uvicorn
+
+    uvicorn.run(create_app(), host="127.0.0.1", port=8100)
+
+
+if __name__ == "__main__":
+    main()
+
+
+__all__ = ["create_app", "main"]

@@ -14,7 +14,11 @@ import {
   CHAT_SUGGESTIONS,
   type ChatControlsState,
   DEFAULT_CHAT_CONTROLS,
+  getModelOption,
+  isChatModelId,
 } from '../../lib/chat-controls';
+import { syncAgentProvider } from '../../lib/copilotkit/agents';
+import { ChatControlsProvider } from './ChatControlsContext';
 import { ConversationView, type ConversationViewHandle } from './ConversationView';
 import { GenerativeUIInteractionProvider } from './GenerativeUIInteractionContext';
 import { GenerativeUIRegistry } from './GenerativeUIRegistry';
@@ -156,8 +160,8 @@ const loadStoredChatControls = (): ChatControlsState => {
 
     return {
       selectedModel:
-        typeof parsed.selectedModel === 'string'
-          ? (parsed.selectedModel as ChatControlsState['selectedModel'])
+        typeof parsed.selectedModel === 'string' && isChatModelId(parsed.selectedModel)
+          ? parsed.selectedModel
           : DEFAULT_CHAT_CONTROLS.selectedModel,
       selectedTools: Array.isArray(parsed.selectedTools)
         ? (parsed.selectedTools.filter(
@@ -185,7 +189,7 @@ function ChatControlsBridge({ controls }: { controls: ChatControlsState }) {
         message: suggestion.message,
       })),
     },
-    [controls.selectedModel, controls.selectedTools.join(',')],
+    [controls.selectedTools.join(',')],
   );
 
   return null;
@@ -206,6 +210,7 @@ export default function App({ activeSessionId = null }: AppProps) {
   );
   const [activeToolCallIds, setActiveToolCallIds] = useState<Set<string>>(new Set());
   const [chatControls, setChatControls] = useState<ChatControlsState>(DEFAULT_CHAT_CONTROLS);
+  const chatControlsRef = useRef(chatControls);
   const conversationViewHandleRef = useRef<ConversationViewHandle | null>(null);
   const currentSessionId = activeSessionId ?? transientSessionId;
   const currentSessionIdRef = useRef<string | null>(currentSessionId);
@@ -213,6 +218,19 @@ export default function App({ activeSessionId = null }: AppProps) {
 
   currentSessionIdRef.current = currentSessionId;
   pendingInitialMessageRef.current = pendingInitialMessage;
+  chatControlsRef.current = chatControls;
+
+  const updateChatControls = useCallback(
+    (next: ChatControlsState | ((current: ChatControlsState) => ChatControlsState)) => {
+      setChatControls((current) => {
+        const resolved = typeof next === 'function' ? next(current) : next;
+        syncAgentProvider(resolved);
+        chatControlsRef.current = resolved;
+        return resolved;
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
     setSessions(loadStoredSessions());
@@ -222,7 +240,9 @@ export default function App({ activeSessionId = null }: AppProps) {
       setTheme(storedTheme);
     }
 
-    setChatControls(loadStoredChatControls());
+    const storedControls = loadStoredChatControls();
+    syncAgentProvider(storedControls);
+    setChatControls(storedControls);
     setHasLoadedClientState(true);
   }, []);
 
@@ -396,57 +416,67 @@ export default function App({ activeSessionId = null }: AppProps) {
         }
       >
         <div className={currentSession ? 'flex h-full min-h-0 flex-1 flex-col' : 'w-full'}>
-          <CopilotKitProvider runtimeUrl="/api/copilotkit" useSingleEndpoint showDevConsole={false}>
-            <ChatControlsBridge controls={chatControls} />
-            <GenerativeUIInteractionProvider
-              onSubmit={submitGenerativeUIInteraction}
-              activeToolCallIds={activeToolCallIds}
+          <CopilotKitProvider
+            runtimeUrl="/api/copilotkit"
+            headers={{
+              'x-zenith-provider': getModelOption(chatControls.selectedModel).provider,
+            }}
+            useSingleEndpoint
+            showDevConsole={false}
+          >
+            <ChatControlsProvider
+              value={{ controls: chatControls, setControls: updateChatControls }}
             >
-              <GenerativeUIRegistry />
-              <AnimatePresence mode="wait">
-                {!currentSession ? (
-                  <motion.div
-                    key="home"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.4, ease: 'easeOut' }}
-                    className="w-full max-w-3xl px-6"
-                  >
-                    <HomeView
-                      onSendMessage={startConversation}
-                      controls={chatControls}
-                      onControlsChange={setChatControls}
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key={currentSession.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="flex h-full w-full flex-1 min-h-0 "
-                  >
-                    <div className="flex h-full min-h-0 flex-1 flex-col border border-border bg-sidebar-bg shadow-sm">
-                      <div className="border-b border-border px-5 py-2">
-                        <h2 className="text-base font-semibold text-text-primary">
-                          {currentSession.title}
-                        </h2>
+              <ChatControlsBridge controls={chatControls} />
+              <GenerativeUIInteractionProvider
+                onSubmit={submitGenerativeUIInteraction}
+                activeToolCallIds={activeToolCallIds}
+              >
+                <GenerativeUIRegistry agentId="zenith" />
+                <AnimatePresence mode="wait">
+                  {!currentSession ? (
+                    <motion.div
+                      key="home"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.4, ease: 'easeOut' }}
+                      className="w-full max-w-3xl px-6"
+                    >
+                      <HomeView
+                        onSendMessage={startConversation}
+                        controls={chatControls}
+                        onControlsChange={updateChatControls}
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key={currentSession.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex h-full w-full flex-1 min-h-0 "
+                    >
+                      <div className="flex h-full min-h-0 flex-1 flex-col border border-border bg-sidebar-bg shadow-sm">
+                        <div className="border-b border-border px-5 py-2">
+                          <h2 className="text-base font-semibold text-text-primary">
+                            {currentSession.title}
+                          </h2>
+                        </div>
+                        <div className="flex h-full min-h-0 flex-1">
+                          <ConversationView
+                            ref={attachConversationViewHandle}
+                            sessionId={currentSession.id}
+                            controlsRef={chatControlsRef}
+                            onActiveToolCallIdsChange={setActiveToolCallIds}
+                          />
+                        </div>
                       </div>
-                      <div className="flex h-full min-h-0 flex-1">
-                        <ConversationView
-                          ref={attachConversationViewHandle}
-                          sessionId={currentSession.id}
-                          controls={chatControls}
-                          onControlsChange={setChatControls}
-                          onActiveToolCallIdsChange={setActiveToolCallIds}
-                        />
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </GenerativeUIInteractionProvider>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </GenerativeUIInteractionProvider>
+            </ChatControlsProvider>
           </CopilotKitProvider>
         </div>
       </main>

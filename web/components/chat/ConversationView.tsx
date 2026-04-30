@@ -1,3 +1,4 @@
+import { HttpAgent } from '@ag-ui/client';
 import {
   type AssistantMessage,
   CopilotChat,
@@ -15,6 +16,8 @@ import {
 import { ChevronDown } from 'lucide-react';
 import {
   forwardRef,
+  memo,
+  type RefObject,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -22,14 +25,15 @@ import {
   useRef,
   useState,
 } from 'react';
-import type { ChatControlsState } from '../../lib/chat-controls';
+import { type ChatControlsState, getModelOption } from '../../lib/chat-controls';
+import { resolveAgentUrl } from '../../lib/copilotkit/agents';
 import { cn } from '../../lib/utils';
+import { useChatControls } from './ChatControlsContext';
 import { ZenithComposer } from './ZenithComposer';
 
 interface ConversationViewProps {
   sessionId: string;
-  controls: ChatControlsState;
-  onControlsChange: (controls: ChatControlsState) => void;
+  controlsRef: RefObject<ChatControlsState>;
   onActiveToolCallIdsChange?: (toolCallIds: Set<string>) => void;
 }
 
@@ -72,6 +76,11 @@ const saveStoredMessages = (sessionId: string, messages: unknown[]) => {
 
   localStorage.setItem(getSessionMessagesStorageKey(sessionId), JSON.stringify(messages));
 };
+
+const buildRunState = (controls: ChatControlsState) => ({
+  model: getModelOption(controls.selectedModel).model,
+  provider: getModelOption(controls.selectedModel).provider,
+});
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -173,13 +182,61 @@ const getLatestAssistantToolCallIds = (messages: unknown[]) => {
   return new Set<string>();
 };
 
-export const ConversationView = forwardRef<ConversationViewHandle, ConversationViewProps>(
+function ZenithChatInputSlot(props: CopilotChatInputProps) {
+  const { controls, setControls } = useChatControls();
+
+  return (
+    <ZenithComposer
+      {...props}
+      placeholder="Type a message..."
+      selectedModel={controls.selectedModel}
+      setSelectedModel={(selectedModel) =>
+        setControls((current) => ({ ...current, selectedModel }))
+      }
+      selectedTools={controls.selectedTools}
+      setSelectedTools={(selectedTools) =>
+        setControls((current) => ({ ...current, selectedTools }))
+      }
+      sticky
+    />
+  );
+}
+
+function AgentStateSync({
+  agent,
+}: {
+  agent: { setState: (state: ReturnType<typeof buildRunState>) => void };
+}) {
+  const { controls } = useChatControls();
+
+  useEffect(() => {
+    agent.setState(buildRunState(controls));
+  }, [agent, controls]);
+
+  return null;
+}
+
+function AgentEndpointSync({ agent }: { agent: unknown }) {
+  const { controls } = useChatControls();
+
+  useEffect(() => {
+    if (agent instanceof HttpAgent) {
+      agent.url = resolveAgentUrl(controls);
+    }
+  }, [agent, controls]);
+
+  return null;
+}
+
+const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationViewProps>(
   function ConversationView(
-    { sessionId, controls, onControlsChange, onActiveToolCallIdsChange }: ConversationViewProps,
+    { sessionId, controlsRef, onActiveToolCallIdsChange }: ConversationViewProps,
     ref,
   ) {
+    const selectedModel = getModelOption(controlsRef.current.selectedModel);
+    const agentId = selectedModel.agentId;
     const { agent } = useAgent({
-      agentId: 'zenith',
+      agentId,
       threadId: sessionId,
       updates: [UseAgentUpdate.OnMessagesChanged, UseAgentUpdate.OnRunStatusChanged],
     });
@@ -305,17 +362,19 @@ export const ConversationView = forwardRef<ConversationViewHandle, ConversationV
           content,
         });
 
+        agent.setState(buildRunState(controlsRef.current));
         await copilotkit.runAgent({ agent });
       },
-      [agent, copilotkit],
+      [agent, controlsRef, copilotkit],
     );
 
     const rerunFromMessages = useCallback(
       async (messages: Message[]) => {
         agent.setMessages(messages);
+        agent.setState(buildRunState(controlsRef.current));
         await copilotkit.runAgent({ agent });
       },
-      [agent, copilotkit],
+      [agent, controlsRef, copilotkit],
     );
 
     const openEditUserMessage = useCallback((message: UserMessage) => {
@@ -388,23 +447,7 @@ export const ConversationView = forwardRef<ConversationViewHandle, ConversationV
 
     useImperativeHandle(ref, () => handleRef.current, []);
 
-    const inputSlot = useMemo(
-      () =>
-        Object.assign(function ZenithChatInput(props: CopilotChatInputProps) {
-          return (
-            <ZenithComposer
-              {...props}
-              placeholder="Type a message..."
-              selectedModel={controls.selectedModel}
-              setSelectedModel={(selectedModel) => onControlsChange({ ...controls, selectedModel })}
-              selectedTools={controls.selectedTools}
-              setSelectedTools={(selectedTools) => onControlsChange({ ...controls, selectedTools })}
-              sticky
-            />
-          );
-        }, ZenithComposer),
-      [controls, onControlsChange],
-    );
+    const inputSlot = useMemo(() => Object.assign(ZenithChatInputSlot, ZenithComposer), []);
 
     const assistantMessageSlot = useMemo(
       () =>
@@ -431,9 +474,11 @@ export const ConversationView = forwardRef<ConversationViewHandle, ConversationV
 
     return (
       <div className="zenith-conversation-shell relative flex h-full min-h-0 flex-1">
+        <AgentStateSync agent={agent} />
+        <AgentEndpointSync agent={agent} />
         <div ref={scrollContainerRef} className="h-full min-h-0 flex-1 overflow-y-auto">
           <CopilotChat
-            agentId="zenith"
+            agentId={agentId}
             threadId={sessionId}
             className="zenith-copilot-chat flex min-h-full flex-col"
             welcomeScreen={false}
@@ -511,3 +556,5 @@ export const ConversationView = forwardRef<ConversationViewHandle, ConversationV
     );
   },
 );
+
+export const ConversationView = memo(ConversationViewBase);

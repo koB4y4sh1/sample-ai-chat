@@ -29,7 +29,7 @@
     "format": "pnpm exec biome check --write . && uv run ruff format .",
     "format:check": "pnpm exec biome format . && uv run ruff format . --check",
     "lint": "pnpm run lint:ts && pnpm run lint:py",
-    "lint:py": "uv run ruff check . --extend-ignore",
+    "lint:py": "uv run ruff check .",
     "lint:ts": "pnpm exec biome check .",
     "test": "pnpm run test:py && pnpm run test:fe",
     "test:fe": "pnpm --filter @zenith/web test",

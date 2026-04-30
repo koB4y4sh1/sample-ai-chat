@@ -48,6 +48,9 @@ type MockCopilotChatProps = {
   welcomeScreen?: MockCopilotChatViewProps['welcomeScreen'];
 };
 
+let capturedRuntimeUrl: string | undefined;
+let capturedHeaders: Record<string, string> | undefined;
+
 const agentListeners = new Set<() => void>();
 const notifyAgentListeners = () => {
   for (const listener of agentListeners) {
@@ -61,6 +64,7 @@ const agent = {
   }),
   isRunning: false,
   messages: [] as MockMessage[],
+  setState: vi.fn(),
   setMessages: vi.fn((messages: MockMessage[]) => {
     agent.messages = messages;
     notifyAgentListeners();
@@ -332,9 +336,19 @@ vi.mock('@copilotkit/react-core/v2', async () => {
     CopilotChatMessageView: MockCopilotChatMessageView,
     CopilotChatUserMessage: MockCopilotChatUserMessage,
     CopilotChatView: MockCopilotChatView,
-    CopilotKitProvider: ({ children }: { children: React.ReactNode }) => (
-      <div data-testid="copilot-kit">{children}</div>
-    ),
+    CopilotKitProvider: ({
+      children,
+      runtimeUrl,
+      headers,
+    }: {
+      children: React.ReactNode;
+      runtimeUrl?: string;
+      headers?: Record<string, string>;
+    }) => {
+      capturedRuntimeUrl = runtimeUrl;
+      capturedHeaders = headers;
+      return <div data-testid="copilot-kit">{children}</div>;
+    },
     UseAgentUpdate: {
       OnMessagesChanged: 'OnMessagesChanged',
       OnRunStatusChanged: 'OnRunStatusChanged',
@@ -358,11 +372,14 @@ describe('App', () => {
     vi.restoreAllMocks();
     agent.addMessage.mockClear();
     agent.setMessages.mockClear();
+    agent.setState.mockClear();
     agent.messages = [];
     runAgent.mockClear();
     useAgentMock.mockClear();
     useCopilotKitMock.mockClear();
     pushMock.mockClear();
+    capturedRuntimeUrl = undefined;
+    capturedHeaders = undefined;
   });
 
   beforeEach(() => {
@@ -399,6 +416,7 @@ describe('App', () => {
         role: 'user',
       }),
     );
+    expect(agent.setState).toHaveBeenCalledWith({ model: 'gpt-5.4-nano', provider: 'openai' });
   });
 
   it('sends the initial home message only once in StrictMode', async () => {
@@ -419,6 +437,7 @@ describe('App', () => {
 
     await waitFor(() => expect(runAgent).toHaveBeenCalledTimes(1));
     expect(agent.addMessage).toHaveBeenCalledTimes(1);
+    expect(agent.setState).toHaveBeenCalledWith({ model: 'gpt-5.4-nano', provider: 'openai' });
   });
 
   it('returns to the home screen when New chat is clicked', async () => {
@@ -437,6 +456,30 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'How can I help?' })).toBeInTheDocument();
     expect(screen.getByText('Conversation 1')).toBeInTheDocument();
     expect(screen.getByTestId('copilot-kit')).toBeInTheDocument();
+  });
+
+  it('always uses /api/copilotkit as runtimeUrl regardless of model', () => {
+    render(<App />);
+
+    expect(capturedRuntimeUrl).toBe('/api/copilotkit');
+  });
+
+  it('passes x-zenith-provider: openai header when openai model is selected (default)', () => {
+    render(<App />);
+
+    expect(capturedHeaders).toMatchObject({ 'x-zenith-provider': 'openai' });
+  });
+
+  it('passes x-zenith-provider: anthropic header when anthropic model is stored', () => {
+    localStorage.setItem(
+      'zenith_chat_controls',
+      JSON.stringify({ selectedModel: 'anthropic', selectedTools: [] }),
+    );
+
+    render(<App />);
+
+    expect(capturedRuntimeUrl).toBe('/api/copilotkit');
+    expect(capturedHeaders).toMatchObject({ 'x-zenith-provider': 'anthropic' });
   });
 
   it('restores stored conversation messages for an existing session', async () => {
