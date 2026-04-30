@@ -19,6 +19,15 @@ export const MODEL_OPTIONS = [
     icon: 'AN',
     description: 'Azure Foundry Anthropic agent endpoint.',
   },
+  {
+    id: 'lang-chain',
+    provider: 'lang-chain',
+    model: 'langgraph',
+    agentId: 'zenith',
+    name: 'LangGraph',
+    icon: 'LG',
+    description: 'Python LangChain LangGraph AG-UI endpoint.',
+  },
 ] as const;
 
 export const TOOL_OPTIONS = [

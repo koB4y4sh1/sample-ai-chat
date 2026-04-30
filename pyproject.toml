@@ -63,7 +63,7 @@ strict = true
 pretty = true
 namespace_packages = true
 explicit_package_bases = true
-mypy_path = ["agent/src", "mcp/src"]
+mypy_path = ["agent", "mcp/src"]
 exclude = [
     "^web/",
     "^docs/",

@@ -482,6 +482,18 @@ describe('App', () => {
     expect(capturedHeaders).toMatchObject({ 'x-zenith-provider': 'anthropic' });
   });
 
+  it('passes x-zenith-provider: lang-chain header when LangGraph model is stored', () => {
+    localStorage.setItem(
+      'zenith_chat_controls',
+      JSON.stringify({ selectedModel: 'lang-chain', selectedTools: [] }),
+    );
+
+    render(<App />);
+
+    expect(capturedRuntimeUrl).toBe('/api/copilotkit');
+    expect(capturedHeaders).toMatchObject({ 'x-zenith-provider': 'lang-chain' });
+  });
+
   it('restores stored conversation messages for an existing session', async () => {
     localStorage.setItem(
       'zenith_sessions',

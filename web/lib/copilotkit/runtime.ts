@@ -1,12 +1,26 @@
 import { HttpAgent } from '@ag-ui/client';
 import { CopilotRuntime } from '@copilotkit/runtime';
-import { ANTHROPIC_AGENT_URL, OPENAI_AGENT_URL } from './agents';
+import {
+  type AgentProvider,
+  ANTHROPIC_AGENT_URL,
+  LANG_CHAIN_AGENT_URL,
+  OPENAI_AGENT_URL,
+} from './agents';
 
-export const createCopilotRuntime = (provider: 'openai' | 'anthropic' = 'openai') => {
-  const agentUrl = provider === 'anthropic' ? ANTHROPIC_AGENT_URL : OPENAI_AGENT_URL;
+export const createCopilotRuntime = (provider: AgentProvider = 'openai') => {
+  const agent = new HttpAgent({
+    agentId: 'zenith',
+    url:
+      provider === 'anthropic'
+        ? ANTHROPIC_AGENT_URL
+        : provider === 'lang-chain'
+          ? LANG_CHAIN_AGENT_URL
+          : OPENAI_AGENT_URL,
+  });
+
   return new CopilotRuntime({
     agents: {
-      zenith: new HttpAgent({ agentId: 'zenith', url: agentUrl }),
+      zenith: agent,
     },
   });
 };

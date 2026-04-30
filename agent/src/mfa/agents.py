@@ -1,9 +1,9 @@
-from agent_framework import Agent
+from agent_framework import Agent, MCPStreamableHTTPTool
 from agent_framework.foundry import AnthropicFoundryClient, FoundryChatClient
 from azure.identity.aio import AzureCliCredential, get_bearer_token_provider
 from dedent import dedent
 
-from .config import Settings
+from ..config import Settings
 
 ZENITH_INSTRUCTIONS = dedent(
     """
@@ -27,7 +27,9 @@ ZENITH_INSTRUCTIONS = dedent(
     frontend tool for flight search result cards and never return raw JSON for flight
     cards. Use sales_dashboard for KPI dashboards with charts and recent orders.
     Use show_mcp_app for open-ended embedded app experiences that require an interactive
-    surface. Prefer tool calls over describing the UI in plain text when a tool fits
+    surface. Use Zenith MCP tools for document review, listing assistance, quote
+    comparison, and submission pack operations when those domain actions are requested.
+    Prefer tool calls over describing the UI in plain text when a tool fits
     the request. Use hosted code_interpreter for code execution and calculations,
     web_search for current external information, and image_generation for generated
     images when they fit the user's request. Respect the current Zenith chat controls
@@ -37,11 +39,27 @@ ZENITH_INSTRUCTIONS = dedent(
 ).strip()
 
 
+def build_mcp_tools(settings: Settings) -> list[MCPStreamableHTTPTool]:
+    if not settings.mcp_enabled:
+        return []
+
+    return [
+        MCPStreamableHTTPTool(
+            name="zenith_mcp",
+            description="Zenith MCP domain tools for document review, listing assist, quote comparison, and submission packs.",
+            url=settings.mcp_url,
+            approval_mode="never_require",
+            request_timeout=settings.mcp_request_timeout_seconds,
+        )
+    ]
+
+
 def build_openai_agent(settings: Settings, *, model: str | None = None) -> Agent:
     return Agent(
         name="zenith",
         instructions=ZENITH_INSTRUCTIONS,
         client=FoundryChatClient(model=model or settings.openai_model, credential=AzureCliCredential()),
+        tools=build_mcp_tools(settings),
         default_options={"store": False},
     )
 

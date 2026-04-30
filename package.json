@@ -10,6 +10,7 @@
     "setup:py": "uv sync --all-packages --dev",
     "setup:mcp": "uv sync --all-packages --dev",
     "dev:agent": "uv run uvicorn src.main:create_app --factory --reload --port 8100",
+    "dev:agent:lang-chain": "uv run uvicorn src.lang_chain.app:create_app --factory --reload --port 8200",
     "dev:mcp": "uv run python -c \"import sys; sys.path.insert(0, r'mcp/src'); from server import main; main()\"",
     "dev:mcp:reload": "uv run python mcp/src/dev.py root",
     "dev:mcp:http": "uv run python -c \"import sys; sys.path.insert(0, r'mcp/src'); from server import main_http; main_http()\"",
