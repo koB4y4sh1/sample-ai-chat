@@ -7,13 +7,15 @@ import {
   type CopilotChatInputProps,
   CopilotChatUserMessage,
   type CopilotChatUserMessageProps,
+  CopilotChatView,
+  type CopilotChatViewProps,
   type Message,
   UseAgentUpdate,
   type UserMessage,
   useAgent,
   useCopilotKit,
 } from '@copilotkit/react-core/v2';
-import { ChevronDown } from 'lucide-react';
+import { CheckCircle2, ChevronDown, Loader2, Wrench, XCircle } from 'lucide-react';
 import {
   forwardRef,
   memo,
@@ -38,7 +40,7 @@ interface ConversationViewProps {
 }
 
 export interface ConversationViewHandle {
-  sendMessage: (content: string) => Promise<void>;
+  sendMessage: (content: string, options?: { messageId?: string }) => Promise<void>;
 }
 
 type EditingDraft = {
@@ -51,7 +53,7 @@ const SESSION_MESSAGES_STORAGE_PREFIX = 'zenith_session_messages:';
 const getSessionMessagesStorageKey = (sessionId: string) =>
   `${SESSION_MESSAGES_STORAGE_PREFIX}${sessionId}`;
 
-const loadStoredMessages = (sessionId: string) => {
+const loadStoredMessages = (sessionId: string): Message[] => {
   if (typeof window === 'undefined') {
     return [];
   }
@@ -63,7 +65,7 @@ const loadStoredMessages = (sessionId: string) => {
 
   try {
     const parsed = JSON.parse(saved);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? (removeOrphanToolCallMessages(parsed) as Message[]) : [];
   } catch {
     return [];
   }
@@ -74,7 +76,10 @@ const saveStoredMessages = (sessionId: string, messages: unknown[]) => {
     return;
   }
 
-  localStorage.setItem(getSessionMessagesStorageKey(sessionId), JSON.stringify(messages));
+  localStorage.setItem(
+    getSessionMessagesStorageKey(sessionId),
+    JSON.stringify(removeOrphanToolCallMessages(messages)),
+  );
 };
 
 const buildRunState = (controls: ChatControlsState) => ({
@@ -84,6 +89,57 @@ const buildRunState = (controls: ChatControlsState) => ({
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
+
+// Removes assistant messages whose tool calls have no corresponding tool result.
+// Such orphan messages occur when a run errors before producing tool results.
+// Restoring them causes CopilotKit to attempt automatic continuation, triggering
+// a second RUN_ERROR event that the AG-UI client rejects as "already errored".
+const removeOrphanToolCallMessages = (messages: unknown[]): unknown[] => {
+  const toolResultIds = new Set<string>();
+  const assistantToolCallIds = new Set<string>();
+  for (const msg of messages) {
+    if (isRecord(msg) && msg.role === 'tool' && typeof msg.toolCallId === 'string') {
+      toolResultIds.add(msg.toolCallId);
+    }
+    if (isRecord(msg) && msg.role === 'assistant' && Array.isArray(msg.toolCalls)) {
+      for (const toolCall of msg.toolCalls) {
+        if (isRecord(toolCall) && typeof toolCall.id === 'string') {
+          assistantToolCallIds.add(toolCall.id);
+        }
+      }
+    }
+  }
+  return messages.filter((msg) => {
+    if (!isRecord(msg)) return false;
+    if (msg.role === 'tool') {
+      return typeof msg.toolCallId === 'string' && assistantToolCallIds.has(msg.toolCallId);
+    }
+    if (msg.role !== 'assistant') return true;
+    const toolCalls = Array.isArray(msg.toolCalls) ? msg.toolCalls : [];
+    if (toolCalls.length === 0) return true;
+    return toolCalls.some(
+      (tc) => isRecord(tc) && typeof tc.id === 'string' && toolResultIds.has(tc.id),
+    );
+  });
+};
+
+const mergeMessages = (baseMessages: Message[], incomingMessages: Message[]) => {
+  const merged = [...baseMessages];
+  const indexesById = new Map(merged.map((message, index) => [message.id, index]));
+
+  for (const message of incomingMessages) {
+    const existingIndex = indexesById.get(message.id);
+    if (existingIndex === undefined) {
+      indexesById.set(message.id, merged.length);
+      merged.push(message);
+      continue;
+    }
+
+    merged[existingIndex] = message;
+  }
+
+  return merged;
+};
 
 const getMessageText = (content: unknown): string => {
   if (typeof content === 'string') {
@@ -156,8 +212,122 @@ function ZenithScrollToBottomButton({
   );
 }
 
-function ToolLogPanel({ logs, isRunning }: { logs: string[]; isRunning: boolean }) {
-  if (!isRunning || logs.length === 0) {
+const getToolCallName = (toolCall: unknown) => {
+  if (!isRecord(toolCall)) {
+    return null;
+  }
+
+  const fn = toolCall.function;
+  if (isRecord(fn) && typeof fn.name === 'string') {
+    return fn.name;
+  }
+
+  return typeof toolCall.name === 'string' ? toolCall.name : null;
+};
+
+const getToolCallArguments = (toolCall: unknown) => {
+  if (!isRecord(toolCall)) {
+    return null;
+  }
+
+  const fn = toolCall.function;
+  const args = isRecord(fn) ? fn.arguments : toolCall.arguments;
+
+  if (typeof args === 'string') {
+    return args;
+  }
+
+  if (args === undefined || args === null) {
+    return null;
+  }
+
+  try {
+    return JSON.stringify(args, null, 2);
+  } catch {
+    return String(args);
+  }
+};
+
+const getToolResultContent = (message: unknown) => {
+  if (!isRecord(message)) {
+    return null;
+  }
+
+  const { content } = message;
+  if (typeof content === 'string') {
+    return content;
+  }
+
+  if (content === undefined || content === null) {
+    return null;
+  }
+
+  try {
+    return JSON.stringify(content, null, 2);
+  } catch {
+    return String(content);
+  }
+};
+
+const parseJsonRecord = (value: string) => {
+  try {
+    const parsed = JSON.parse(value);
+    return isRecord(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const isErrorStatus = (value: unknown) =>
+  typeof value === 'string' && ['error', 'failed', 'failure'].includes(value.toLowerCase());
+
+const isToolResultError = (message: unknown) => {
+  if (!isRecord(message)) {
+    return false;
+  }
+
+  if (isErrorStatus(message.status) || message.error === true || message.isError === true) {
+    return true;
+  }
+
+  if (typeof message.errorText === 'string' && message.errorText.trim()) {
+    return true;
+  }
+
+  if (typeof message.content !== 'string') {
+    return false;
+  }
+
+  const parsedContent = parseJsonRecord(message.content);
+  return Boolean(
+    parsedContent &&
+      (isErrorStatus(parsedContent.status) ||
+        parsedContent.error === true ||
+        parsedContent.isError === true ||
+        (typeof parsedContent.errorText === 'string' && parsedContent.errorText.trim())),
+  );
+};
+
+const findToolResultMessage = (messages: unknown[], toolCallId: string) =>
+  messages.find(
+    (message) => isRecord(message) && message.role === 'tool' && message.toolCallId === toolCallId,
+  );
+
+const truncateToolContent = (content: string) =>
+  content.length > 240 ? `${content.slice(0, 240)}...` : content;
+
+function McpToolStatusList({
+  message,
+  messages,
+  isRunning,
+}: {
+  message: AssistantMessage;
+  messages: Message[];
+  isRunning: boolean;
+}) {
+  const toolCalls = Array.isArray(message.toolCalls) ? message.toolCalls : [];
+
+  if (toolCalls.length === 0) {
     return null;
   }
 
@@ -165,18 +335,89 @@ function ToolLogPanel({ logs, isRunning }: { logs: string[]; isRunning: boolean 
     <div
       role="status"
       aria-live="polite"
-      aria-label="Agent processing steps"
-      className="pointer-events-none absolute inset-x-0 bottom-[calc(var(--zenith-composer-height,7.25rem)+0.5rem)] z-20 flex justify-center px-4"
+      aria-label="Tool execution status"
+      data-testid="mcp-tool-status-list"
+      className="mt-2 flex flex-col gap-2"
     >
-      <div className="flex max-w-2xl flex-wrap items-center gap-1.5 rounded-xl border border-border/50 bg-sidebar-bg/90 px-3 py-2 text-xs text-text-secondary shadow-sm backdrop-blur-sm">
-        <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent-primary" />
-        {logs.map((log, i) => (
-          <span key={log} className="opacity-80">
-            {log}
-            {i < logs.length - 1 ? ' →' : ''}
-          </span>
-        ))}
-      </div>
+      {toolCalls.map((toolCall) => {
+        if (!isRecord(toolCall) || typeof toolCall.id !== 'string') {
+          return null;
+        }
+
+        const toolName = getToolCallName(toolCall) ?? 'tool';
+        const resultMessage = findToolResultMessage(messages, toolCall.id);
+        const resultContent = resultMessage ? getToolResultContent(resultMessage) : null;
+        const status = resultMessage
+          ? isToolResultError(resultMessage)
+            ? 'Error'
+            : 'Success'
+          : isRunning
+            ? 'Running'
+            : 'Pending';
+        const argumentsText = getToolCallArguments(toolCall);
+
+        return (
+          <details
+            key={toolCall.id}
+            data-testid="mcp-tool-status"
+            className="group rounded-lg border border-border/60 bg-sidebar-bg/70 text-xs text-text-secondary shadow-sm"
+          >
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 marker:hidden">
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border bg-bg">
+                  {status === 'Running' ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-accent-primary" />
+                  ) : status === 'Success' ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                  ) : status === 'Error' ? (
+                    <XCircle className="h-3.5 w-3.5 text-red-500" />
+                  ) : (
+                    <Wrench className="h-3.5 w-3.5 text-text-secondary" />
+                  )}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate font-medium text-text-primary">{toolName}</span>
+                  <span className="text-text-secondary/70">Tool execution</span>
+                </span>
+              </span>
+              <span
+                className={cn(
+                  'shrink-0 rounded-full border px-2 py-0.5 font-medium',
+                  status === 'Success'
+                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600'
+                    : status === 'Error'
+                      ? 'border-red-500/30 bg-red-500/10 text-red-600'
+                      : status === 'Running'
+                        ? 'border-accent-primary/30 bg-accent-primary/10 text-accent-primary'
+                        : 'border-border bg-bg text-text-secondary',
+                )}
+              >
+                {status}
+              </span>
+            </summary>
+            <div className="border-t border-border/60 px-3 py-2">
+              {argumentsText ? (
+                <div>
+                  <p className="mb-1 font-medium text-text-secondary/80">Parameters</p>
+                  <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-md bg-bg px-2 py-1.5 font-mono text-[11px] leading-relaxed text-text-secondary">
+                    {argumentsText}
+                  </pre>
+                </div>
+              ) : null}
+              {resultContent ? (
+                <div className={argumentsText ? 'mt-2' : undefined}>
+                  <p className="mb-1 font-medium text-text-secondary/80">
+                    {status === 'Error' ? 'Error' : 'Result'}
+                  </p>
+                  <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-md bg-bg px-2 py-1.5 font-mono text-[11px] leading-relaxed text-text-secondary">
+                    {truncateToolContent(resultContent)}
+                  </pre>
+                </div>
+              ) : null}
+            </div>
+          </details>
+        );
+      })}
     </div>
   );
 }
@@ -273,12 +514,8 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
     const shouldStickToBottomRef = useRef(true);
     const [editingDraft, setEditingDraft] = useState<EditingDraft | null>(null);
     const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-    agentMessagesRef.current = agent.messages;
-
-    const toolLogs =
-      isRecord(agent.state) && Array.isArray((agent.state as Record<string, unknown>).tool_logs)
-        ? ((agent.state as Record<string, unknown>).tool_logs as string[])
-        : [];
+    const [guaranteedMessages, setGuaranteedMessages] = useState<Message[]>([]);
+    agentMessagesRef.current = mergeMessages(guaranteedMessages, agent.messages);
 
     const updateScrollButton = useCallback(() => {
       const scrollContainer = scrollContainerRef.current;
@@ -361,9 +598,11 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
       restoredSessionIdRef.current = sessionId;
 
       const storedMessages = loadStoredMessages(sessionId);
-      if (storedMessages.length > 0 && agent.messages.length === 0) {
+      const cleanedMessages = removeOrphanToolCallMessages(storedMessages) as Message[];
+      setGuaranteedMessages(cleanedMessages);
+      if (cleanedMessages.length > 0 && agent.messages.length === 0) {
         skipNextPersistRef.current = true;
-        agent.setMessages(storedMessages);
+        agent.setMessages(cleanedMessages);
       }
     }, [agent, sessionId]);
 
@@ -377,21 +616,34 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
         return;
       }
 
-      saveStoredMessages(sessionId, agent.messages);
-    }, [agent.messages, sessionId]);
+      saveStoredMessages(
+        sessionId,
+        removeOrphanToolCallMessages(mergeMessages(guaranteedMessages, agent.messages)),
+      );
+    }, [agent.messages, guaranteedMessages, sessionId]);
 
     useEffect(() => {
       onActiveToolCallIdsChange?.(getLatestAssistantToolCallIds(agent.messages));
     }, [agent.messages, onActiveToolCallIdsChange]);
 
     const sendMessage = useCallback(
-      async (content: string) => {
-        agent.addMessage({
-          id: globalThis.crypto?.randomUUID?.() ?? Date.now().toString(),
+      async (content: string, options?: { messageId?: string }) => {
+        const message = {
+          id: options?.messageId ?? globalThis.crypto?.randomUUID?.() ?? Date.now().toString(),
           role: 'user',
           content,
-        });
+        } as UserMessage;
+        const currentMessages = agentMessagesRef.current as Message[];
+        const hasMessage = currentMessages.some((item) => item.id === message.id);
+        const nextMessages = hasMessage ? currentMessages : [...currentMessages, message];
 
+        agentMessagesRef.current = nextMessages;
+        setGuaranteedMessages(nextMessages);
+        if (hasMessage) {
+          agent.setMessages(nextMessages);
+        } else {
+          agent.addMessage(message);
+        }
         agent.setState(buildRunState(controlsRef.current));
         await copilotkit.runAgent({ agent });
       },
@@ -400,6 +652,7 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
 
     const rerunFromMessages = useCallback(
       async (messages: Message[]) => {
+        setGuaranteedMessages(messages);
         agent.setMessages(messages);
         agent.setState(buildRunState(controlsRef.current));
         await copilotkit.runAgent({ agent });
@@ -479,14 +732,34 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
 
     const inputSlot = useMemo(() => Object.assign(ZenithChatInputSlot, ZenithComposer), []);
 
+    const chatViewSlot = useMemo(
+      () =>
+        Object.assign(function ZenithChatView(props: CopilotChatViewProps) {
+          return (
+            <CopilotChatView
+              {...props}
+              messages={mergeMessages(guaranteedMessages, props.messages ?? [])}
+            />
+          );
+        }, CopilotChatView),
+      [guaranteedMessages],
+    );
+
     const assistantMessageSlot = useMemo(
       () =>
         Object.assign(function ZenithAssistantMessage(props: CopilotChatAssistantMessageProps) {
           return (
-            <CopilotChatAssistantMessage {...props} onRegenerate={regenerateAssistantMessage} />
+            <>
+              <CopilotChatAssistantMessage {...props} onRegenerate={regenerateAssistantMessage} />
+              <McpToolStatusList
+                message={props.message}
+                messages={agentMessagesRef.current as Message[]}
+                isRunning={agent.isRunning}
+              />
+            </>
           );
         }, CopilotChatAssistantMessage),
-      [regenerateAssistantMessage],
+      [agent.isRunning, regenerateAssistantMessage],
     );
 
     const userMessageSlot = useMemo(
@@ -512,6 +785,7 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
             threadId={sessionId}
             className="zenith-copilot-chat flex min-h-full flex-col"
             welcomeScreen={false}
+            chatView={chatViewSlot}
             autoScroll="none"
             suggestionView="flex flex-wrap gap-2"
             scrollView={{
@@ -543,7 +817,6 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
             <ZenithScrollToBottomButton onClick={() => scrollToConversationBottom()} />
           </div>
         ) : null}
-        <ToolLogPanel logs={toolLogs} isRunning={agent.isRunning} />
         {editingDraft ? (
           <div className="absolute inset-0 z-40 flex items-end justify-center bg-black/20 px-4 py-6 backdrop-blur-[1px] sm:items-center">
             <div className="w-full max-w-2xl rounded-2xl border border-border bg-sidebar-bg p-4 shadow-2xl">

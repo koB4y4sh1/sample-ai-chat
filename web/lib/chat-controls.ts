@@ -124,6 +124,33 @@ export const CHAT_SUGGESTIONS = [
 
 export const HOME_PROMPT_SUGGESTIONS = [
   {
+    title: '実行計画をUI化',
+    description: 'task_planで方針、タスク、リスク、完了条件をカード表示します。',
+    message:
+      'Generative UIのtask_planで、次の要件を「実装方針」「影響範囲」「タスク」「リスク」「完了条件」に分けて表示してください。\n\n要件: チャット履歴にtool_callとtool_resultを正しい順序で保持し、画面にもツール実行状況を表示する。',
+  },
+  {
+    title: '比較表を作成',
+    description: 'comparisonとdecisionで選択肢、評価軸、推奨案を可視化します。',
+    message:
+      'Generative UIでcomparisonとdecisionを使い、次の選択肢を比較して推奨案を表示してください。\n\n選択肢: 1. OpenAI endpointを直接使う 2. LangChain endpointに統合する 3. MCP toolを別サービスとして呼ぶ\n評価軸: 保守性、実装コスト、障害調査のしやすさ、AG-UI互換性。',
+  },
+  {
+    title: '進捗を可視化',
+    description: 'progress_trackerとchecklistで作業状態を追えるUIを作ります。',
+    message:
+      'Generative UIのprogress_trackerとchecklistで、次の作業の進捗UIを作ってください。\n\n作業: 仕様確認、テスト追加、実装修正、lint/typecheck、動作確認\n現在の状態: 仕様確認は完了、テスト追加は進行中、残りは未着手。',
+  },
+  {
+    title: '確認パネルを表示',
+    description: 'confirmation_panelで実行前の内容、影響、承認項目を表示します。',
+    message:
+      'Generative UIのconfirmation_panelで、次の操作を実行前確認として表示してください。\n\n操作: LangChain endpointの設定変更\n表示項目: 実行内容、影響範囲、ロールバック方針、承認ボタン。',
+  },
+] as const;
+
+export const LEGACY_HOME_PROMPT_SUGGESTIONS = [
+  {
     title: 'エラーを診断する',
     description: '原因候補、再現手順、修正案、確認コマンドに分解します。',
     message:

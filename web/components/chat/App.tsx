@@ -34,6 +34,7 @@ type PendingInitialMessage = {
   id: string;
   sessionId: string;
   content: string;
+  messageId?: string;
 };
 
 const SESSIONS_STORAGE_KEY = 'zenith_sessions';
@@ -110,7 +111,8 @@ const loadPendingInitialMessage = (): PendingInitialMessage | null => {
       !isRecord(parsed) ||
       typeof parsed.id !== 'string' ||
       typeof parsed.sessionId !== 'string' ||
-      typeof parsed.content !== 'string'
+      typeof parsed.content !== 'string' ||
+      ('messageId' in parsed && typeof parsed.messageId !== 'string')
     ) {
       return null;
     }
@@ -140,6 +142,17 @@ const removeStoredSessionMessages = (sessionId: string) => {
   }
 
   localStorage.removeItem(`${SESSION_MESSAGES_STORAGE_PREFIX}${sessionId}`);
+};
+
+const saveInitialSessionMessage = (
+  sessionId: string,
+  message: { id: string; role: 'user'; content: string },
+) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  localStorage.setItem(`${SESSION_MESSAGES_STORAGE_PREFIX}${sessionId}`, JSON.stringify([message]));
 };
 
 const loadStoredChatControls = (): ChatControlsState => {
@@ -172,6 +185,14 @@ const loadStoredChatControls = (): ChatControlsState => {
   } catch {
     return DEFAULT_CHAT_CONTROLS;
   }
+};
+
+const saveStoredChatControls = (controls: ChatControlsState) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  localStorage.setItem(CHAT_CONTROLS_STORAGE_KEY, JSON.stringify(controls));
 };
 
 function ChatControlsBridge({ controls }: { controls: ChatControlsState }) {
@@ -210,15 +231,19 @@ export default function App({ activeSessionId = null }: AppProps) {
   );
   const [activeToolCallIds, setActiveToolCallIds] = useState<Set<string>>(new Set());
   const [chatControls, setChatControls] = useState<ChatControlsState>(DEFAULT_CHAT_CONTROLS);
+  const [conversationViewReadyTick, setConversationViewReadyTick] = useState(0);
   const chatControlsRef = useRef(chatControls);
   const conversationViewHandleRef = useRef<ConversationViewHandle | null>(null);
   const currentSessionId = activeSessionId ?? transientSessionId;
   const currentSessionIdRef = useRef<string | null>(currentSessionId);
   const pendingInitialMessageRef = useRef<PendingInitialMessage | null>(null);
+  const hasLoadedClientStateRef = useRef(hasLoadedClientState);
+  const consumedPendingInitialMessageIdsRef = useRef<Set<string>>(new Set());
 
   currentSessionIdRef.current = currentSessionId;
   pendingInitialMessageRef.current = pendingInitialMessage;
   chatControlsRef.current = chatControls;
+  hasLoadedClientStateRef.current = hasLoadedClientState;
 
   const updateChatControls = useCallback(
     (next: ChatControlsState | ((current: ChatControlsState) => ChatControlsState)) => {
@@ -272,7 +297,7 @@ export default function App({ activeSessionId = null }: AppProps) {
       return;
     }
 
-    localStorage.setItem(CHAT_CONTROLS_STORAGE_KEY, JSON.stringify(chatControls));
+    saveStoredChatControls(chatControls);
   }, [chatControls, hasLoadedClientState]);
 
   useEffect(() => {
@@ -301,35 +326,67 @@ export default function App({ activeSessionId = null }: AppProps) {
     });
   }, [currentSessionId, hasLoadedClientState]);
 
+  const consumePendingInitialMessage = useCallback(
+    (
+      message: PendingInitialMessage,
+      options?: {
+        currentSessionId: string | null;
+        hasLoadedClientState: boolean;
+      },
+    ) => {
+      const handle = conversationViewHandleRef.current;
+      const canConsume = options?.hasLoadedClientState ?? hasLoadedClientStateRef.current;
+      const targetSessionId = options?.currentSessionId ?? currentSessionIdRef.current;
+
+      if (!canConsume || !handle) {
+        return;
+      }
+
+      if (message.sessionId !== targetSessionId) {
+        return;
+      }
+
+      if (consumedPendingInitialMessageIdsRef.current.has(message.id)) {
+        return;
+      }
+
+      consumedPendingInitialMessageIdsRef.current.add(message.id);
+      pendingInitialMessageRef.current = null;
+      savePendingInitialMessage(null);
+      setPendingInitialMessage((prev) => (prev?.id === message.id ? null : prev));
+      queueMicrotask(() => {
+        void handle.sendMessage(message.content, { messageId: message.messageId });
+      });
+    },
+    [],
+  );
+
   useEffect(() => {
-    if (!pendingInitialMessage || !conversationViewHandleRef.current) {
+    if (!pendingInitialMessage) {
       return;
     }
 
-    if (pendingInitialMessage.sessionId !== currentSessionId) {
+    if (conversationViewReadyTick === 0) {
       return;
     }
 
-    savePendingInitialMessage(null);
-    setPendingInitialMessage((prev) => (prev?.id === pendingInitialMessage.id ? null : prev));
-    void conversationViewHandleRef.current.sendMessage(pendingInitialMessage.content);
-  }, [currentSessionId, pendingInitialMessage]);
+    consumePendingInitialMessage(pendingInitialMessage, {
+      currentSessionId,
+      hasLoadedClientState,
+    });
+  }, [
+    consumePendingInitialMessage,
+    conversationViewReadyTick,
+    currentSessionId,
+    hasLoadedClientState,
+    pendingInitialMessage,
+  ]);
 
   const attachConversationViewHandle = useCallback((handle: ConversationViewHandle | null) => {
     conversationViewHandleRef.current = handle;
-    if (!handle) {
-      return;
+    if (handle) {
+      setConversationViewReadyTick((tick) => tick + 1);
     }
-
-    const queuedMessage = pendingInitialMessageRef.current;
-    if (!queuedMessage || queuedMessage.sessionId !== currentSessionIdRef.current) {
-      return;
-    }
-
-    pendingInitialMessageRef.current = null;
-    savePendingInitialMessage(null);
-    setPendingInitialMessage((prev) => (prev?.id === queuedMessage.id ? null : prev));
-    void handle.sendMessage(queuedMessage.content);
   }, []);
 
   const submitGenerativeUIInteraction = useCallback(async (content: string) => {
@@ -353,16 +410,23 @@ export default function App({ activeSessionId = null }: AppProps) {
       id: createSessionId(),
       title: buildSessionTitle(sessions.length + 1),
     };
+    const initialMessage = {
+      id: createSessionId(),
+      role: 'user' as const,
+      content: trimmedContent,
+    };
     const nextSessions = [newSession, ...sessions];
     const nextPendingMessage = {
       id: createSessionId(),
       sessionId: newSession.id,
       content: trimmedContent,
+      messageId: initialMessage.id,
     };
 
     setSessions(nextSessions);
     saveStoredSessions(nextSessions);
-    setTransientSessionId(newSession.id);
+    saveStoredChatControls(chatControlsRef.current);
+    saveInitialSessionMessage(newSession.id, initialMessage);
     setPendingInitialMessage(nextPendingMessage);
     savePendingInitialMessage(nextPendingMessage);
     router.push(`/chat/${newSession.id}`);

@@ -131,8 +131,9 @@
 
   .zenith-copilot-chat .copilotKitInput {
     background: var(--color-sidebar-bg);
-    border: 1px solid var(--color-border);
-    box-shadow: 0 1px 2px color-mix(in srgb, black 12%, transparent);
+    border: none !important;
+    box-shadow: none !important;
+    outline: none;
   }
 
   .zenith-copilot-chat textarea {

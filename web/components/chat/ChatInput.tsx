@@ -53,7 +53,7 @@ export function ChatInput({
 
   return (
     <div className={cn('mx-auto w-full max-w-3xl', className)}>
-      <div className="mx-auto rounded-[28px] border border-border bg-sidebar-bg px-4 pt-4 pb-3 shadow-xs transition-colors focus-within:border-text-secondary/40">
+      <div className="mx-auto rounded-[28px] bg-sidebar-bg px-4 pt-4 pb-3 shadow-xs">
         <textarea
           ref={textareaRef}
           value={input}
@@ -64,7 +64,7 @@ export function ChatInput({
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           rows={1}
-          className="min-h-9 w-full bg-transparent border-none focus:ring-0 text-text-primary placeholder-text-secondary px-2 py-2 resize-none leading-relaxed text-[15px]"
+          className="min-h-9 w-full resize-none border-none bg-transparent px-2 py-2 text-[15px] leading-relaxed text-text-primary outline-none placeholder-text-secondary focus:outline-none focus:ring-0"
         />
 
         <div className="mt-4 flex items-end justify-between gap-3 border-t border-border pt-3">

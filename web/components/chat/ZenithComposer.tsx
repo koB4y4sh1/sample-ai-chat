@@ -64,7 +64,7 @@ const AutoResizeTextArea = forwardRef<
       rows={1}
       className={cn(
         className,
-        'min-h-9 w-full resize-none bg-transparent px-2 py-2 text-[15px] leading-relaxed text-text-primary placeholder:text-text-secondary focus:ring-0',
+        'min-h-9 w-full resize-none border-none bg-transparent px-2 py-2 text-[15px] leading-relaxed text-text-primary outline-none placeholder:text-text-secondary focus:outline-none focus:ring-0',
       )}
     />
   );
