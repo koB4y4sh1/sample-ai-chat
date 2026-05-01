@@ -8,6 +8,7 @@ from typing import Final
 from fastmcp import FastMCP
 from servers.document_review import create_document_review_server
 from servers.listing_assist import create_listing_assist_server
+from servers.map_view import create_map_view_server
 from servers.quote_compare import create_quote_compare_server
 from servers.submission_pack import create_submission_pack_server
 from shared.icons import ROOT_SERVER_ICONS
@@ -15,6 +16,7 @@ from shared.icons import ROOT_SERVER_ICONS
 SERVER_NAMESPACES: Final[tuple[str, ...]] = (
     "document_review",
     "listing_assist",
+    "map_view",
     "quote_compare",
     "submission_pack",
 )
@@ -30,7 +32,7 @@ def create_server() -> FastMCP:
         "Zenith MCP",
         instructions=(
             "Mounted FastMCP server for Zenith AI Chat. Use the document_review, "
-            "listing_assist, quote_compare, and submission_pack namespaces to access "
+            "listing_assist, map_view, quote_compare, and submission_pack namespaces to access "
             "domain tools."
         ),
         icons=ROOT_SERVER_ICONS,
@@ -38,6 +40,7 @@ def create_server() -> FastMCP:
     )
     server.mount(create_document_review_server(), namespace="document_review")
     server.mount(create_listing_assist_server(), namespace="listing_assist")
+    server.mount(create_map_view_server(), namespace="map_view")
     server.mount(create_quote_compare_server(), namespace="quote_compare")
     server.mount(create_submission_pack_server(), namespace="submission_pack")
     return server

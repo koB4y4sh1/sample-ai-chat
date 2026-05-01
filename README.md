@@ -56,6 +56,8 @@ pnpm run dev:mcp:document-review
 pnpm run dev:mcp:document-review:reload
 pnpm run dev:mcp:listing-assist
 pnpm run dev:mcp:listing-assist:reload
+pnpm run dev:mcp:map-view
+pnpm run dev:mcp:map-view:reload
 pnpm run dev:mcp:quote-compare
 pnpm run dev:mcp:quote-compare:reload
 pnpm run dev:mcp:submission-pack
@@ -87,3 +89,5 @@ The mounted root server supports both transports:
 For iterative MCP development, the `*:reload` variants watch `mcp/src` and restart the selected FastMCP process whenever Python files change. The HTTP reload path is usually the smoothest option for Inspector-based work.
 
 Set provider credentials in `/.env` before running a real model-backed conversation.
+Set `GOOGLE_MAPS_API_KEY` in `/.env` for the MCP Google Maps app, or in
+`web/.env` for the Next.js iframe route.

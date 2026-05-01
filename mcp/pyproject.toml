@@ -13,6 +13,7 @@ zenith-mcp = "server:main"
 zenith-mcp-http = "server:main_http"
 zenith-mcp-document-review = "servers.document_review.server:main"
 zenith-mcp-listing-assist = "servers.listing_assist.server:main"
+zenith-mcp-map-view = "servers.map_view.server:main"
 zenith-mcp-quote-compare = "servers.quote_compare.server:main"
 zenith-mcp-submission-pack = "servers.submission_pack.server:main"
 

@@ -19,6 +19,8 @@
     "dev:mcp:document-review:reload": "uv run python mcp/src/dev.py document-review",
     "dev:mcp:listing-assist": "uv run python -c \"import sys; sys.path.insert(0, r'mcp/src'); from servers.listing_assist.server import main; main()\"",
     "dev:mcp:listing-assist:reload": "uv run python mcp/src/dev.py listing-assist",
+    "dev:mcp:map-view": "uv run python -c \"import sys; sys.path.insert(0, r'mcp/src'); from servers.map_view.server import main; main()\"",
+    "dev:mcp:map-view:reload": "uv run python mcp/src/dev.py map-view",
     "dev:mcp:quote-compare": "uv run python -c \"import sys; sys.path.insert(0, r'mcp/src'); from servers.quote_compare.server import main; main()\"",
     "dev:mcp:quote-compare:reload": "uv run python mcp/src/dev.py quote-compare",
     "dev:mcp:submission-pack": "uv run python -c \"import sys; sys.path.insert(0, r'mcp/src'); from servers.submission_pack.server import main; main()\"",

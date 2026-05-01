@@ -84,6 +84,20 @@ SUBMISSION_PACK_SERVER_ICONS: Final[list[Icon]] = [
     )
 ]
 
+MAP_VIEW_SERVER_ICONS: Final[list[Icon]] = [
+    _svg_icon(
+        """
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="18" fill="#0F766E"/>
+  <path d="M14 18L28 12L50 18V48L36 52L14 46V18Z" fill="#CCFBF1"/>
+  <path d="M28 12V42M36 22V52" stroke="#0F766E" stroke-width="4" stroke-linecap="round"/>
+  <path d="M39 30C39 36 32 43 32 43C32 43 25 36 25 30C25 26 28 23 32 23C36 23 39 26 39 30Z" fill="#EF4444"/>
+  <circle cx="32" cy="30" r="3" fill="#FFFFFF"/>
+</svg>
+""".strip()
+    )
+]
+
 CREATE_DOCUMENT_REVIEW_TOOL_ICONS: Final[list[Icon]] = [
     _svg_icon(
         """
@@ -152,6 +166,19 @@ GET_MARKETPLACE_POSTING_CHECKLIST_TOOL_ICONS: Final[list[Icon]] = [
   <rect width="64" height="64" rx="18" fill="#FFFBEB"/>
   <rect x="16" y="14" width="32" height="36" rx="4" fill="#F59E0B"/>
   <path d="M24 26L27 29L32 22M24 36L27 39L32 32M36 26H41M36 36H41" stroke="#FFFBEB" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+""".strip()
+    )
+]
+
+SHOW_GOOGLE_MAP_TOOL_ICONS: Final[list[Icon]] = [
+    _svg_icon(
+        """
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="18" fill="#ECFDF5"/>
+  <path d="M18 16H46V48H18V16Z" fill="#14B8A6"/>
+  <path d="M24 22H40M24 42H40M22 30H42" stroke="#ECFDF5" stroke-width="4" stroke-linecap="round"/>
+  <path d="M37 30C37 35 32 40 32 40C32 40 27 35 27 30C27 27 29 25 32 25C35 25 37 27 37 30Z" fill="#F43F5E"/>
 </svg>
 """.strip()
     )

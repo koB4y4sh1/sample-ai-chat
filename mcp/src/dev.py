@@ -18,6 +18,7 @@ TARGETS: Final[dict[str, tuple[str, str]]] = {
     "root-http": ("server", "main_http"),
     "document-review": ("servers.document_review.server", "main"),
     "listing-assist": ("servers.listing_assist.server", "main"),
+    "map-view": ("servers.map_view.server", "main"),
     "quote-compare": ("servers.quote_compare.server", "main"),
     "submission-pack": ("servers.submission_pack.server", "main"),
 }
