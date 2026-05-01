@@ -1,3 +1,4 @@
+import { useFrontendTool } from '@copilotkit/react-core/v2';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
@@ -456,6 +457,7 @@ describe('App', () => {
     runAgentMessageSnapshots.length = 0;
     useAgentMock.mockClear();
     useCopilotKitMock.mockClear();
+    vi.mocked(useFrontendTool).mockClear();
     pushMock.mockClear();
     capturedRuntimeUrl = undefined;
     capturedHeaders = undefined;
@@ -474,6 +476,23 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /比較表を作成/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /進捗を可視化/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /確認パネルを表示/ })).toBeInTheDocument();
+  });
+
+  it('shows a Google Maps MCP Apps home suggestion', () => {
+    render(<App />);
+
+    expect(screen.getByRole('button', { name: /Google Maps MCP App/ })).toBeInTheDocument();
+  });
+
+  it('registers a frontend renderer for the Google Maps MCP tool call', () => {
+    render(<App />);
+
+    expect(useFrontendTool).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'map_view_show_google_map',
+      }),
+      expect.anything(),
+    );
   });
 
   it('starts a conversation from a Generative UI home suggestion', async () => {

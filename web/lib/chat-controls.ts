@@ -147,6 +147,12 @@ export const HOME_PROMPT_SUGGESTIONS = [
     message:
       'Generative UIのconfirmation_panelで、次の操作を実行前確認として表示してください。\n\n操作: LangChain endpointの設定変更\n表示項目: 実行内容、影響範囲、ロールバック方針、承認ボタン。',
   },
+  {
+    title: 'Google Maps MCP App',
+    description: 'MCP AppsでGoogle Mapsをiframe表示し、中心座標とmarkerを確認します。',
+    message:
+      'MCP Appsのmap_view_show_google_mapを使って、Google Mapsをiframeに表示してください。\n\n地図: 東京駅周辺\n中心座標: lat 35.681236, lng 139.767125\nzoom: 14\nmarkers:\n- 東京駅: lat 35.681236, lng 139.767125, note 丸の内中央口\n- 皇居外苑: lat 35.679501, lng 139.758037, note 徒歩圏の確認地点',
+  },
 ] as const;
 
 export const LEGACY_HOME_PROMPT_SUGGESTIONS = [

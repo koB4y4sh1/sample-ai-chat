@@ -13,11 +13,15 @@ import {
   type ShowFlightOptionsArgs,
   showFlightOptionsSchema,
 } from '../../lib/generative-ui/schemas/flight-options';
+import {
+  type ShowGoogleMapArgs,
+  showGoogleMapSchema,
+} from '../../lib/generative-ui/schemas/google-map';
 import { type ShowMcpAppArgs, showMcpAppSchema } from '../../lib/generative-ui/schemas/open-ended';
 import { type ZenithPanelArgs, zenithPanelSchema } from '../../lib/generative-ui/schemas/static';
 import { FlightOptions } from '../generative-ui/custom';
 import { DeclarativeRenderer } from '../generative-ui/declarative';
-import { EmbeddedAppFrame } from '../generative-ui/open-ended';
+import { EmbeddedAppFrame, GoogleMapFrame } from '../generative-ui/open-ended';
 import { ZenithPanel } from '../generative-ui/static';
 import { useGenerativeUIInteraction } from './GenerativeUIInteractionContext';
 
@@ -1116,6 +1120,32 @@ export function GenerativeUIRegistry({ agentId }: GenerativeUIRegistryProps) {
           title={args.title ?? 'Embedded App'}
           prompt={args.prompt}
           height={args.height ?? 420}
+        />
+      ),
+    },
+    staticToolDeps,
+  );
+
+  useFrontendTool<ShowGoogleMapArgs>(
+    {
+      name: 'map_view_show_google_map',
+      agentId,
+      description:
+        'Render an interactive Google Maps MCP App in a sandboxed iframe. Use this when the user asks to display a map, locations, or markers.',
+      parameters: showGoogleMapSchema,
+      followUp: false,
+      handler: async (args) => ({
+        rendered: true,
+        type: 'google-map',
+        title: args.title,
+        markerCount: args.markers?.length ?? 0,
+      }),
+      render: ({ args }) => (
+        <GoogleMapFrame
+          title={args.title ?? 'Google Map'}
+          center={args.center ?? { lat: 35.681236, lng: 139.767125 }}
+          zoom={args.zoom ?? 13}
+          markers={args.markers ?? []}
         />
       ),
     },

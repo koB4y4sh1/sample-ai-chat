@@ -6,6 +6,7 @@ import {
   LANG_CHAIN_AGENT_URL,
   OPENAI_AGENT_URL,
 } from './agents';
+import { buildMcpAppsConfig } from './mcp-apps';
 
 export const createCopilotRuntime = (provider: AgentProvider = 'openai') => {
   const agent = new HttpAgent({
@@ -22,5 +23,6 @@ export const createCopilotRuntime = (provider: AgentProvider = 'openai') => {
     agents: {
       zenith: agent,
     },
+    mcpApps: buildMcpAppsConfig(),
   });
 };

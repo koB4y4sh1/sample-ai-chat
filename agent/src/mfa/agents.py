@@ -27,8 +27,8 @@ ZENITH_INSTRUCTIONS = dedent(
     frontend tool for flight search result cards and never return raw JSON for flight
     cards. Use sales_dashboard for KPI dashboards with charts and recent orders.
     Use show_mcp_app for open-ended embedded app experiences that require an interactive
-    surface. Use Zenith MCP tools for document review, listing assistance, quote
-    comparison, and submission pack operations when those domain actions are requested.
+    surface. Use Zenith MCP tools for document review, listing assistance, Google
+    Maps display, quote comparison, and submission pack operations when those domain actions are requested.
     Prefer tool calls over describing the UI in plain text when a tool fits
     the request. Use hosted code_interpreter for code execution and calculations,
     web_search for current external information, and image_generation for generated
@@ -46,7 +46,7 @@ def build_mcp_tools(settings: Settings) -> list[MCPStreamableHTTPTool]:
     return [
         MCPStreamableHTTPTool(
             name="zenith_mcp",
-            description="Zenith MCP domain tools for document review, listing assist, quote comparison, and submission packs.",
+            description="Zenith MCP domain tools for document review, listing assist, Google Maps display, quote comparison, and submission packs.",
             url=settings.mcp_url,
             approval_mode="never_require",
             request_timeout=settings.mcp_request_timeout_seconds,
