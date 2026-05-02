@@ -192,4 +192,8 @@ sketch
 # End of https://www.toptal.com/developers/gitignore/api/python,react
 
 ### Local Patch ###
+# MCP Server
 .serena
+
+# Agent Skills
+.agents/skills/*

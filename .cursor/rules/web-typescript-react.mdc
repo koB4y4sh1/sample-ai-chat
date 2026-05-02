@@ -1,0 +1,15 @@
+---
+description: web の TypeScript・React・Next.js・CopilotKit（.github/instructions/typescript-react と整合）
+globs: web/**/*.ts,web/**/*.tsx
+alwaysApply: false
+---
+
+# TypeScript, React, CopilotKit
+
+- 新しい抽象より既存パターンを優先する。
+- React は表示とユーザー操作に集中。BFF は route handler または既存 client の背後。
+- Biome の format と import 順序に従う。
+- `any` は避ける。`unknown` は境界で schema / type guard で検証。
+- `button` には明示的な `type` を付ける。
+- CopilotKit 変更は runtime 内部ではなく公開契約をテストする。
+- 先に対象テストを実行し、完了前に `pnpm run check` を実行する。

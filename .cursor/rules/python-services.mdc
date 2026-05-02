@@ -1,0 +1,14 @@
+---
+description: agent / mcp の Python 作業（.github/instructions/python と整合）
+globs: agent/**/*.py,mcp/**/*.py
+alwaysApply: false
+---
+
+# Python Services
+
+- パッケージ操作は `uv` のみ。
+- format / lint は Ruff、型は strict mypy。
+- `agent` の挙動と MCP tool 実装を分離する。
+- 公開関数・境界・tool handler には型注釈。境界では広い `dict[str, Any]` より構造化モデル。
+- 理由なく Ruff / mypy を抑制しない。
+- 先に対象 `pytest` を実行し、完了前に `pnpm run check` を実行する。

@@ -5,6 +5,6 @@
   "author": {
     "name": "Zenith AI Chat"
   },
-  "skills": "../skills/",
+  "skills": "../../skills/",
   "hooks": "../hooks/quality-gate.json"
 }

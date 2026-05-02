@@ -1,0 +1,38 @@
+---
+description: Zenith AI Chat のモノレポ境界、コマンド、品質、CopilotKit 契約（ルート AGENTS.md / CODING.md と整合）
+alwaysApply: true
+---
+
+# Zenith AI Chat（共通）
+
+リポジトリ全体の正はルートの [AGENTS.md](../../AGENTS.md) と [CODING.md](../../CODING.md)。`.codex/AGENTS.md` と同趣旨の補助。
+
+## コマンド
+
+- JS: `pnpm install`（`npm` は使わない）
+- Python: `uv sync --all-packages --dev`（`pip` / `python install` でパッケージを入れない）
+- 品質: `pnpm run format` / `lint` / `typecheck` / `check`、hooks は `uv run pre-commit install`
+
+## 必須ワークフロー
+
+- 変更は要求範囲に限定する。
+- 挙動変更は TDD: [tdd-specification.md](../../tdd-specification.md)。詳細手順は [skills/zenith-tdd/SKILL.md](../../skills/zenith-tdd/SKILL.md)。
+- Ruff・Biome・`tsc`・mypy の診断は残して完了しない（無意味な抑制はしない）。
+- アーキテクチャ・コマンド・契約変更時は [docs/specification.html](../../docs/specification.html) を更新する。
+- `docs/` は HTML のみ。共通 Markdown ガイドはルートまたは `.github/`。
+
+## サービス境界
+
+- `web`: Next.js、CopilotKit、BFF / route handler、frontend tool。
+- `agent`: エージェント挙動と会話状態。
+- `mcp`: FastMCP と tool schema。
+- agent の意思決定を `web` に置かない。MCP 実装詳細を `agent` に入れない。BFF 責務を React に混ぜない。
+
+## CopilotKit
+
+観測可能な契約をテストする（UI、`/api/copilotkit`、agent context、endpoint 選択、frontend tool、Generative UI の入力）。runtime 内部に依存するテストは書かない。運用は [skills/copilotkit-contracts/SKILL.md](../../skills/copilotkit-contracts/SKILL.md)。
+
+## コミット・PR（日本語）
+
+- コミット案: [commit-convention.md](../../commit-convention.md)。タイトルは短く、目的が分かること。
+- PR: 変更目的、保証した挙動、実行した確認コマンド。TDD したら対象テストを記載。
