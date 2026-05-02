@@ -2,21 +2,57 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "FE: Chrome",
-      "type": "pwa-chrome",
+      "name": "Web: Next.js (client)",
+      "type": "chrome",
       "request": "launch",
       "url": "http://localhost:3000",
-      "webRoot": "${workspaceFolder}/web/src",
-      "preLaunchTask": "dev:web",
+      "webRoot": "${workspaceFolder}/web",
       "sourceMaps": true
+    },
+    {
+      "name": "Web: Next.js (server)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "pnpm run dev:web",
+      "cwd": "${workspaceFolder}"
     },
     {
       "name": "BE: Agent",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/agent/src/main.py",
+      "module": "uvicorn",
+      "args": [
+        "src.main:create_app",
+        "--factory",
+        "--reload",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8100"
+      ],
+      "cwd": "${workspaceFolder}/agent",
       "console": "integratedTerminal",
-      "justMyCode": false
+      "justMyCode": false,
+      "subProcess": true
+    },
+    {
+      "name": "BE: MCP",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "pnpm run dev:mcp:http:reload",
+      "cwd": "${workspaceFolder}"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "FE: Web",
+      "configurations": ["Web: Next.js (server)", "Web: Next.js (client)"],
+      "stopAll": true
+    },
+    {
+      "name": "BE: Agent + MCP",
+      "configurations": ["BE: Agent", "BE: MCP"],
+      "stopAll": true
     }
   ]
 }
