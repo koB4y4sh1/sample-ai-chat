@@ -1,12 +1,11 @@
 ---
 description: HTML ドキュメントとリポジトリ共通ガイド（.github/instructions/docs と整合）
-globs: docs/**/*.html,AGENTS.md,CODING.md,.github/**/*.md,skills/**/*.md,**/*.md
+globs: docs/**/*.{html,md},AGENTS.md,CODING.md,.github/**/*.md,skills/**/*.md,**/*.md
 alwaysApply: false
 ---
 
 # Documentation
 
-- `docs/` には HTML のみ。
-- 共通 Markdown はルート、`.github/`、または `skills/`（`SKILL.md` など）。
-- アーキテクチャ・コマンド・環境変数・service contract・tool schema・CI・pre-commit を変えたら `docs/specification.html` を更新する。
+- ドキュメントの正は `docs/spec/*.md`。閲覧用 HTML は `pnpm run docs:build` で `docs/html` に生成する。共通 Markdown ガイドはルート、`.github/`、または `skills/`（`SKILL.md` など）。
+- アーキテクチャ・コマンド・環境変数・service contract・tool schema・CI・pre-commit を変えたら `docs/spec/specification.md` を更新し、`pnpm run docs:build` で `docs/html/specification.html` を再生成する。
 - 事実と運用手順に限定し、宣伝文句は書かない。

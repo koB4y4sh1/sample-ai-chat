@@ -23,7 +23,7 @@ Zenith AI Chat is a monorepo with these service boundaries:
 - Use `uv`, never ad hoc Python installation commands.
 - Keep unrelated edits out of a task.
 - Prefer existing repo scripts over direct tool invocations.
-- Update `docs/specification.html` when architecture or quality gates change.
+- Update `docs/spec/specification.md` and run `pnpm run docs:build` (outputs `docs/html/specification.html`) when architecture or quality gates change.
 
 ## Quality
 

@@ -69,7 +69,9 @@ uv run pre-commit run --all-files
 ### `docs`
 
 - 仕様書、設計判断、API契約、運用前提を置く。
-- アーキテクチャ、コマンド、サービス契約を変えたら `docs/specification.html` を更新する。
+- ソースは `docs/spec/*.md`。生成された閲覧用 HTML は `pnpm run docs:build` で `docs/html` に出力する。
+- 読み順・全ページ一覧は `docs/spec/documentation-guide.md`（生成 HTML は `docs/html/documentation-guide.html`）。
+- アーキテクチャ、コマンド、サービス契約を変えたら `docs/spec/specification.md` を更新し、`pnpm run docs:build` で HTML を再生成する。
 
 ## TypeScript / React
 

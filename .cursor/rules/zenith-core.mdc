@@ -18,7 +18,7 @@ alwaysApply: true
 - 変更は要求範囲に限定する。
 - 挙動変更は TDD: [tdd-specification.md](../../tdd-specification.md)。詳細手順は [skills/zenith-tdd/SKILL.md](../../skills/zenith-tdd/SKILL.md)。
 - Ruff・Biome・`tsc`・mypy の診断は残して完了しない（無意味な抑制はしない）。
-- アーキテクチャ・コマンド・契約変更時は [docs/specification.html](../../docs/specification.html) を更新する。
+- アーキテクチャ・コマンド・契約変更時は [docs/spec/specification.md](../../docs/spec/specification.md) を更新し、`pnpm run docs:build` で HTML を再生成する。
 - `docs/` は HTML のみ。共通 Markdown ガイドはルートまたは `.github/`。
 
 ## サービス境界

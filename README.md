@@ -9,7 +9,7 @@ a monorepo chat application.
 web/    Next.js frontend and BFF route handlers
 agent/  Python agent service
 mcp/    FastMCP tool server
-docs/   HTML specifications
+docs/   Markdown sources (`spec/`), generated HTML (`html/`), templates (`template/`)
 ```
 
 ## Prerequisites

@@ -12,7 +12,7 @@ applyTo: "**"
 - Python では `uv` を使う。`pip install` と `python install` は使わない。
 - 挙動変更では [TDD](../tdd-specification.md) に従う。手順の詳細は [skills/zenith-tdd/SKILL.md](skills/zenith-tdd/SKILL.md)。先に失敗テストを書き、Red を確認し、最小実装で Green にしてからリファクタリングする。
 - Ruff、Biome、`tsc`、mypy の診断は作業項目として扱う。今回変更で新規発生または露出した診断を残して完了しない。
-- `docs/` には HTML 文書だけを置く。リポジトリ共通の Markdown ガイドはルート、`.github/`、または `skills/` 配下に置く。CopilotKit 契約チェックは [skills/copilotkit-contracts/SKILL.md](skills/copilotkit-contracts/SKILL.md)。
+- ドキュメントの正は `docs/spec/*.md`。閲覧用 HTML は `pnpm run docs:build` で `docs/html` に生成する。リポジトリ共通の Markdown ガイドはルート、`.github/`、または `skills/` 配下に置く。CopilotKit 契約チェックは [skills/copilotkit-contracts/SKILL.md](skills/copilotkit-contracts/SKILL.md)。
 
 ## アーキテクチャ境界
 

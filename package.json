@@ -40,9 +40,15 @@
     "typecheck": "pnpm run typecheck:ts && pnpm run typecheck:py",
     "typecheck:py": "uv run mypy -p src && uv run mypy mcp/src mcp/tests",
     "typecheck:ts": "pnpm --filter @zenith/web typecheck",
-    "check": "pnpm run lint && pnpm run typecheck"
+    "check": "pnpm run lint && pnpm run typecheck",
+    "docs:build": "node scripts/build-docs.mjs",
+    "docs:migrate-html": "node scripts/migrate-html-to-spec.mjs"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.6"
+    "@biomejs/biome": "^2.2.6",
+    "cheerio": "^1.2.0",
+    "marked": "^18.0.3",
+    "turndown": "^7.2.4",
+    "turndown-plugin-gfm": "^1.0.2"
   }
 }

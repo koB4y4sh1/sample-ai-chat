@@ -31,7 +31,7 @@ This repository is a monorepo for Zenith AI Chat.
   - `mcp` owns tool exposure.
 - Do not add runtime dependencies unless the target package and import name are confirmed.
 - Treat Ruff, Biome, `tsc`, and mypy diagnostics as tracked work. Fix introduced or affected errors before completion; do not silence rules unless the reason is explicit in the config or nearest code.
-- Update `docs/specification.html` when architecture, commands, or service contracts change.
+- Update `docs/spec/specification.md` and run `pnpm run docs:build` (outputs `docs/html/specification.html`) when architecture, commands, or service contracts change.
 
 ## Quality Baseline
 
