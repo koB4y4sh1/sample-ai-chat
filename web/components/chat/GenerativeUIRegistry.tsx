@@ -17,11 +17,10 @@ import {
   type ShowGoogleMapArgs,
   showGoogleMapSchema,
 } from '../../lib/generative-ui/schemas/google-map';
-import { type ShowMcpAppArgs, showMcpAppSchema } from '../../lib/generative-ui/schemas/open-ended';
 import { type ZenithPanelArgs, zenithPanelSchema } from '../../lib/generative-ui/schemas/static';
 import { FlightOptions } from '../generative-ui/custom';
 import { DeclarativeRenderer } from '../generative-ui/declarative';
-import { EmbeddedAppFrame, GoogleMapFrame } from '../generative-ui/open-ended';
+import { GoogleMapFrame } from '../generative-ui/open-ended';
 import { ZenithPanel } from '../generative-ui/static';
 import { useGenerativeUIInteraction } from './GenerativeUIInteractionContext';
 
@@ -1098,32 +1097,6 @@ export function GenerativeUIRegistry({ agentId }: GenerativeUIRegistryProps) {
       ),
     },
     interactiveToolDeps,
-  );
-
-  useFrontendTool<ShowMcpAppArgs>(
-    {
-      name: 'show_mcp_app',
-      agentId,
-      description:
-        'Render an open-ended MCP App style surface in a sandboxed iframe. Use this for interactive embedded app experiences that do not fit the predefined static or declarative UI blocks.',
-      parameters: showMcpAppSchema,
-      followUp: false,
-      handler: async (args) => ({
-        rendered: true,
-        type: 'open-ended',
-        appId: args.appId,
-        title: args.title,
-      }),
-      render: ({ args }) => (
-        <EmbeddedAppFrame
-          appId={args.appId ?? 'project-dashboard'}
-          title={args.title ?? 'Embedded App'}
-          prompt={args.prompt}
-          height={args.height ?? 420}
-        />
-      ),
-    },
-    staticToolDeps,
   );
 
   useFrontendTool<ShowGoogleMapArgs>(

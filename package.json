@@ -44,5 +44,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.6"
+  },
+  "dependencies": {
+    "@ag-ui/mcp-apps-middleware": "^0.0.3",
+    "@copilotkit/react-core": "^1.56.5",
+    "@copilotkit/runtime": "^1.56.5"
   }
 }

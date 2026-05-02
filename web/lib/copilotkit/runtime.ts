@@ -1,4 +1,5 @@
 import { HttpAgent } from '@ag-ui/client';
+import { MCPAppsMiddleware } from '@ag-ui/mcp-apps-middleware';
 import { CopilotRuntime } from '@copilotkit/runtime';
 import {
   type AgentProvider,
@@ -6,7 +7,6 @@ import {
   LANG_CHAIN_AGENT_URL,
   OPENAI_AGENT_URL,
 } from './agents';
-import { buildMcpAppsConfig } from './mcp-apps';
 
 export const createCopilotRuntime = (provider: AgentProvider = 'openai') => {
   const agent = new HttpAgent({
@@ -17,12 +17,15 @@ export const createCopilotRuntime = (provider: AgentProvider = 'openai') => {
         : provider === 'lang-chain'
           ? LANG_CHAIN_AGENT_URL
           : OPENAI_AGENT_URL,
-  });
+  }).use(
+    new MCPAppsMiddleware({
+      mcpServers: [{ type: 'http', url: 'http://localhost:8101/mcp', serverId: 'mcp-server' }],
+    }),
+  );
 
   return new CopilotRuntime({
     agents: {
       zenith: agent,
     },
-    mcpApps: buildMcpAppsConfig(),
   });
 };

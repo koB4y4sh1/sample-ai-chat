@@ -24,6 +24,7 @@ import { GenerativeUIInteractionProvider } from './GenerativeUIInteractionContex
 import { GenerativeUIRegistry } from './GenerativeUIRegistry';
 import { HomeView } from './HomeView';
 import { Sidebar } from './Sidebar';
+import { stableMcpAppsActivityRenderers } from './StableMcpAppsActivityRenderer';
 
 export type Session = {
   id: string;
@@ -485,6 +486,7 @@ export default function App({ activeSessionId = null }: AppProps) {
             headers={{
               'x-zenith-provider': getModelOption(chatControls.selectedModel).provider,
             }}
+            renderActivityMessages={stableMcpAppsActivityRenderers}
             useSingleEndpoint
             showDevConsole={false}
           >

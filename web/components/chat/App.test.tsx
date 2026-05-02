@@ -77,6 +77,7 @@ type MockCopilotChatProps = {
 
 let capturedRuntimeUrl: string | undefined;
 let capturedHeaders: Record<string, string> | undefined;
+let capturedRenderActivityMessages: unknown[] | undefined;
 
 const agentListeners = new Set<() => void>();
 const notifyAgentListeners = () => {
@@ -418,15 +419,21 @@ vi.mock('@copilotkit/react-core/v2', async () => {
       children,
       runtimeUrl,
       headers,
+      renderActivityMessages,
     }: {
       children: React.ReactNode;
       runtimeUrl?: string;
       headers?: Record<string, string>;
+      renderActivityMessages?: unknown[];
     }) => {
       capturedRuntimeUrl = runtimeUrl;
       capturedHeaders = headers;
+      capturedRenderActivityMessages = renderActivityMessages;
       return <div data-testid="copilot-kit">{children}</div>;
     },
+    MCPAppsActivityContentSchema: { safeParse: vi.fn() },
+    MCPAppsActivityRenderer: vi.fn(() => <div data-testid="mcp-apps-activity" />),
+    MCPAppsActivityType: 'mcp-apps',
     UseAgentUpdate: {
       OnMessagesChanged: 'OnMessagesChanged',
       OnRunStatusChanged: 'OnRunStatusChanged',
@@ -461,6 +468,7 @@ describe('App', () => {
     pushMock.mockClear();
     capturedRuntimeUrl = undefined;
     capturedHeaders = undefined;
+    capturedRenderActivityMessages = undefined;
   });
 
   beforeEach(() => {
@@ -476,17 +484,26 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /比較表を作成/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /進捗を可視化/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /確認パネルを表示/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /既存MCPを実行/ })).toBeInTheDocument();
   });
 
   it('shows a Google Maps MCP Apps home suggestion', () => {
     render(<App />);
 
     expect(screen.getByRole('button', { name: /Google Maps MCP App/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /MCP Appsを試す/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Quote Compare MCP App/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Submission Pack MCP App/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Document Review MCP App/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Listing Assist MCP App/ })).toBeInTheDocument();
   });
 
   it('registers a frontend renderer for the Google Maps MCP tool call', () => {
     render(<App />);
 
+    expect(
+      vi.mocked(useFrontendTool).mock.calls.some(([tool]) => tool.name === 'show_mcp_app'),
+    ).toBe(false);
     expect(useFrontendTool).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'map_view_show_google_map',
@@ -519,6 +536,44 @@ describe('App', () => {
         content: expect.stringContaining('Generative UIのtask_plan'),
       }),
     ]);
+  });
+
+  it('starts a conversation from an existing MCP follow-up with concrete tool names', async () => {
+    vi.spyOn(globalThis.crypto, 'randomUUID')
+      .mockReturnValueOnce('00000000-0000-0000-0000-000000000011')
+      .mockReturnValueOnce('00000000-0000-0000-0000-000000000012')
+      .mockReturnValue('00000000-0000-0000-0000-000000000013');
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: /既存MCPを実行/ }));
+
+    expect(pushMock).toHaveBeenCalledWith('/chat/00000000-0000-0000-0000-000000000011');
+    expect(
+      JSON.parse(
+        localStorage.getItem('zenith_session_messages:00000000-0000-0000-0000-000000000011') ??
+          '[]',
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        id: '00000000-0000-0000-0000-000000000012',
+        role: 'user',
+        content: expect.stringContaining('map_view_show_google_map'),
+      }),
+    ]);
+    expect(
+      JSON.parse(
+        localStorage.getItem('zenith_session_messages:00000000-0000-0000-0000-000000000011') ??
+          '[]',
+      )[0].content,
+    ).toContain('document_review_show_document_review_app');
+    expect(
+      JSON.parse(
+        localStorage.getItem('zenith_session_messages:00000000-0000-0000-0000-000000000011') ??
+          '[]',
+      )[0].content,
+    ).toContain('listing_assist_show_listing_app');
   });
 
   it('queues the home input until the conversation route is active', async () => {
@@ -751,6 +806,14 @@ describe('App', () => {
     render(<App />);
 
     expect(capturedRuntimeUrl).toBe('/api/copilotkit');
+  });
+
+  it('overrides the MCP Apps activity renderer with a stable renderer', () => {
+    render(<App />);
+
+    expect(capturedRenderActivityMessages).toEqual([
+      expect.objectContaining({ activityType: 'mcp-apps' }),
+    ]);
   });
 
   it('passes x-zenith-provider: openai header when openai model is selected (default)', () => {

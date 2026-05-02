@@ -1,4 +1,7 @@
-import { copilotRuntimeNextJSAppRouterEndpoint } from '@copilotkit/runtime';
+import {
+  copilotRuntimeNextJSAppRouterEndpoint,
+  ExperimentalEmptyAdapter,
+} from '@copilotkit/runtime';
 import type { NextRequest } from 'next/server';
 import type { AgentProvider } from '../../../lib/copilotkit/agents';
 import { createCopilotRuntime } from '../../../lib/copilotkit/runtime';
@@ -13,8 +16,9 @@ async function handleRequest(req: NextRequest) {
       ? requestedProvider
       : 'openai';
   const { handleRequest: handle } = copilotRuntimeNextJSAppRouterEndpoint({
-    runtime: createCopilotRuntime(provider),
     endpoint: '/api/copilotkit',
+    serviceAdapter: new ExperimentalEmptyAdapter(),
+    runtime: createCopilotRuntime(provider),
   });
   return handle(req);
 }

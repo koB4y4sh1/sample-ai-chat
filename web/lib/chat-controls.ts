@@ -153,6 +153,43 @@ export const HOME_PROMPT_SUGGESTIONS = [
     message:
       'MCP Appsのmap_view_show_google_mapを使って、Google Mapsをiframeに表示してください。\n\n地図: 東京駅周辺\n中心座標: lat 35.681236, lng 139.767125\nzoom: 14\nmarkers:\n- 東京駅: lat 35.681236, lng 139.767125, note 丸の内中央口\n- 皇居外苑: lat 35.679501, lng 139.758037, note 徒歩圏の確認地点',
   },
+  {
+    title: 'MCP Appsを試す',
+    description: 'FastMCP Appsのサンプルデータ作成からApp表示までをまとめて確認します。',
+    message:
+      'FastMCP Appsの動作確認をしてください。内部IDを事前に作らず、次のMCP App toolを自然な入力またはデフォルト入力で順に開いてください。\n\n1. map_view_show_google_map\n2. quote_compare_show_quote_comparison_app\n3. submission_pack_show_submission_pack_app\n4. document_review_show_document_review_app\n5. listing_assist_show_listing_app\n\n各Appについて、表示できたUI、使った入力、App内操作がbackend toolに繋がるかを短く報告してください。',
+  },
+  {
+    title: 'Quote Compare MCP App',
+    description: 'Open the FastMCP Apps quote comparison UI and verify vendor selection.',
+    message:
+      'Open quote_compare_show_quote_comparison_app directly. Use Studio A and Studio B as vendors, and price, delivery, and support as evaluation focus. Do not ask for or require comparison_id. Confirm that selecting a vendor from the App calls record_quote_decision.',
+  },
+  {
+    title: 'Submission Pack MCP App',
+    description: 'Open the FastMCP Apps submission checklist UI and verify status updates.',
+    message:
+      'Open submission_pack_show_submission_pack_app directly. Required items are Application form, Identity document, and Budget plan. Due date is 2026-05-30. Do not ask for or require pack_id. Confirm that Mark ready from the App calls update_submission_item_status.',
+  },
+  {
+    title: 'Document Review MCP App',
+    description: 'Open the FastMCP Apps before/after diff UI and verify review decisions.',
+    message:
+      'Open document_review_show_document_review_app directly. Provide original_text, revised_text, and focus_points as natural inputs. Do not ask for or require review_id. Confirm that Approve and Request changes from the App call record_review_decision.',
+  },
+  {
+    title: 'Listing Assist MCP App',
+    description:
+      'Open the FastMCP Apps listing preview, price range, and marketplace checklist UI.',
+    message:
+      'Open listing_assist_show_listing_app directly. Item is Wireless headphones, category is Home electronics, and target marketplaces are mercari, rakuma, and yahoo_fleamarket. Do not ask for or require draft_id.',
+  },
+  {
+    title: '既存MCPを実行',
+    description: '既存MCP Appsツールを具体名で順に実行し、結果を要約します。',
+    message:
+      '以下の既存MCP Appsツールを、可能な範囲で順に実行してください。\n\n対象ツール:\n1. map_view_show_google_map\n2. quote_compare_show_quote_comparison_app\n3. submission_pack_show_submission_pack_app\n4. document_review_show_document_review_app\n5. listing_assist_show_listing_app\n\n各ツールについて、実行時に使った入力パラメータと結果要約を短く示してください。失敗した場合はエラー要約と再試行方針も示してください。',
+  },
 ] as const;
 
 export const LEGACY_HOME_PROMPT_SUGGESTIONS = [
