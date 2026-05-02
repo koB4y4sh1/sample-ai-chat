@@ -1,8 +1,10 @@
+import json
 import os
 from pathlib import Path
 from typing import Any
 
 import pytest
+from fastmcp import Client
 from fastmcp.utilities.inspect import inspect_fastmcp
 from server import SERVER_NAMESPACES, create_server
 from servers.document_review import ReviewRepository, create_document_review_server
@@ -22,10 +24,49 @@ def _tool_icon_count_by_name(info: Any) -> dict[str, int]:
     return {tool.name: len(tool.icons or []) for tool in info.tools}
 
 
+def _tool_input_schema(info: Any, tool_name: str) -> dict[str, Any]:
+    return next(tool.input_schema for tool in info.tools if tool.name == tool_name)
+
+
+def _assert_app_tool_uses_natural_inputs(
+    info: Any,
+    tool_name: str,
+    expected_properties: set[str],
+    forbidden_properties: set[str],
+) -> None:
+    schema = _tool_input_schema(info, tool_name)
+    properties = set(schema["properties"])
+
+    assert expected_properties <= properties
+    assert properties.isdisjoint(forbidden_properties)
+    assert schema.get("required", []) == []
+
+
+def _assert_prefab_app_tool(info: Any, tool_name: str) -> None:
+    tool = next(tool for tool in info.tools if tool.name == tool_name)
+
+    assert tool.meta is not None
+    assert tool.meta["ui"]["resourceUri"].startswith("ui://prefab/tool/")
+    assert any(resource.uri == tool.meta["ui"]["resourceUri"] and resource.mime_type == "text/html;profile=mcp-app" for resource in info.resources)
+
+
 def test_mcp_server_module_importable() -> None:
     import server
 
     assert server.__doc__ is not None
+
+
+def test_mcp_app_ui_modules_live_under_each_server() -> None:
+    src_root = Path(__file__).parents[1] / "src"
+
+    assert not (src_root / "shared" / "prefab_apps.py").exists()
+    for server_name in [
+        "document_review",
+        "listing_assist",
+        "quote_compare",
+        "submission_pack",
+    ]:
+        assert (src_root / "servers" / server_name / "mcp_apps.py").exists()
 
 
 def test_env_file_loader_sets_missing_values(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -44,31 +85,39 @@ async def test_root_server_mounts_expected_namespaced_tools() -> None:
 
     assert {tool.name for tool in info.tools} == {
         "document_review_create_document_review",
+        "document_review_show_document_review_app",
         "document_review_get_document_review",
         "document_review_record_review_decision",
         "listing_assist_create_listing_draft",
+        "listing_assist_show_listing_app",
         "listing_assist_get_listing_draft",
         "listing_assist_get_marketplace_posting_checklist",
         "map_view_show_google_map",
         "quote_compare_create_quote_comparison",
+        "quote_compare_show_quote_comparison_app",
         "quote_compare_get_quote_comparison",
         "quote_compare_record_quote_decision",
         "submission_pack_create_submission_pack",
+        "submission_pack_show_submission_pack_app",
         "submission_pack_get_submission_pack",
         "submission_pack_update_submission_item_status",
     }
     assert _tool_icon_count_by_name(info) == {
         "document_review_create_document_review": 1,
+        "document_review_show_document_review_app": 1,
         "document_review_get_document_review": 1,
         "document_review_record_review_decision": 1,
         "listing_assist_create_listing_draft": 1,
+        "listing_assist_show_listing_app": 1,
         "listing_assist_get_listing_draft": 1,
         "listing_assist_get_marketplace_posting_checklist": 1,
         "map_view_show_google_map": 1,
         "quote_compare_create_quote_comparison": 1,
+        "quote_compare_show_quote_comparison_app": 1,
         "quote_compare_get_quote_comparison": 1,
         "quote_compare_record_quote_decision": 1,
         "submission_pack_create_submission_pack": 1,
+        "submission_pack_show_submission_pack_app": 1,
         "submission_pack_get_submission_pack": 1,
         "submission_pack_update_submission_item_status": 1,
     }
@@ -79,18 +128,27 @@ async def test_document_review_server_exposes_expected_tools() -> None:
 
     assert {tool.name for tool in info.tools} == {
         "create_document_review",
+        "show_document_review_app",
         "get_document_review",
         "record_review_decision",
     }
     assert len(create_document_review_server().icons or []) == 1
     assert _tool_icon_count_by_name(info) == {
         "create_document_review": 1,
+        "show_document_review_app": 1,
         "get_document_review": 1,
         "record_review_decision": 1,
     }
     assert _tool_annotations_by_name(info) == {
         "create_document_review": {
             "title": "Create Document Review",
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        },
+        "show_document_review_app": {
+            "title": "Show Document Review App",
             "readOnlyHint": False,
             "destructiveHint": False,
             "idempotentHint": False,
@@ -111,6 +169,13 @@ async def test_document_review_server_exposes_expected_tools() -> None:
             "openWorldHint": False,
         },
     }
+    _assert_prefab_app_tool(info, "show_document_review_app")
+    _assert_app_tool_uses_natural_inputs(
+        info,
+        "show_document_review_app",
+        {"document_id", "original_text", "revised_text", "focus_points"},
+        {"review_id"},
+    )
 
 
 def test_document_review_repository_persists_decision() -> None:
@@ -139,18 +204,27 @@ async def test_listing_assist_server_exposes_expected_tools() -> None:
 
     assert {tool.name for tool in info.tools} == {
         "create_listing_draft",
+        "show_listing_app",
         "get_listing_draft",
         "get_marketplace_posting_checklist",
     }
     assert len(create_listing_assist_server().icons or []) == 1
     assert _tool_icon_count_by_name(info) == {
         "create_listing_draft": 1,
+        "show_listing_app": 1,
         "get_listing_draft": 1,
         "get_marketplace_posting_checklist": 1,
     }
     assert _tool_annotations_by_name(info) == {
         "create_listing_draft": {
             "title": "Create Listing Draft",
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        },
+        "show_listing_app": {
+            "title": "Show Listing App",
             "readOnlyHint": False,
             "destructiveHint": False,
             "idempotentHint": False,
@@ -171,17 +245,24 @@ async def test_listing_assist_server_exposes_expected_tools() -> None:
             "openWorldHint": False,
         },
     }
+    _assert_prefab_app_tool(info, "show_listing_app")
+    _assert_app_tool_uses_natural_inputs(
+        info,
+        "show_listing_app",
+        {"item_name", "category", "condition", "target_marketplaces"},
+        {"draft_id"},
+    )
 
 
 def test_listing_assist_repository_creates_draft_and_checklist() -> None:
     repository = ListingAssistRepository()
     draft = repository.create_draft(
-        item_name="ワイヤレスヘッドホン",
-        category="家電",
+        item_name="Wireless headphones",
+        category="Home electronics",
         brand="ZenSound",
         condition="good",
-        included_accessories=["充電ケーブル", "収納ケース"],
-        visible_flaws=["イヤーパッドに軽い使用感"],
+        included_accessories=["Charging cable", "Storage case"],
+        visible_flaws=["Light wear on ear pads"],
         desired_price_jpy=9800,
         target_marketplaces=["mercari"],
     )
@@ -221,18 +302,27 @@ async def test_quote_compare_server_exposes_expected_tools() -> None:
 
     assert {tool.name for tool in info.tools} == {
         "create_quote_comparison",
+        "show_quote_comparison_app",
         "get_quote_comparison",
         "record_quote_decision",
     }
     assert len(create_quote_compare_server().icons or []) == 1
     assert _tool_icon_count_by_name(info) == {
         "create_quote_comparison": 1,
+        "show_quote_comparison_app": 1,
         "get_quote_comparison": 1,
         "record_quote_decision": 1,
     }
     assert _tool_annotations_by_name(info) == {
         "create_quote_comparison": {
             "title": "Create Quote Comparison",
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        },
+        "show_quote_comparison_app": {
+            "title": "Show Quote Comparison App",
             "readOnlyHint": False,
             "destructiveHint": False,
             "idempotentHint": False,
@@ -253,35 +343,42 @@ async def test_quote_compare_server_exposes_expected_tools() -> None:
             "openWorldHint": False,
         },
     }
+    _assert_prefab_app_tool(info, "show_quote_comparison_app")
+    _assert_app_tool_uses_natural_inputs(
+        info,
+        "show_quote_comparison_app",
+        {"procurement_title", "comparison_focus", "offers"},
+        {"comparison_id"},
+    )
 
 
 def test_quote_compare_repository_records_selected_vendor() -> None:
     repository = QuoteCompareRepository()
     comparison = repository.create_comparison(
-        procurement_title="動画制作見積",
-        comparison_focus=["価格", "納期"],
+        procurement_title="Video production quote",
+        comparison_focus=["price", "delivery"],
         offers=[
             QuoteOfferInput(
                 vendor_name="Studio A",
                 total_price_jpy=520000,
                 delivery_days=14,
                 support_level="standard",
-                payment_terms="検収後30日",
-                included_items=["構成", "編集"],
-                excluded_items=["ナレーション収録"],
+                payment_terms="Net 30",
+                included_items=["Planning", "Editing"],
+                excluded_items=["Narration recording"],
             ),
             QuoteOfferInput(
                 vendor_name="Studio B",
                 total_price_jpy=610000,
                 delivery_days=10,
                 support_level="premium",
-                payment_terms="発注時50%",
-                included_items=["構成", "編集", "サムネイル"],
+                payment_terms="50% on order",
+                included_items=["Planning", "Editing", "Thumbnail"],
                 excluded_items=[],
             ),
         ],
     )
-    decided = repository.record_decision(comparison.comparison_id, "Studio B", "短納期を重視")
+    decided = repository.record_decision(comparison.comparison_id, "Studio B", "Prioritized shorter delivery")
 
     assert decided.recommended_vendor == "Studio B"
     assert decided.offers[0].decision in {"selected", "not_selected"}
@@ -292,18 +389,27 @@ async def test_submission_pack_server_exposes_expected_tools() -> None:
 
     assert {tool.name for tool in info.tools} == {
         "create_submission_pack",
+        "show_submission_pack_app",
         "get_submission_pack",
         "update_submission_item_status",
     }
     assert len(create_submission_pack_server().icons or []) == 1
     assert _tool_icon_count_by_name(info) == {
         "create_submission_pack": 1,
+        "show_submission_pack_app": 1,
         "get_submission_pack": 1,
         "update_submission_item_status": 1,
     }
     assert _tool_annotations_by_name(info) == {
         "create_submission_pack": {
             "title": "Create Submission Pack",
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        },
+        "show_submission_pack_app": {
+            "title": "Show Submission Pack App",
             "readOnlyHint": False,
             "destructiveHint": False,
             "idempotentHint": False,
@@ -324,26 +430,52 @@ async def test_submission_pack_server_exposes_expected_tools() -> None:
             "openWorldHint": False,
         },
     }
+    _assert_prefab_app_tool(info, "show_submission_pack_app")
+    _assert_app_tool_uses_natural_inputs(
+        info,
+        "show_submission_pack_app",
+        {"pack_name", "submission_type", "required_items", "optional_items", "due_date"},
+        {"pack_id"},
+    )
+
+
+async def test_mcp_app_tools_open_with_default_inputs() -> None:
+    async with Client(create_server()) as client:
+        for tool_name in [
+            "quote_compare_show_quote_comparison_app",
+            "submission_pack_show_submission_pack_app",
+            "document_review_show_document_review_app",
+            "listing_assist_show_listing_app",
+        ]:
+            result = await client.call_tool(tool_name, {})
+
+            assert result.structured_content is not None
+            assert result.structured_content["$prefab"]["version"]
+            assert result.structured_content["view"]
+            serialized = json.dumps(result.structured_content)
+            assert "1fr 2fr" not in serialized
+            assert "max-w-full" in serialized
+            assert "overflow-x-auto" in serialized
 
 
 def test_submission_pack_repository_updates_item_status() -> None:
     repository = SubmissionPackRepository()
     pack = repository.create_pack(
-        pack_name="助成金申請 2026 春",
-        submission_type="助成金申請",
-        required_items=["申請書", "本人確認書類", "収支計画"],
-        optional_items=["補足説明資料"],
+        pack_name="Grant application 2026",
+        submission_type="grant",
+        required_items=["Application form", "Identity document", "Budget plan"],
+        optional_items=["Supplemental notes"],
         due_date="2026-05-30",
     )
     updated = repository.update_item_status(
         pack.pack_id,
         pack.items[0].item_id,
         "ready",
-        "草案と証憑を添付済み",
+        "Draft and evidence attached",
     )
 
     assert updated.ready_count == 1
-    assert updated.items[0].notes == ["草案と証憑を添付済み"]
+    assert updated.items[0].notes == ["Draft and evidence attached"]
 
 
 def test_create_server_mounts_expected_namespaces() -> None:

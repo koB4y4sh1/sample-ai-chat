@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastmcp import FastMCP
+from fastmcp import FastMCP, FastMCPApp
 from mcp.types import ToolAnnotations
+from prefab_ui.app import PrefabApp
 from pydantic import Field
+from servers.document_review.mcp_apps import document_review_app
 from servers.document_review.models import DocumentDiffReview, ReviewDecision
 from servers.document_review.repository import ReviewRepository
 from shared.icons import (
@@ -21,14 +23,28 @@ def create_document_review_server(repository: ReviewRepository | None = None) ->
     """ドキュメントレビューサーバーを生成する。"""
 
     review_repository = repository or ReviewRepository()
+    app = FastMCPApp("Document Review App")
     server = FastMCP(
         "Document Diff Review",
         instructions=(
             "Use this server to compare document versions, summarize changes, and keep the final human review decision attached to the diff."
         ),
         icons=DOCUMENT_REVIEW_SERVER_ICONS,
+        providers=[app],
         version="0.1.0",
     )
+
+    @app.tool()
+    def record_review_decision_from_app(
+        review_id: Annotated[str, Field(description="App decision target review ID.")],
+        decision: Annotated[ReviewDecision, Field(description="Review decision selected from the App.")],
+        rationale: Annotated[str | None, Field(description="Review decision rationale from the App.")] = None,
+        required_actions: Annotated[
+            list[str] | None,
+            Field(description="Required actions entered or selected from the App."),
+        ] = None,
+    ) -> DocumentDiffReview:
+        return review_repository.record_decision(review_id, decision, rationale, required_actions)
 
     @server.tool(
         description=(
@@ -117,6 +133,47 @@ def create_document_review_server(repository: ReviewRepository | None = None) ->
         ],
     ) -> DocumentDiffReview:
         return review_repository.get_review(review_id)
+
+    @app.ui(
+        name="show_document_review_app",
+        description="Open a FastMCP Prefab App for reviewing before/after document diffs and recording a review decision.",
+        annotations=ToolAnnotations(
+            title="Show Document Review App",
+            readOnlyHint=False,
+            destructiveHint=False,
+            idempotentHint=False,
+            openWorldHint=False,
+        ),
+        icons=GET_DOCUMENT_REVIEW_TOOL_ICONS,
+    )
+    def show_document_review_app(
+        document_id: Annotated[
+            str,
+            Field(description="Document identifier or filename to render in the MCP App."),
+        ] = "sample-contract.md",
+        original_text: Annotated[
+            str,
+            Field(description="Original document text before revision."),
+        ] = "The contractor may submit deliverables after the deadline.",
+        revised_text: Annotated[
+            str,
+            Field(description="Revised document text after proposed changes."),
+        ] = "The contractor must submit deliverables by the agreed deadline.",
+        focus_points: Annotated[
+            list[str] | None,
+            Field(description="Review focus points such as risk, tone, compliance, or approval."),
+        ] = None,
+    ) -> PrefabApp:
+        review = review_repository.create_review(
+            document_id,
+            original_text,
+            revised_text,
+            focus_points or ["risk", "approval"],
+        )
+        return document_review_app(
+            review,
+            record_review_decision_from_app,
+        )
 
     return server
 

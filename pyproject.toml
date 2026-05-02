@@ -46,7 +46,8 @@ select = [
 ]
 
 ignore = [
-    "E501",  # Line length is enforced by Ruff format and the project line-length setting.
+    "E501",  # インデント表現が崩れるため、強制改行の設定を無効化する。
+    "SIM117", # Prefab UIの階層構造（親子関係）をインデントで表現するため、あえてネストを許容する。
 ]
 
 [tool.ruff.lint.per-file-ignores]

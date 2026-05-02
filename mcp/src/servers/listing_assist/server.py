@@ -6,7 +6,9 @@ from typing import Annotated
 
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
+from prefab_ui.app import PrefabApp
 from pydantic import Field
+from servers.listing_assist.mcp_apps import listing_assist_app
 from servers.listing_assist.models import (
     ItemCondition,
     ListingDraftPackage,
@@ -122,6 +124,58 @@ def create_listing_assist_server(repository: ListingAssistRepository | None = No
         ],
     ) -> MarketplacePostingChecklist:
         return listing_repository.get_posting_checklist(draft_id, marketplace)
+
+    @server.tool(
+        description="Open a FastMCP Prefab App for listing preview, price range, and marketplace checklists.",
+        annotations=ToolAnnotations(
+            title="Show Listing App",
+            readOnlyHint=False,
+            destructiveHint=False,
+            idempotentHint=False,
+            openWorldHint=False,
+        ),
+        icons=GET_LISTING_DRAFT_TOOL_ICONS,
+        app=True,
+    )
+    def show_listing_app(
+        item_name: Annotated[str, Field(description="Item name to render in the MCP App.")] = "Wireless headphones",
+        category: Annotated[str, Field(description="Item category for listing drafts.")] = "Home electronics",
+        brand: Annotated[
+            str | None,
+            Field(description="Brand or maker name."),
+        ] = None,
+        condition: Annotated[
+            ItemCondition,
+            Field(description="Item condition."),
+        ] = "good",
+        included_accessories: Annotated[
+            list[str] | None,
+            Field(description="Included accessories."),
+        ] = None,
+        visible_flaws: Annotated[
+            list[str] | None,
+            Field(description="Visible flaws buyers should know."),
+        ] = None,
+        desired_price_jpy: Annotated[
+            int | None,
+            Field(description="Desired selling price in JPY."),
+        ] = None,
+        target_marketplaces: Annotated[
+            list[MarketplaceName] | None,
+            Field(description="Target marketplaces to generate listing drafts for."),
+        ] = None,
+    ) -> PrefabApp:
+        draft = listing_repository.create_draft(
+            item_name,
+            category,
+            brand,
+            condition,
+            included_accessories,
+            visible_flaws,
+            desired_price_jpy,
+            target_marketplaces,
+        )
+        return listing_assist_app(draft)
 
     return server
 

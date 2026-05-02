@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastmcp import FastMCP
+from fastmcp import FastMCP, FastMCPApp
 from mcp.types import ToolAnnotations
+from prefab_ui.app import PrefabApp
 from pydantic import Field
+from servers.submission_pack.mcp_apps import submission_pack_app
 from servers.submission_pack.models import SubmissionItemStatus, SubmissionPack
 from servers.submission_pack.repository import SubmissionPackRepository
 from shared.icons import (
@@ -21,6 +23,7 @@ def create_submission_pack_server(repository: SubmissionPackRepository | None = 
     """申請・提出パックサーバーを生成する。"""
 
     submission_repository = repository or SubmissionPackRepository()
+    app = FastMCPApp("Submission Pack App")
     server = FastMCP(
         "Submission Pack Workspace",
         instructions=(
@@ -28,8 +31,18 @@ def create_submission_pack_server(repository: SubmissionPackRepository | None = 
             "pack, update each required item, and expose readiness information for an MCP App."
         ),
         icons=SUBMISSION_PACK_SERVER_ICONS,
+        providers=[app],
         version="0.1.0",
     )
+
+    @app.tool()
+    def update_submission_item_status_from_app(
+        pack_id: Annotated[str, Field(description="App update target pack_id.")],
+        item_id: Annotated[str, Field(description="Submission item ID to update from the App.")],
+        status: Annotated[SubmissionItemStatus, Field(description="New submission item status.")],
+        note: Annotated[str | None, Field(description="Status update note from the App.")] = None,
+    ) -> SubmissionPack:
+        return submission_repository.update_item_status(pack_id, item_id, status, note)
 
     @server.tool(
         description=("申請や提出の準備をチェックリスト化して進めたいときに使用する。必須項目、任意項目、期限を束ねた提出パックを返す。"),
@@ -105,6 +118,52 @@ def create_submission_pack_server(repository: SubmissionPackRepository | None = 
         pack_id: Annotated[str, Field(description="再取得したい提出パックの pack_id。")],
     ) -> SubmissionPack:
         return submission_repository.get_pack(pack_id)
+
+    @app.ui(
+        name="show_submission_pack_app",
+        description="Open a FastMCP Prefab App for checking submission items and updating item readiness.",
+        annotations=ToolAnnotations(
+            title="Show Submission Pack App",
+            readOnlyHint=False,
+            destructiveHint=False,
+            idempotentHint=False,
+            openWorldHint=False,
+        ),
+        icons=GET_SUBMISSION_PACK_TOOL_ICONS,
+    )
+    def show_submission_pack_app(
+        pack_name: Annotated[
+            str,
+            Field(description="Submission pack name to render in the MCP App."),
+        ] = "Sample submission pack",
+        submission_type: Annotated[
+            str,
+            Field(description="Submission type, for example grant, application, or listing review."),
+        ] = "application",
+        required_items: Annotated[
+            list[str] | None,
+            Field(description="Required submission items. If omitted, demo items are shown."),
+        ] = None,
+        optional_items: Annotated[
+            list[str] | None,
+            Field(description="Optional submission items."),
+        ] = None,
+        due_date: Annotated[
+            str | None,
+            Field(description="Submission due date such as 2026-05-30."),
+        ] = None,
+    ) -> PrefabApp:
+        pack = submission_repository.create_pack(
+            pack_name,
+            submission_type,
+            required_items or ["Application form", "Identity document", "Budget plan"],
+            optional_items,
+            due_date,
+        )
+        return submission_pack_app(
+            pack,
+            update_submission_item_status_from_app,
+        )
 
     return server
 
