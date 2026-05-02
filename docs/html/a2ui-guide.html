@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <title>A2UI ガイド</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --text: #20242a;
+        --muted: #5b6470;
+        --line: #d8dde3;
+        --accent: #1864ab;
+        --code: #eef2f6;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      header {
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      h2 {
+        border-bottom: 1px solid var(--line);
+        margin-top: 40px;
+        padding-bottom: 8px;
+        font-size: 1.35rem;
+      }
+
+      h3 {
+        margin-top: 24px;
+        font-size: 1.05rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      code,
+      pre {
+        font-family:
+          "SFMono-Regular",
+          Consolas,
+          "Liberation Mono",
+          monospace;
+      }
+
+      code {
+        border-radius: 4px;
+        background: var(--code);
+        padding: 0.1em 0.35em;
+        color: var(--text);
+      }
+
+      pre {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 16px;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef2f6;
+        color: var(--text);
+      }
+
+      .note {
+        border-left: 4px solid var(--accent);
+        background: var(--panel);
+        padding: 12px 16px;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>Zenith AI Chat / A2UI Guide</p>
+<h1>A2UI ガイド</h1>
+<p>このリポジトリでは A2UI を「LLM が直接 HTML を生成して描画する」方式としては採用していない。frontend が所有する block catalog を agent に渡し、その catalog に沿って UI を組み立てる関係として位置づける。</p>
+<h2>1. 前提としていること</h2>
+<ul>
+<li>agent は UI の部品そのものを生成しない。</li>
+<li>frontend がレンダリング可能な宣言的 schema として契約を渡す。</li>
+<li>標準 block とカスタム block を catalog として扱うこと。</li>
+</ul>
+<h2>2. このリポジトリでの参照関係</h2>
+<table>
+<thead>
+<tr>
+<th>参照</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>web/lib/generative-ui/schemas/declarative.ts</code></td>
+<td>block type を定義した zod schema を置き、agent に渡す引数仕様を合わせる。</td>
+</tr>
+<tr>
+<td><code>DeclarativeRenderer</code></td>
+<td>schema を React UI に変換する renderer。catalog の選択に対応する。</td>
+</tr>
+<tr>
+<td><code>docs/spec/generative-ui.md</code></td>
+<td>生成 HTML は <code>docs/html/generative-ui.html</code>。Basic / Custom Catalog と block の対応を記載する。</td>
+</tr>
+</tbody></table>
+<h2>3. catalog の例</h2>
+<table>
+<thead>
+<tr>
+<th>区分</th>
+<th>block type の例</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>基本表示</td>
+<td><code>text</code>, <code>list</code>, <code>table</code>, <code>callout</code></td>
+<td>説明文、一覧、表、注記の表示。</td>
+</tr>
+<tr>
+<td>サマリー</td>
+<td><code>metric_grid</code>, <code>key_value</code>, <code>progress</code></td>
+<td>指標・状態・進捗のわかりやすい提示。</td>
+</tr>
+<tr>
+<td>判断支援</td>
+<td><code>decision</code>, <code>risk_matrix</code>, <code>task_plan</code></td>
+<td>意思決定、リスク整理、タスク計画。</td>
+</tr>
+<tr>
+<td>カスタム</td>
+<td><code>flight_card</code>, <code>sales_dashboard</code>, <code>diff_preview</code></td>
+<td>旅行、売上、差分などドメイン固有の表示。</td>
+</tr>
+</tbody></table>
+<h2>4. 依存関係との関係</h2>
+<p>lockfile には <code>@a2ui/web_core</code> や <code>@copilotkit/a2ui-renderer</code> が含まれることがある。ただしこのアプリケーションコードが A2UI API をフルスタックで直接駆動しているとは限らない。現在は CopilotKit と declarative schema の設計境界として A2UI 由来の概念を参照しているだけであることが多い。</p>
+<h2>5. まとめ</h2>
+<p>Zenith AI Chat における A2UI は、agent が UI のカタログを使って structured response を返し、frontend がそれを描画するという説明が妥当である。HTML をそのままストリーミングする設計とは異なる。</p>
+
+    </main>
+  </body>
+</html>

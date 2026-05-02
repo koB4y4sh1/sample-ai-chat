@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="docs/spec の読み順と各ファイルの役割。HTML は docs/html で閲覧。" />
+    <title>ドキュメントガイド</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --text: #20242a;
+        --muted: #5b6470;
+        --line: #d8dde3;
+        --accent: #1864ab;
+        --code: #eef2f6;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      header {
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      h2 {
+        border-bottom: 1px solid var(--line);
+        margin-top: 40px;
+        padding-bottom: 8px;
+        font-size: 1.35rem;
+      }
+
+      h3 {
+        margin-top: 24px;
+        font-size: 1.05rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      code,
+      pre {
+        font-family:
+          "SFMono-Regular",
+          Consolas,
+          "Liberation Mono",
+          monospace;
+      }
+
+      code {
+        border-radius: 4px;
+        background: var(--code);
+        padding: 0.1em 0.35em;
+        color: var(--text);
+      }
+
+      pre {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 16px;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef2f6;
+        color: var(--text);
+      }
+
+      .note {
+        border-left: 4px solid var(--accent);
+        background: var(--panel);
+        padding: 12px 16px;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>ドキュメントガイド</h1>
+<p><code>docs/spec</code> の Markdown が正本です。ブラウザで読む場合は <code>pnpm run docs:build</code> 後に <code>docs/html/*.html</code> を開いてください。</p>
+<h2>まず読むもの（最短ルート）</h2>
+<ol>
+<li><strong><a href="./specification.html">全体仕様書</a></strong> … アプリの目的・モノレポ構成・接続と Generative UI の結論。</li>
+<li><strong><a href="./workspace-overview.html">ワークスペース概要</a></strong> … web / agent / mcp の境界とリクエストの流れ。</li>
+<li><strong><a href="./environment-configuration.html">環境設定仕様</a></strong> … ツールチェーン、セットアップ、環境変数、よく使うコマンド。</li>
+</ol>
+<p>ここまでで「何のプロジェクトか」「どこに何があるか」「どう起動するか」が揃います。</p>
+<h2>用途別の読み方</h2>
+<table>
+<thead>
+<tr>
+<th>やりたいこと</th>
+<th>読むドキュメント</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ディレクトリにコードを置く</td>
+<td><a href="./directory-structure.html">ディレクトリ構成仕様</a></td>
+</tr>
+<tr>
+<td>通信経路を追う</td>
+<td><a href="./api-communication-flow.html">API・通信フロー仕様</a></td>
+</tr>
+<tr>
+<td>リポジトリルールの確認</td>
+<td>ルートの <code>AGENTS.md</code> / <code>CODING.md</code> と <a href="./development-rules.html">開発ルール仕様</a></td>
+</tr>
+<tr>
+<td>依存を増やす・更新する</td>
+<td><a href="./dependency-policy.html">依存関係ポリシー仕様</a></td>
+</tr>
+<tr>
+<td>Lint / format / 型 / hooks</td>
+<td><a href="./biome-guide.html">Biome</a> / <a href="./ruff-guide.html">Ruff</a> / <a href="./mypy-guide.html">mypy</a> / <a href="./pre-commit-guide.html">pre-commit</a></td>
+</tr>
+<tr>
+<td>テストを書く・足す</td>
+<td><a href="./test-strategy.html">テスト戦略仕様</a></td>
+</tr>
+<tr>
+<td>Generative UI を理解する</td>
+<td><a href="./generative-ui.html">Generative UI 解説</a> → <a href="./generative-ui-examples.html">サンプルカタログ</a></td>
+</tr>
+<tr>
+<td>CopilotKit / AG-UI / A2UI</td>
+<td><a href="./copilotkit-guide.html">CopilotKit ガイド</a> → <a href="./ag-ui-guide.html">AG-UI ガイド</a> → <a href="./a2ui-guide.html">A2UI ガイド</a></td>
+</tr>
+<tr>
+<td>MCP のテーマや載せ方を検討する</td>
+<td><a href="./mcp-theme-selection.html">MCP テーマ選定メモ</a></td>
+</tr>
+</tbody></table>
+<h2>全ページ一覧（カテゴリ別）</h2>
+<h3>核となる仕様</h3>
+<table>
+<thead>
+<tr>
+<th>ページ</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="./specification.html">全体仕様書</a></td>
+<td>システム全体の前提・接続・Generative UI・品質コマンド</td>
+</tr>
+<tr>
+<td><a href="./development-rules.html">開発ルール仕様</a></td>
+<td>AGENTS/CODING の要約とドキュメント更新の約束事</td>
+</tr>
+</tbody></table>
+<h3>環境・構造・通信</h3>
+<table>
+<thead>
+<tr>
+<th>ページ</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="./environment-configuration.html">環境設定仕様</a></td>
+<td>バージョン、セットアップ、起動、環境変数</td>
+</tr>
+<tr>
+<td><a href="./workspace-overview.html">ワークスペース概要</a></td>
+<td>パッケージ役割・境界・リクエストの流れ</td>
+</tr>
+<tr>
+<td><a href="./directory-structure.html">ディレクトリ構成仕様</a></td>
+<td>ルートと主要ディレクトリの対応表</td>
+</tr>
+<tr>
+<td><a href="./api-communication-flow.html">API・通信フロー仕様</a></td>
+<td>BFF → Runtime → agent の経路</td>
+</tr>
+</tbody></table>
+<h3>品質・開発運用</h3>
+<table>
+<thead>
+<tr>
+<th>ページ</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="./dependency-policy.html">依存関係ポリシー仕様</a></td>
+<td>pnpm / uv、lockfile、追加前の確認</td>
+</tr>
+<tr>
+<td><a href="./biome-guide.html">Biome ガイド</a></td>
+<td>TS/JSON の format・lint</td>
+</tr>
+<tr>
+<td><a href="./ruff-guide.html">Ruff ガイド</a></td>
+<td>Python の format・lint</td>
+</tr>
+<tr>
+<td><a href="./mypy-guide.html">mypy ガイド</a></td>
+<td>strict 型検査の範囲とコマンド</td>
+</tr>
+<tr>
+<td><a href="./pre-commit-guide.html">pre-commit ガイド</a></td>
+<td>コミット前フック一覧</td>
+</tr>
+<tr>
+<td><a href="./test-strategy.html">テスト戦略仕様</a></td>
+<td>pytest / Vitest の置き場所の考え方</td>
+</tr>
+</tbody></table>
+<h3>AI・UI</h3>
+<table>
+<thead>
+<tr>
+<th>ページ</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="./generative-ui.html">Generative UI 解説</a></td>
+<td>Static / Declarative / MCP の考え方</td>
+</tr>
+<tr>
+<td><a href="./generative-ui-examples.html">Generative UI サンプルカタログ</a></td>
+<td>ツール選びの具体例</td>
+</tr>
+<tr>
+<td><a href="./copilotkit-guide.html">CopilotKit ガイド</a></td>
+<td>Runtime・Provider・frontend tool</td>
+</tr>
+<tr>
+<td><a href="./ag-ui-guide.html">AG-UI ガイド</a></td>
+<td>agent 側 endpoint と web の接続</td>
+</tr>
+<tr>
+<td><a href="./a2ui-guide.html">A2UI ガイド</a></td>
+<td>block catalog との関係</td>
+</tr>
+<tr>
+<td><a href="./mcp-theme-selection.html">MCP テーマ選定メモ</a></td>
+<td>MCP UI の設計判断ログ</td>
+</tr>
+</tbody></table>
+<h2>ルートのドキュメントとの関係</h2>
+<ul>
+<li><strong><code>AGENTS.md</code></strong> … コマンド必須セットとリポジトリ全体ルール。</li>
+<li><strong><code>CODING.md</code></strong> … 実装ルールの詳細（境界、CopilotKit TDD、テスト方針など）。</li>
+</ul>
+<p><code>docs/spec</code> は Zenith 固有の<strong>設計・運用の説明</strong>に寄せ、<code>AGENTS.md</code> / <code>CODING.md</code> と重なる部分は「要約 + リンク」に留めるファイルがあります（例: 開発ルール仕様）。</p>
+<h2>HTML の生成</h2>
+<pre><code class="language-bash">pnpm run docs:build
+</code></pre>
+<p>出力先は <code>docs/html/</code>。仕様や索引を変えたあと、閲覧用 HTML をコミットする運用で揃えています。</p>
+
+    </main>
+  </body>
+</html>

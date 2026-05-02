@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <title>環境設定仕様</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --text: #20242a;
+        --muted: #5b6470;
+        --line: #d8dde3;
+        --accent: #1864ab;
+        --code: #eef2f6;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      header {
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      h2 {
+        border-bottom: 1px solid var(--line);
+        margin-top: 40px;
+        padding-bottom: 8px;
+        font-size: 1.35rem;
+      }
+
+      h3 {
+        margin-top: 24px;
+        font-size: 1.05rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      code,
+      pre {
+        font-family:
+          "SFMono-Regular",
+          Consolas,
+          "Liberation Mono",
+          monospace;
+      }
+
+      code {
+        border-radius: 4px;
+        background: var(--code);
+        padding: 0.1em 0.35em;
+        color: var(--text);
+      }
+
+      pre {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 16px;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef2f6;
+        color: var(--text);
+      }
+
+      .note {
+        border-left: 4px solid var(--accent);
+        background: var(--panel);
+        padding: 12px 16px;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>Zenith AI Chat / Environment Configuration</p>
+<h1>環境設定仕様</h1>
+<p>この仕様は Zenith AI Chat をローカルで起動・検証するためのツールチェーン、セットアップ手順、起動コマンド、環境変数、品質ゲートをまとめたものである。</p>
+<h2>1. 前提ツール</h2>
+<table>
+<thead>
+<tr>
+<th>種別</th>
+<th>利用ツール</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JavaScript package manager</td>
+<td>pnpm 10.33.x</td>
+<td>リポジトリ全体では pnpm。npm は使わない。</td>
+</tr>
+<tr>
+<td>Python package manager</td>
+<td>uv 0.11.x</td>
+<td>Python 依存は uv で管理し、lockfile を更新する。</td>
+</tr>
+<tr>
+<td>Node.js</td>
+<td>24.x</td>
+<td>Next.js 開発サーバーと frontend build に該当。</td>
+</tr>
+<tr>
+<td>Python</td>
+<td>3.14.x 以上</td>
+<td>ルートの pyproject.toml と各 Python package の前提バージョン。</td>
+</tr>
+</tbody></table>
+<h2>2. モノレポ構成</h2>
+<ul>
+<li><strong>web</strong> … Next.js frontend / BFF、<code>/api/copilotkit</code> の CopilotKit Runtime。</li>
+<li><strong>agent</strong> … FastAPI で AG-UI 用エンドポイント（<code>/mfa/*</code>、<code>/lang-chain/*</code> など）と agent 実行。</li>
+<li><strong>mcp</strong> … FastMCP で tool を公開。</li>
+<li><strong>docs</strong> … 正は <code>docs/spec</code> の Markdown。<code>pnpm run docs:build</code> で <code>docs/html</code> を生成。</li>
+</ul>
+<h2>3. セットアップ手順</h2>
+<pre><code>pnpm install
+uv sync --all-packages --dev
+uv run pre-commit install
+</code></pre>
+<p>JavaScript 依存はルートの pnpm-workspace で管理し、Python 依存は uv workspace で agent と mcp をまとめて管理する。</p>
+<h3>環境変数ファイルの利用</h3>
+<pre><code>cp web/.env.example web/.env
+</code></pre>
+<p>実際の Windows 環境では PowerShell またはエディタで適宜コピーする。</p>
+<h2>4. 実行コマンド</h2>
+<table>
+<thead>
+<tr>
+<th>用途</th>
+<th>コマンド</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>frontend 起動</td>
+<td><code>pnpm run dev:web</code></td>
+<td>web package の Next.js 開発サーバーを起動する。</td>
+</tr>
+<tr>
+<td>agent 起動</td>
+<td><code>pnpm run dev:agent</code></td>
+<td>uvicorn で AG-UI サービスを 8100 番ポートで公開する。</td>
+</tr>
+<tr>
+<td>build</td>
+<td><code>pnpm run build</code></td>
+<td>web package の production build を実行する。</td>
+</tr>
+<tr>
+<td>品質確認</td>
+<td><code>pnpm run check</code></td>
+<td>TypeScript 側の Biome と Python 側の Ruff、mypy をまとめて通す。</td>
+</tr>
+</tbody></table>
+<h2>5. 品質ゲート</h2>
+<pre><code>pnpm run format
+pnpm run lint
+pnpm run typecheck
+pnpm run test
+pnpm run check
+uv run pre-commit run --all-files
+</code></pre>
+<p>ルートの check は lint と typecheck を含む。テストと build は別コマンドなので、変更内容に応じて追加実行する。</p>
+<h2>6. 主な環境変数</h2>
+<table>
+<thead>
+<tr>
+<th>変数</th>
+<th>利用側</th>
+<th>既定値・説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>AG_UI_BASE_URL</code></td>
+<td>web</td>
+<td>既定は <code>http://127.0.0.1:8100</code>。BFF が agent の <code>/copilotkit</code> に転送する。</td>
+</tr>
+<tr>
+<td><code>ZENITH_OPENAI_MODEL</code></td>
+<td>agent</td>
+<td>既定は <code>gpt-5.4-nano</code>。Azure Foundry 経由で使うモデル名。</td>
+</tr>
+<tr>
+<td><code>ZENITH_CORS_ORIGINS</code></td>
+<td>agent</td>
+<td>既定は <code>http://127.0.0.1:3000</code>。カンマ区切りで複数指定できる。</td>
+</tr>
+<tr>
+<td><code>MCP_SERVER_URL</code> / <code>ZENITH_MCP_SERVER_URL</code></td>
+<td>agent（lang-chain のみ）</td>
+<td>未設定のときは LangGraph に MCP ツールを載せない。例: <code>http://127.0.0.1:8101/mcp</code>（<code>pnpm run dev:mcp:http</code> 想定）</td>
+</tr>
+</tbody></table>
+<h2>7. 運用上の注意</h2>
+<p>JavaScript は pnpm、Python は uv で統一する。新しい環境変数を追加する場合は <code>web/.env.example</code> を更新する。アーキテクチャ・コマンド・サービス契約が変わる場合は <code>docs/spec/specification.md</code> を更新し、<code>pnpm run docs:build</code> で HTML を再生成する。</p>
+
+    </main>
+  </body>
+</html>

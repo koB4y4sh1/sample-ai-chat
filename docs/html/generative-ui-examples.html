@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <title>Generative UI サンプルカタログ</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --text: #20242a;
+        --muted: #5b6470;
+        --line: #d8dde3;
+        --accent: #1864ab;
+        --code: #eef2f6;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      header {
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      h2 {
+        border-bottom: 1px solid var(--line);
+        margin-top: 40px;
+        padding-bottom: 8px;
+        font-size: 1.35rem;
+      }
+
+      h3 {
+        margin-top: 24px;
+        font-size: 1.05rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      code,
+      pre {
+        font-family:
+          "SFMono-Regular",
+          Consolas,
+          "Liberation Mono",
+          monospace;
+      }
+
+      code {
+        border-radius: 4px;
+        background: var(--code);
+        padding: 0.1em 0.35em;
+        color: var(--text);
+      }
+
+      pre {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 16px;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef2f6;
+        color: var(--text);
+      }
+
+      .note {
+        border-left: 4px solid var(--accent);
+        background: var(--panel);
+        padding: 12px 16px;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>Zenith AI Chat / Generative UI Example Catalog</p>
+<h1>Generative UI サンプルカタログ</h1>
+<p>この仕様は、ユーザー発話に応じてどの frontend tool と UI block を選ぶと説明しやすいかを具体例でまとめたものである。完璧な一覧ではなく、運用上の判断のヒントとして使う。</p>
+<h2>1. 使い分けの基本</h2>
+<table>
+<thead>
+<tr>
+<th>ユーザー意図の例</th>
+<th>主な tool</th>
+<th>狙い</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ダッシュボード風の status / summary</td>
+<td><code>show_zenith_panel</code></td>
+<td>指標が決まっていて複数の数値と next actions を見せたい。</td>
+</tr>
+<tr>
+<td>表・比較・一覧・アクションなど宣言的な見せ方</td>
+<td><code>show_ui_spec</code></td>
+<td>block catalog の組み合わせで柔軟にレイアウトできる。</td>
+</tr>
+<tr>
+<td>埋め込みアプリ型の調査・ツール</td>
+<td><code>Runtime mcpApps.servers</code></td>
+<td>iframe surface を使う MCP Apps 表示が主役。</td>
+</tr>
+</tbody></table>
+<h2>2. 具体例</h2>
+<table>
+<thead>
+<tr>
+<th>ユーザー発話のニュアンス</th>
+<th>候補 tool</th>
+<th>候補 block / 表示</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>案件の状況をカードで見せたい</td>
+<td><code>show_zenith_panel</code></td>
+<td>title、summary、metrics、nextActions を使う構成が無難。</td>
+</tr>
+<tr>
+<td>検索結果をリストや表、アクション付きで見せたい</td>
+<td><code>show_ui_spec</code></td>
+<td><code>callout</code>、<code>table</code>、<code>actions</code> など。</td>
+</tr>
+<tr>
+<td>複数案を比較して決めたい</td>
+<td><code>show_ui_spec</code></td>
+<td><code>comparison</code>、<code>decision</code>、<code>risk_matrix</code> など。</td>
+</tr>
+<tr>
+<td>進捗を一覧で見せたい</td>
+<td><code>show_ui_spec</code></td>
+<td><code>progress</code>、<code>checklist</code>、<code>timeline</code> など。</td>
+</tr>
+<tr>
+<td>リファクタの before / after を見せたい</td>
+<td><code>show_ui_spec</code></td>
+<td><code>diff_preview</code> 系 block。before と after を両方渡す。</td>
+</tr>
+<tr>
+<td>フライトの候補をカードで出したい</td>
+<td><code>show_flight_options</code> または <code>show_ui_spec</code></td>
+<td>ドメイン固有の flight result surface を優先する。</td>
+</tr>
+<tr>
+<td>組み込みアプリを実行したい</td>
+<td><code>Runtime mcpApps.servers</code></td>
+<td>appId と prompt に応じて iframe で出す。</td>
+</tr>
+</tbody></table>
+<h2>3. 運用で気をつけること</h2>
+<ul>
+<li>会話の一文に複数 tool を無秩序に混ぜない。</li>
+<li>flight 系は raw JSON のまま渡さない。</li>
+<li>diff 表示では before と after を揃えて渡す。</li>
+<li>MCP Apps が必要なときだけ iframe を選ぶ。</li>
+</ul>
+
+    </main>
+  </body>
+</html>

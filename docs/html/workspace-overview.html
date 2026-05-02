@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <title>ワークスペース概要</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --text: #20242a;
+        --muted: #5b6470;
+        --line: #d8dde3;
+        --accent: #1864ab;
+        --code: #eef2f6;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      header {
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      h2 {
+        border-bottom: 1px solid var(--line);
+        margin-top: 40px;
+        padding-bottom: 8px;
+        font-size: 1.35rem;
+      }
+
+      h3 {
+        margin-top: 24px;
+        font-size: 1.05rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      code,
+      pre {
+        font-family:
+          "SFMono-Regular",
+          Consolas,
+          "Liberation Mono",
+          monospace;
+      }
+
+      code {
+        border-radius: 4px;
+        background: var(--code);
+        padding: 0.1em 0.35em;
+        color: var(--text);
+      }
+
+      pre {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 16px;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef2f6;
+        color: var(--text);
+      }
+
+      .note {
+        border-left: 4px solid var(--accent);
+        background: var(--panel);
+        padding: 12px 16px;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>Zenith AI Chat / Workspace Overview</p>
+<h1>ワークスペース概要</h1>
+<p>このワークスペースは Next.js frontend、Python agent サービス、FastMCP サーバーを一つのモノレポで扱う。各パッケージの境界を誤解しないための整理である。</p>
+<h2>1. ルート構成</h2>
+<table>
+<thead>
+<tr>
+<th>ディレクトリ</th>
+<th>役割</th>
+<th>主な技術</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>web</code></td>
+<td>チャット UI、Next.js App Router、CopilotKit Runtime、BFF route handler</td>
+<td>Next.js、React、TypeScript、CopilotKit</td>
+</tr>
+<tr>
+<td><code>agent</code></td>
+<td>agent 実行、モデル呼び出し、AG-UI endpoint、CORS 調整</td>
+<td>FastAPI、agent-framework、Azure identity</td>
+</tr>
+<tr>
+<td><code>mcp</code></td>
+<td>MCP tool の公開</td>
+<td>FastMCP、Pydantic</td>
+</tr>
+<tr>
+<td><code>docs</code></td>
+<td>仕様の Markdown（<code>spec/</code>）、生成 HTML（<code>html/</code>）、テンプレート（<code>template/</code>）</td>
+<td>Markdown、<code>pnpm run docs:build</code></td>
+</tr>
+</tbody></table>
+<h2>2. ルート設定ファイルの役割</h2>
+<ul>
+<li><code>package.json</code>: ワークスペース共通の pnpm script を集約する。</li>
+<li><code>pyproject.toml</code>: uv workspace、Ruff、mypy、pytest の共通設定を置く。</li>
+<li><code>biome.json</code>: TypeScript と JSON の format と lint を統合する。</li>
+<li><code>.pre-commit-config.yaml</code>: コミット前に通すフック群を定義する。</li>
+<li><code>AGENTS.md</code> と <code>CODING.md</code>: 開発ルールとサービス境界を明示する。</li>
+</ul>
+<h2>3. サービス境界</h2>
+<table>
+<thead>
+<tr>
+<th>境界</th>
+<th>守ること</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>web → agent</td>
+<td>web は UI と BFF に専念し、agent の内部実装や tool 実装を直接持たない。</td>
+</tr>
+<tr>
+<td>agent → mcp</td>
+<td>agent は tool 利用方針を持ち、tool 実装本体は mcp に閉じる。</td>
+</tr>
+<tr>
+<td>docs → 実装</td>
+<td>アーキテクチャ、コマンド、サービス契約が変わったら <code>docs/spec</code> を更新し HTML を再生成する。</td>
+</tr>
+</tbody></table>
+<h2>4. リクエストの流れ（概要）</h2>
+<p><strong>Step 1</strong> ユーザーは web のブラウザ画面から入力する。</p>
+<p><strong>Step 2</strong> web は CopilotKit Runtime である <code>/api/copilotkit</code> に届ける。</p>
+<p><strong>Step 3</strong> Runtime は <code>AG_UI_BASE_URL</code> とモデル選択に応じたパス（例: <code>/mfa/openai</code>、<code>/mfa/anthropic</code>、<code>/lang-chain/</code>）へ agent 通信を転送する。</p>
+<p><strong>Step 4</strong> agent は通常応答または frontend tool 呼び出しを返す。</p>
+<p><strong>Step 5</strong> web は static / declarative / open-ended のいずれかの UI surface で結果を描画する。</p>
+<h2>5. 主要サブディレクトリの狙い</h2>
+<table>
+<thead>
+<tr>
+<th>場所</th>
+<th>中身</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>web/app</code></td>
+<td>App Router のページと API route。</td>
+</tr>
+<tr>
+<td><code>web/components/chat</code></td>
+<td>CopilotKit を束ねるチャット UI、<code>GenerativeUIRegistry</code>、会話表示部品。</td>
+</tr>
+<tr>
+<td><code>web/components/generative-ui</code></td>
+<td>static / declarative / open-ended の描画部品。</td>
+</tr>
+<tr>
+<td><code>web/lib/generative-ui/schemas</code></td>
+<td>frontend tool 引数と declarative block catalog の zod schema。</td>
+</tr>
+<tr>
+<td><code>agent/src</code></td>
+<td>FastAPI app、agent 構築、設定、endpoint 登録。</td>
+</tr>
+<tr>
+<td><code>agent/tests</code> / <code>mcp/tests</code></td>
+<td>Python 側の smoke とアプリ生成確認。</td>
+</tr>
+</tbody></table>
+<h2>6. このワークスペースで押さえる前提</h2>
+<ul>
+<li>JavaScript は pnpm、Python は uv に統一する。</li>
+<li>CopilotKit は web 側の統合レイヤーであり、agent 本体ではない。</li>
+<li>AG-UI は agent サービスの transport と endpoint を束ねる語り口として使う。</li>
+<li>宣言的 UI schema は frontend が描ける境界として block catalog と一体化して渡す。</li>
+</ul>
+
+    </main>
+  </body>
+</html>

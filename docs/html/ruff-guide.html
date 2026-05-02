@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <title>Ruff ガイド</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --text: #20242a;
+        --muted: #5b6470;
+        --line: #d8dde3;
+        --accent: #1864ab;
+        --code: #eef2f6;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      header {
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      h2 {
+        border-bottom: 1px solid var(--line);
+        margin-top: 40px;
+        padding-bottom: 8px;
+        font-size: 1.35rem;
+      }
+
+      h3 {
+        margin-top: 24px;
+        font-size: 1.05rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      code,
+      pre {
+        font-family:
+          "SFMono-Regular",
+          Consolas,
+          "Liberation Mono",
+          monospace;
+      }
+
+      code {
+        border-radius: 4px;
+        background: var(--code);
+        padding: 0.1em 0.35em;
+        color: var(--text);
+      }
+
+      pre {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 16px;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef2f6;
+        color: var(--text);
+      }
+
+      .note {
+        border-left: 4px solid var(--accent);
+        background: var(--panel);
+        padding: 12px 16px;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>Zenith AI Chat / Ruff Guide</p>
+<h1>Ruff ガイド</h1>
+<p>このリポジトリでは Python 側の formatter と linter に Ruff を統一する。役割はコード整形、import 整理、よくあるバグの検出、基本的なセキュリティ観点のチェックである。</p>
+<h2>1. 現在の設定（ルート <code>pyproject.toml</code> の <code>[tool.ruff]</code>）</h2>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>設定値</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>line-length</code></td>
+<td><code>150</code></td>
+<td>Python コードの改行基準（プロジェクト設定に従う）。</td>
+</tr>
+<tr>
+<td><code>target-version</code></td>
+<td><code>py314</code></td>
+<td>Python 3.14 前提で lint と format を揃える。</td>
+</tr>
+<tr>
+<td><code>quote-style</code></td>
+<td><code>double</code></td>
+<td>文字列はダブルクォートへ整形する。</td>
+</tr>
+<tr>
+<td><code>indent-style</code></td>
+<td><code>space</code></td>
+<td>タブではなくスペース。</td>
+</tr>
+<tr>
+<td><code>line-ending</code></td>
+<td><code>lf</code></td>
+<td>改行は LF に統一する。</td>
+</tr>
+</tbody></table>
+<h2>2. 代表的な lint カテゴリ</h2>
+<table>
+<thead>
+<tr>
+<th>prefix</th>
+<th>由来</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>E</code>, <code>F</code></td>
+<td>pycodestyle / Pyflakes</td>
+<td>基本的な構文ミス、未使用名、未定義参照など。</td>
+</tr>
+<tr>
+<td><code>I</code></td>
+<td>isort</td>
+<td>import 並びを整理する。</td>
+</tr>
+<tr>
+<td><code>B</code></td>
+<td>bugbear</td>
+<td>バグになりやすい書き方を指摘する。</td>
+</tr>
+<tr>
+<td><code>UP</code></td>
+<td>pyupgrade</td>
+<td>新しい Python で推奨される書き方へ誘導する。</td>
+</tr>
+<tr>
+<td><code>S</code></td>
+<td>bandit 系</td>
+<td>危険なパターンを軽く抑止する。</td>
+</tr>
+<tr>
+<td><code>PERF</code>, <code>SIM</code>, <code>C4</code>, <code>PTH</code>, <code>RUF</code>, <code>N</code>, <code>T20</code></td>
+<td>各種</td>
+<td>性能、簡素化、内包表記、pathlib 利用、<code>print</code> の扱いなど。</td>
+</tr>
+</tbody></table>
+<p><code>E501</code>（行長）は設定で無視し、改行の見た目を崩さないようプロジェクト都合で切っている（<code>pyproject.toml</code> 参照）。</p>
+<h2>3. 例外設定</h2>
+<p><code>tests</code> 配下では <code>S101</code> を無視している。pytest の <code>assert</code> 利用を許容するためである。</p>
+<p><code>.venv</code>、<code>web/node_modules</code>、<code>web/dist</code> は Ruff の対象外である。</p>
+<h2>4. よく使うコマンド</h2>
+<pre><code>uv run ruff check .
+uv run ruff check --fix .
+uv run ruff format .
+pnpm run lint
+pnpm run format
+</code></pre>
+<p>ルートの lint と format には他ツールも混ざる。Python だけを確認したいときは <code>uv run</code> を直接使う。</p>
+
+    </main>
+  </body>
+</html>

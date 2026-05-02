@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <title>Zenith AI Chat 仕様書</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --text: #20242a;
+        --muted: #5b6470;
+        --line: #d8dde3;
+        --accent: #1864ab;
+        --code: #eef2f6;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      header {
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      h2 {
+        border-bottom: 1px solid var(--line);
+        margin-top: 40px;
+        padding-bottom: 8px;
+        font-size: 1.35rem;
+      }
+
+      h3 {
+        margin-top: 24px;
+        font-size: 1.05rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      code,
+      pre {
+        font-family:
+          "SFMono-Regular",
+          Consolas,
+          "Liberation Mono",
+          monospace;
+      }
+
+      code {
+        border-radius: 4px;
+        background: var(--code);
+        padding: 0.1em 0.35em;
+        color: var(--text);
+      }
+
+      pre {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 16px;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef2f6;
+        color: var(--text);
+      }
+
+      .note {
+        border-left: 4px solid var(--accent);
+        background: var(--panel);
+        padding: 12px 16px;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Zenith AI Chat 仕様書</h1>
+<p>作成日: 2026-04-24 / 更新日: 2026-05-03 / 対象: web, agent, mcp</p>
+<h2>関連ドキュメント</h2>
+<ul>
+<li><strong><a href="./documentation-guide.html">ドキュメントガイド</a></strong> … <code>docs/spec</code> の読み順・用途別索引・全ページ一覧。</li>
+</ul>
+<h2>目的</h2>
+<p>Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由してagentへ接続し、 通常のテキスト応答とGenerative UI応答を同じ会話画面に表示するチャットアプリである。</p>
+<h2>構成</h2>
+<table>
+<thead>
+<tr>
+<th>領域</th>
+<th>ディレクトリ</th>
+<th>技術</th>
+<th>責務</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>FE/BFF</td>
+<td><code>web</code></td>
+<td>TypeScript, Next.js, React, CopilotKit, pnpm</td>
+<td>チャットUI、CopilotKit Runtime endpoint、agentへのBFF route handler</td>
+</tr>
+<tr>
+<td>BE</td>
+<td><code>agent</code></td>
+<td>Python, Microsoft Agent Framework, uv</td>
+<td>agentの実行、agent endpointの公開、LLMへの指示管理</td>
+</tr>
+<tr>
+<td>MCP</td>
+<td><code>mcp</code></td>
+<td>Python, FastMCP, uv</td>
+<td>agentから利用する外部tool群の公開</td>
+</tr>
+<tr>
+<td>ドキュメント</td>
+<td><code>docs</code></td>
+<td>Markdown, HTML</td>
+<td>仕様の正は <code>docs/spec/*.md</code>。閲覧用 HTML は <code>pnpm run docs:build</code> で <code>docs/html</code> に生成する。テンプレートは <code>docs/template</code>。</td>
+</tr>
+</tbody></table>
+<h2>接続仕様</h2>
+<ul>
+<li><code>web</code> は Next.js App Router で UI と BFF route handler を管理する。</li>
+<li>チャット UI は <code>/api/copilotkit</code> の CopilotKit Runtime へ接続する。</li>
+<li>Runtime は <code>AG_UI_BASE_URL</code> を基準に、チャットで選んだモデルプロバイダに応じて agent へ転送する（例: OpenAI 向け <code>/mfa/openai</code>、Anthropic 向け <code>/mfa/anthropic</code>、LangChain 向け <code>/lang-chain/</code>）。実際の URL 組み立ては <code>web/lib/copilotkit/agents.ts</code> の <code>HttpAgent</code> を参照。</li>
+<li><code>agent</code> は <code>agent/src/main.py</code> で FastAPI アプリを組み立て、<code>/mfa</code> に MFA アプリ（<code>/mfa/openai</code>・<code>/mfa/anthropic</code> など）、<code>/lang-chain</code> に LangGraph アプリをマウントする。</li>
+<li>Generative UI は CopilotKit v2 の frontend tool として <code>web</code> 側で登録する。登録例には <code>show_zenith_panel</code>、<code>show_ui_spec</code>、<code>show_flight_options</code>、<code>show_mcp_app</code>（open-ended iframe）、<code>map_view_show_google_map</code> などがある。</li>
+<li>MCP Apps（iframe surface）は <code>web/lib/copilotkit/runtime.ts</code> の <code>MCPAppsMiddleware</code> などで登録する。LangChain（<code>agent/src/lang_chain/app.py</code>）は、環境変数 <code>MCP_SERVER_URL</code> または <code>ZENITH_MCP_SERVER_URL</code> が設定されているとき、Streamable HTTP の MCP（例: <code>http://127.0.0.1:8101/mcp</code>）へ接続して <code>tools/list</code> の<strong>全ツール</strong>を LangGraph の backend tool（<code>server_tools</code>）としてバインドする。BFF 経由で同名ツールが渡った場合は MCP 側を優先する。</li>
+</ul>
+<h2>Generative UIの結論</h2>
+<p>このアプリのGenerative UIは、agentがUI部品そのものを直接生成するのではなく、 agentがfrontend toolを呼び出すか、CopilotKit RuntimeがMCP Appsをiframe surfaceとして表示する仕組みである。</p>
+<p>つまり、LLMは「どのUIを、どのデータで出すか」を決める。 実際のDOM、CSS、React componentはfrontendが所有する。</p>
+<h2>なぜ表示できるのか</h2>
+<ol>
+<li><code>App.tsx</code>で<code>CopilotKitProvider</code>を配置し、 CopilotKitがチャット、agent通信、tool callを扱えるcontextを作る。</li>
+<li><code>GenerativeUIRegistry.tsx</code>が<code>useFrontendTool</code>を呼び、 static、declarative、custom mapのfrontend toolをCopilotKitへ登録する。</li>
+<li>frontend toolには<code>zod</code> schemaで引数仕様を渡す。 CopilotKit Runtimeはこのtool仕様をagentへ渡せる。</li>
+<li>agent の instruction で、用途に応じて <code>show_zenith_panel</code>、<code>show_ui_spec</code>、<code>show_flight_options</code>、<code>show_mcp_app</code>、<code>map_view_show_google_map</code>、MCP Apps を使い分けるよう指定している。</li>
+<li>agentがtool callを返すと、CopilotKitが対応するfrontend toolの<code>render</code>を実行する。 その結果、チャットメッセージ内に<code>ZenithPanel</code>が表示される。</li>
+</ol>
+<h2>実行フロー</h2>
+<pre><code>ユーザー
+  → CopilotChat / CopilotKitProvider
+  → /api/copilotkit（CopilotKit Runtime）
+  → HttpAgent（AG_UI_BASE_URL + プロバイダ別パス、例: /mfa/openai）
+  → agent（tool call を決定）
+  → CopilotKit Runtime が web の frontend tool registry へ
+  → React（Static / Declarative / open-ended iframe / Maps 等）
+  → チャット内に UI を表示
+</code></pre>
+<h2>Frontend Tool仕様</h2>
+<table>
+<thead>
+<tr>
+<th>tool</th>
+<th>方式</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>show_zenith_panel</code></td>
+<td>Static</td>
+<td>固定コンポーネントによるステータスカード・メトリクス・アクションプラン</td>
+</tr>
+<tr>
+<td><code>show_ui_spec</code></td>
+<td>Declarative</td>
+<td>versioned UI schema による grid / list / table / callout / actions など</td>
+</tr>
+<tr>
+<td><code>show_flight_options</code></td>
+<td>Custom</td>
+<td>フライト検索結果などドメイン固有カード</td>
+</tr>
+<tr>
+<td><code>show_mcp_app</code></td>
+<td>Open-ended</td>
+<td>事前定義ブロックに収まらない埋め込みアプリ（sandbox iframe）</td>
+</tr>
+<tr>
+<td><code>map_view_show_google_map</code></td>
+<td>MCP Apps 連携</td>
+<td>Google Maps を iframe で表示</td>
+</tr>
+<tr>
+<td><code>Runtime mcpApps.servers</code></td>
+<td>MCP Apps</td>
+<td>Runtime に登録された MCP App を iframe surface として表示</td>
+</tr>
+</tbody></table>
+<h3>Static Tool詳細</h3>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>仕様</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>tool名</td>
+<td><code>show_zenith_panel</code></td>
+</tr>
+<tr>
+<td>agent</td>
+<td><code>zenith</code></td>
+</tr>
+<tr>
+<td>登録場所</td>
+<td><code>web/components/chat/GenerativeUIRegistry.tsx</code></td>
+</tr>
+<tr>
+<td>表示component</td>
+<td><code>ZenithPanel</code></td>
+</tr>
+<tr>
+<td>用途</td>
+<td>視覚サマリー、ステータスカード、メトリクス、アクションプラン、dashboard風応答</td>
+</tr>
+<tr>
+<td>follow-up</td>
+<td><code>false</code>。tool実行後に追加のLLM応答を要求しない。</td>
+</tr>
+</tbody></table>
+<h3>引数schema</h3>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>制約</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>title</code></td>
+<td><code>string</code></td>
+<td>必須</td>
+<td>パネル見出し</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>string</code></td>
+<td>必須</td>
+<td>概要文</td>
+</tr>
+<tr>
+<td><code>tone</code></td>
+<td>`neutral</td>
+<td>positive</td>
+<td>warning`</td>
+</tr>
+<tr>
+<td><code>metrics</code></td>
+<td><code>{ label, value, delta? }[]</code></td>
+<td>最大4件</td>
+<td>数値や状態のタイル表示</td>
+</tr>
+<tr>
+<td><code>nextActions</code></td>
+<td><code>string[]</code></td>
+<td>最大5件</td>
+<td>次のアクション一覧</td>
+</tr>
+</tbody></table>
+<h2>実装ファイル</h2>
+<table>
+<thead>
+<tr>
+<th>ファイル</th>
+<th>役割</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>web/components/chat/App.tsx</code></td>
+<td><code>CopilotKitProvider</code>を配置し、<code>GenerativeUIRegistry</code>をprovider配下へ登録する。</td>
+</tr>
+<tr>
+<td><code>web/components/chat/GenerativeUIRegistry.tsx</code></td>
+<td>Generative UI frontend toolsをCopilotKitへ登録する。</td>
+</tr>
+<tr>
+<td><code>web/components/generative-ui/declarative/DeclarativeRenderer.tsx</code></td>
+<td><code>show_ui_spec</code>のUI schemaをReact componentへ変換する。</td>
+</tr>
+<tr>
+<td><code>web/components/chat/StableMcpAppsActivityRenderer.tsx</code></td>
+<td>CopilotKit RuntimeのMCP Apps activityを安定したiframe surfaceとして描画する。</td>
+</tr>
+<tr>
+<td><code>web/app/api/generative-ui/mcp-apps/[appId]/route.ts</code></td>
+<td>Google Maps MCP App用のsandboxed app HTMLを配信する。</td>
+</tr>
+<tr>
+<td><code>agent/src/mfa/agents.py</code></td>
+<td>MFA agent の instruction と OpenAI / Anthropic エージェント構築。</td>
+</tr>
+<tr>
+<td><code>web/components/chat/App.test.tsx</code></td>
+<td>テスト環境で<code>useFrontendTool</code>をmockし、既存チャットテストを維持する。</td>
+</tr>
+</tbody></table>
+<h2>公式docsとの対応</h2>
+<ul>
+<li>CopilotKitは、LLMやagentをアプリ内のユーザー操作に接続するための仕組みを提供する。</li>
+<li>CopilotKit docsでは、Generative UIはagentの状態やtool呼び出しをUIとして描画する用途で説明されている。</li>
+<li>この実装は、agent stateを逐次描画する<code>useCoAgentStateRender</code>方式ではなく、 frontend toolの<code>render</code>でtool callをチャット内UIへ変換する方式である。</li>
+<li>参照: <a href="https://docs.copilotkit.ai/llms-full.txt">CopilotKit official docs llms-full.txt</a></li>
+</ul>
+<h2>起動と確認</h2>
+<pre><code>pnpm run dev:agent
+pnpm run dev:web
+</code></pre>
+<p>ブラウザで<code>http://localhost:3000</code>を開き、次のように依頼する。</p>
+<pre><code>Generative UIで、現在のプロジェクト状況をステータスカードとして表示して。
+メトリクスを3つ、次のアクションを3つ含めて。
+</code></pre>
+<h2>制約</h2>
+<ul>
+<li>toolを呼ぶかどうかはLLMの判断に依存するため、promptではGenerative UIやステータスカードを明示する。</li>
+<li>StaticとDeclarativeでは、UIの見た目はfrontend側のcomponentとrendererに制限される。</li>
+<li>MCP Appsでは、raw HTMLをagentから直接受け取らず、FastMCP AppsのresourceをRuntime経由で表示する。</li>
+<li>agentのinstructionを変更した後は、起動中の<code>dev:agent</code>を再起動する必要がある。</li>
+<li>新しいUI種類を増やす場合は、frontend toolを追加するか、既存toolのschemaとrenderを拡張する。</li>
+</ul>
+<h2>品質確認</h2>
+<table>
+<thead>
+<tr>
+<th>目的</th>
+<th>コマンド</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JavaScript依存関係の同期</td>
+<td><code>pnpm install</code></td>
+</tr>
+<tr>
+<td>Python依存関係の同期</td>
+<td><code>uv sync --all-packages --dev</code></td>
+</tr>
+<tr>
+<td>format</td>
+<td><code>pnpm run format</code></td>
+</tr>
+<tr>
+<td>lint</td>
+<td><code>pnpm run lint</code></td>
+</tr>
+<tr>
+<td>type check</td>
+<td><code>pnpm run typecheck</code></td>
+</tr>
+<tr>
+<td>full quality gate</td>
+<td><code>pnpm run check</code></td>
+</tr>
+</tbody></table>
+<h2>共有エージェントスキル</h2>
+<p>TDD 手順と CopilotKit 契約のチェックリストはリポジトリ直下の<code>skills/</code>に置く。 GitHub Copilot 拡張の plugin（<code>.github/plugin/plugin.json</code>）、Cursor のプロジェクトルール、Codex の<code>.codex/AGENTS.md</code>から同一パスで参照する。</p>
+<ul>
+<li><code>skills/zenith-tdd/SKILL.md</code></li>
+<li><code>skills/copilotkit-contracts/SKILL.md</code></li>
+</ul>
+
+    </main>
+  </body>
+</html>

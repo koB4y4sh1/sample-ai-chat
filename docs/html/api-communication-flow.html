@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <title>API・通信フロー仕様</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --text: #20242a;
+        --muted: #5b6470;
+        --line: #d8dde3;
+        --accent: #1864ab;
+        --code: #eef2f6;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      header {
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      h2 {
+        border-bottom: 1px solid var(--line);
+        margin-top: 40px;
+        padding-bottom: 8px;
+        font-size: 1.35rem;
+      }
+
+      h3 {
+        margin-top: 24px;
+        font-size: 1.05rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      code,
+      pre {
+        font-family:
+          "SFMono-Regular",
+          Consolas,
+          "Liberation Mono",
+          monospace;
+      }
+
+      code {
+        border-radius: 4px;
+        background: var(--code);
+        padding: 0.1em 0.35em;
+        color: var(--text);
+      }
+
+      pre {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 16px;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef2f6;
+        color: var(--text);
+      }
+
+      .note {
+        border-left: 4px solid var(--accent);
+        background: var(--panel);
+        padding: 12px 16px;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>Zenith AI Chat / API Communication Flow</p>
+<h1>API・通信フロー仕様</h1>
+<p>この仕様は、チャット入力がどこを経て agent に届き、どこで UI 表示が変換されるかを通信経路として整理する。</p>
+<h2>1. 経路</h2>
+<pre><code>Browser UI
+  → CopilotKitProvider
+  → Next.js route: /api/copilotkit
+  → CopilotRuntime
+  → HttpAgent（AG_UI_BASE_URL + プロバイダ別パス、例: /mfa/openai）
+  → FastAPI agent service
+  → 通常応答または frontend tool call
+  → web 側 renderer が表示
+</code></pre>
+<p>プロバイダ（OpenAI / Anthropic / LangChain）に応じて <code>HttpAgent</code> の接続先 URL が切り替わる（<code>web/lib/copilotkit/agents.ts</code>）。</p>
+<h2>2. 通信要素と役割</h2>
+<table>
+<thead>
+<tr>
+<th>要素</th>
+<th>場所</th>
+<th>役割</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>チャット UI</td>
+<td><code>web/components/chat</code></td>
+<td>ユーザー入力、会話表示、tool 結果の描画。</td>
+</tr>
+<tr>
+<td>Runtime endpoint</td>
+<td><code>web/app/api/copilotkit/route.ts</code></td>
+<td><code>/api/copilotkit</code> を公開し CopilotKit Runtime に処理を渡す。</td>
+</tr>
+<tr>
+<td>Agent registry</td>
+<td><code>web/lib/copilotkit/agents.ts</code></td>
+<td><code>@ag-ui/client</code> の <code>HttpAgent</code> で AG-UI 接続先を解決する。</td>
+</tr>
+<tr>
+<td>AG-UI endpoint</td>
+<td><code>agent/src/main.py</code> ほか</td>
+<td><code>/mfa/*</code>、<code>/lang-chain/*</code> など agent 側 endpoint。</td>
+</tr>
+<tr>
+<td>Frontend tools</td>
+<td><code>web/components/chat/GenerativeUIRegistry.tsx</code></td>
+<td>tool call を React の renderer に変換する。</td>
+</tr>
+</tbody></table>
+<h2>3. エンドポイント整理</h2>
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th>提供側</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/api/copilotkit</code></td>
+<td>web</td>
+<td>ブラウザが叩く BFF。Runtime の入口。</td>
+</tr>
+<tr>
+<td><code>AG_UI_BASE_URL</code> + <code>/mfa/openai</code> など</td>
+<td>agent</td>
+<td>CopilotKit Runtime から接続する MFA 側 AG-UI endpoint。</td>
+</tr>
+<tr>
+<td><code>AG_UI_BASE_URL</code> + <code>/health</code></td>
+<td>agent</td>
+<td>ルートアプリのヘルスチェック。</td>
+</tr>
+</tbody></table>
+<p>（LangChain 利用時は <code>LANG_CHAIN_AGENT_BASE_URL</code> や <code>/lang-chain/</code> の組み合わせを参照。）</p>
+<h2>4. Generative UI が関わるときの流れ</h2>
+<ol>
+<li>agent がユーザー発話を解釈し frontend tool を呼ぶ。</li>
+<li>tool 名と引数が CopilotKit Runtime 経由で web に返る。</li>
+<li>web の <code>GenerativeUIRegistry</code> が登録済み tool にディスパッチする。</li>
+<li>static / declarative / open-ended のいずれかで描画する。</li>
+</ol>
+
+    </main>
+  </body>
+</html>

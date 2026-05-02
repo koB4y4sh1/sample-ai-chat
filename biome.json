@@ -20,7 +20,8 @@
       "!web/.next",
       "!web/next-env.d.ts",
       "!web/pnpm-lock.yaml",
-      "!web/package-lock.json"
+      "!web/package-lock.json",
+      "!docs/template"
     ]
   },
   "formatter": {

@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <title>MCP テーマ選定メモ</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --text: #20242a;
+        --muted: #5b6470;
+        --line: #d8dde3;
+        --accent: #1864ab;
+        --code: #eef2f6;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      header {
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      h2 {
+        border-bottom: 1px solid var(--line);
+        margin-top: 40px;
+        padding-bottom: 8px;
+        font-size: 1.35rem;
+      }
+
+      h3 {
+        margin-top: 24px;
+        font-size: 1.05rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      code,
+      pre {
+        font-family:
+          "SFMono-Regular",
+          Consolas,
+          "Liberation Mono",
+          monospace;
+      }
+
+      code {
+        border-radius: 4px;
+        background: var(--code);
+        padding: 0.1em 0.35em;
+        color: var(--text);
+      }
+
+      pre {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 16px;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef2f6;
+        color: var(--text);
+      }
+
+      .note {
+        border-left: 4px solid var(--accent);
+        background: var(--panel);
+        padding: 12px 16px;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>MCP Theme Decision Log</p>
+<h1>MCP テーマ選定メモ</h1>
+<p><strong>要点:</strong> MCP に載せるかは「再利用できる tool 境界か」「ユーザー入力だけで価値が出るか」「Generative UI と見た目が壊れないか」で切る。業務テーマは監査・個人情報コストが重くなりやすい。</p>
+<p>本文はテーマごとの判断ログと運用上の注意が続く。</p>
+<hr>
+<p>MCP のテーマを決めるときに議論した内容を、後から設計判断を読み返せるように残す。コントラストや配色だけでなく、MCP Apps への移植しやすさやデータ利用のリスクまで含めて整理する。</p>
+<h2>前提となる前提</h2>
+<h3>評価軸</h3>
+<p>テーマ選定では次の 4 軸を並べる。</p>
+<ul>
+<li>業務上「説明しやすい」こと</li>
+<li>長く触っても疲れないこと</li>
+<li>MCP App と Generative UI で見た目が破綻しないこと</li>
+<li>将来の拡張で無理なくモックや別ブランドに差し替えられること</li>
+</ul>
+<h3>設計の大原則</h3>
+<p>外部システムと結びつく処理は安易に MCP に寄せない。再利用可能な tool 境界として切り出せるかで判断する。アプリ内の state を細かい utility で埋める実装は、原則 MCP にしない。</p>
+<h2>MCP に載せるテーマの考え方</h2>
+<h3>向いている</h3>
+<ul>
+<li>比較・レビュー・承認・進捗のように状態と次アクションがある UI</li>
+<li>ユーザー入力データだけで最初の結果が出せる</li>
+<li>カード、表、チェックリスト、タイムラインなど UI の見せ場がある</li>
+<li>原則として外部サービス連携を追加しても責務が崩れにくい</li>
+</ul>
+<h3>向かない</h3>
+<ul>
+<li>細かい plan や長文メモだけで業務が完結する、tool 境界が曖昧</li>
+<li>入力を細かく刻んで検証するだけで、アプリ内関数で足りる</li>
+<li>外部データ利用許諾や確実な監査証跡が最初から重い</li>
+<li>個人情報や機微情報など、コストとガバナンスが先に来る</li>
+</ul>
+<h2>読みやすさと設計</h2>
+<table>
+<thead>
+<tr>
+<th>テーマ</th>
+<th>強み</th>
+<th>負担</th>
+<th>設計</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ライト基調・低彩 UI・比較・MCP App 連携が多い</td>
+<td>スクロール長文・多用時の疲労・再利用時のコストが軽い</td>
+<td>強調色が弱くアクティブ状態では視認が落ちる</td>
+<td>テーマとしては淡色寄り。アクティブ状態は別トークンで補う</td>
+</tr>
+<tr>
+<td>業務オペレーション寄り</td>
+<td>推移や履歴で文脈が見える</td>
+<td>依存データ・個人情報・監査ログが重い</td>
+<td>業務専用テーマを選ぶ。レビュー用途ではログ設計もセットで決める</td>
+</tr>
+<tr>
+<td>イベント・レビュー寄り</td>
+<td>比較 UI を組みやすくチャットから繋ぎやすい</td>
+<td>外部データ探索と許諾確認の工程が増えやすい</td>
+<td>アイデアとして薄色寄り。長文テーマとしては判断が重い</td>
+</tr>
+</tbody></table>
+<p>ライト基調・レビュー寄りはアイデアとして強いが、MCP App とブランドが競合しやすい。よってスコープでは UI よりデータ探索と利用許諾のコストが勝ちやすい。</p>
+<h3>よくある落とし穴</h3>
+<ul>
+<li>全体トークンが明暗ワンスクリーン前提だと強調が弱い</li>
+<li>条件付き・段階開示・匿名化は業務ドキュメント以外の許諾設計が先</li>
+<li>実務レビューと個人情報・監査ログが同居すると運用コストが跳ねる</li>
+<li>機密と API の粒度がサイトごとにバラバラだと現場コストが重い</li>
+</ul>
+<h2>業務寄りテーマの埋め込み</h2>
+<p>業務種別は固定ではないが、実務レビューに寄せると強調が大きい。設計を誤ると業務オペレーションそのものではなく「業務サマリー」「個人情報」「監査ログ」にモックが寄りやすい。</p>
+<h3>比較に強い業務が良い理由</h3>
+<ul>
+<li>推移の長期運用</li>
+<li>仕様書のドリルダウン</li>
+<li>契約や変更履歴の抽出</li>
+<li>複数拠点業務の横断整理</li>
+</ul>
+<h3>選ぶべきでない領域</h3>
+<ul>
+<li>個人ごとの恣意的な業務要件</li>
+<li>調達や調査目的の機微データ</li>
+<li>そのまま業務 UI に載せる監査ログの丸写し</li>
+</ul>
+<h2>運用で選んだ active テーマ</h2>
+<h3>document_review</h3>
+<p>既存資料を踏まえた文章校正・体裁調整・ファイル入力や業務レビュー連携を想定する。</p>
+<h3>listing_assist</h3>
+<p>検索ではなく棚卸し業務に寄せることで、一覧・見積・チェックリストなど MCP App の見せ場が立ちやすい。</p>
+<h3>quote_compare</h3>
+<p>複数見積の比較や業務判断が多く、表・リスク・ライクライン・運用理由 UI が組みやすい。外部データ依存も検討しやすい。</p>
+<h3>submission_pack</h3>
+<p>提出・送付はチェックリストと状態更新が主で、MCP に載せる値と MCP App の境界が説明しやすい。</p>
+<h2>あとから設計に使うルール</h2>
+<ol>
+<li>レビュー寄りテーマを選ぶときは、最初にデータ探索と規約遵守のコストを確認する。</li>
+<li>外部システムと結ぶなら MCP にしない前に tool 境界として説明できるかを見る。</li>
+<li>ユーザー入力データだけで成果が出るテーマを優先する。</li>
+<li>Generative UI の見せ場が表・タイムライン・チェックリスト・カードに落ちるか確認する。</li>
+<li>業務・監査・個人情報は「許諾」「処理」「監査」に分けて語る。</li>
+</ol>
+<h2>運用でテーマを閉じる条件</h2>
+<ul>
+<li>ライトとイベント寄りは機密やデータ・API の粒度が荒いとテーマ維持が難しい。</li>
+<li>業務寄りは業務オペレーションではなく資料レビュー用途で設計が固まったら閉じやすい。</li>
+<li>レビュー寄りテーマを閉じるときも、まずモックで UI と tool surface を揃えてから本番データ連携を語る。</li>
+</ul>
+
+    </main>
+  </body>
+</html>

@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Zenith AI Chat の HTML ドキュメント一覧とカテゴリ別リンク。" />
+    <title>Zenith AI Chat ドキュメント索引</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f1ea;
+        --panel: rgba(255, 255, 255, 0.86);
+        --text: #1d2521;
+        --muted: #57655d;
+        --line: rgba(39, 65, 54, 0.12);
+        --accent: #1e6f5c;
+        --accent-strong: #124437;
+        --hero: linear-gradient(135deg, #efe3c3 0%, #d6eadf 55%, #ecf5f2 100%);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top left, rgba(250, 211, 115, 0.25), transparent 28%),
+          radial-gradient(circle at right 20%, rgba(52, 211, 153, 0.18), transparent 30%),
+          var(--bg);
+        color: var(--text);
+        font-family: Georgia, "Yu Mincho", "Hiragino Mincho ProN", serif;
+        line-height: 1.7;
+      }
+
+      main {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 40px 24px 72px;
+      }
+
+      .hero {
+        padding: 36px;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: var(--hero);
+        box-shadow: 0 22px 50px rgba(34, 57, 48, 0.09);
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        font-size: 0.84rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent-strong);
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.2;
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2.4rem, 5vw, 4.2rem);
+      }
+
+      h2 {
+        margin: 40px 0 18px;
+        font-size: 1.55rem;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 40px;
+      }
+
+      .section-header h2 {
+        margin: 0;
+      }
+
+      .section-kicker {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--accent-strong);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      .lead {
+        max-width: 760px;
+        font-size: 1.08rem;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 18px;
+        margin-top: 28px;
+      }
+
+      .category {
+        margin-top: 28px;
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: var(--panel);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 18px 40px rgba(43, 59, 51, 0.06);
+      }
+
+      .card h3 {
+        margin: 0;
+        font-size: 1.18rem;
+      }
+
+      .tag {
+        width: fit-content;
+        padding: 0.18rem 0.6rem;
+        border-radius: 999px;
+        background: rgba(30, 111, 92, 0.1);
+        color: var(--accent-strong);
+        font-size: 0.78rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      a {
+        color: var(--accent-strong);
+      }
+
+      .footer-note {
+        margin-top: 36px;
+        padding: 18px 20px;
+        border-left: 4px solid var(--accent);
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      code {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      }
+
+      @media (max-width: 720px) {
+        main {
+          padding: 24px 16px 56px;
+        }
+
+        .hero {
+          padding: 28px 22px;
+          border-radius: 22px;
+        }
+
+        .card {
+          border-radius: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+  <p class="eyebrow">Zenith AI Chat Documentation</p>
+  <h1>ドキュメントを読むための索引</h1>
+  <p class="lead">
+    <strong>初めてなら</strong> <a href="./documentation-guide.html">ドキュメントガイド</a>（読む順・ページ一覧）を先にどうぞ。ソースは <code>docs/spec</code> の Markdown、閲覧用 HTML は <code>pnpm run docs:build</code> で <code>docs/html</code> に出力する。
+  </p>
+</section><section>
+  <div class="section-header">
+    <h2>ドキュメント一覧</h2>
+    <p class="section-kicker">Categories</p>
+  </div>  <div class="category">
+    <div class="section-header">
+      <h2>入口・全体</h2>
+      <p class="section-kicker">Start here</p>
+    </div>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">Guide</span>
+        <h3><a href="./documentation-guide.html">ドキュメントガイド</a></h3>
+        <p>読む順番、用途別インデックス、全ページの説明。</p>
+      </article>
+      <article class="card">
+        <span class="tag">Specification</span>
+        <h3><a href="./specification.html">全体仕様書</a></h3>
+        <p>目的・構成・接続・Generative UI・品質ゲートの基準。</p>
+      </article>
+      <article class="card">
+        <span class="tag">Decision</span>
+        <h3><a href="./mcp-theme-selection.html">MCPテーマ選定メモ</a></h3>
+        <p>MCP UI のテーマ判断・設計ログ。</p>
+      </article>
+      <article class="card">
+        <span class="tag">Environment</span>
+        <h3><a href="./environment-configuration.html">環境設定仕様</a></h3>
+        <p>ツールバージョン、セットアップ、環境変数、起動・検証コマンド。</p>
+      </article>
+      <article class="card">
+        <span class="tag">Workspace</span>
+        <h3><a href="./workspace-overview.html">ワークスペース概要</a></h3>
+        <p>パッケージ境界と通信の流れ（web / agent / mcp）。</p>
+      </article>
+      <article class="card">
+        <span class="tag">Directories</span>
+        <h3><a href="./directory-structure.html">ディレクトリ構成仕様</a></h3>
+        <p>コードを置く場所の索引。</p>
+      </article>
+      <article class="card">
+        <span class="tag">API Flow</span>
+        <h3><a href="./api-communication-flow.html">API・通信フロー仕様</a></h3>
+        <p>BFF、Runtime、agent 間の経路。</p>
+      </article>
+    </div>
+  </div>  <div class="category">
+    <div class="section-header">
+      <h2>開発フローと品質</h2>
+      <p class="section-kicker">Workflow</p>
+    </div>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">Rules</span>
+        <h3><a href="./development-rules.html">開発ルール仕様</a></h3>
+        <p>このリポジトリで守るべきサービス境界、依存追加方針、Generative UI、仕様更新の流れをまとめる。</p>
+      </article>
+      <article class="card">
+        <span class="tag">Biome</span>
+        <h3><a href="./biome-guide.html">Biome ガイド</a></h3>
+        <p>フォーマッタ／リンターとしての運用、設定値、よくある修正、品質コマンドをまとめる。</p>
+      </article>
+      <article class="card">
+        <span class="tag">Ruff</span>
+        <h3><a href="./ruff-guide.html">Ruff ガイド</a></h3>
+        <p>Python 側の formatter と linter としての運用、ルール、修正内容、品質コマンドをまとめる。</p>
+      </article>
+      <article class="card">
+        <span class="tag">mypy</span>
+        <h3><a href="./mypy-guide.html">mypy ガイド</a></h3>
+        <p>strict type check の前提、対象範囲、mypy_path、修正ルール、運用上の注意をまとめる。</p>
+      </article>
+      <article class="card">
+        <span class="tag">Hooks</span>
+        <h3><a href="./pre-commit-guide.html">pre-commit ガイド</a></h3>
+        <p>コミット時フックの構成、ローカルフックの役割、初回セットアップの読み方をまとめる。</p>
+      </article>
+      <article class="card">
+        <span class="tag">Testing</span>
+        <h3><a href="./test-strategy.html">テスト戦略仕様</a></h3>
+        <p>pytest と Vitest の役割分担、現状のテスト配置、追加時の考え方をまとめる。</p>
+      </article>
+      <article class="card">
+        <span class="tag">Dependencies</span>
+        <h3><a href="./dependency-policy.html">依存関係ポリシー仕様</a></h3>
+        <p>pnpm、uv、lockfile、runtime 依存追加の判断基準をまとめる。</p>
+      </article>
+    </div>
+  </div>  <div class="category">
+    <div class="section-header">
+      <h2>AI・UI 関連</h2>
+      <p class="section-kicker">AI Surfaces</p>
+    </div>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">Generative UI</span>
+        <h3><a href="./generative-ui.html">Generative UI 解説</a></h3>
+        <p>static、declarative、open-ended の三類型と block catalog の関係をまとめる。</p>
+      </article>
+      <article class="card">
+        <span class="tag">CopilotKit</span>
+        <h3><a href="./copilotkit-guide.html">CopilotKit ガイド</a></h3>
+        <p>Next.js 側の Runtime、Provider、frontend tool 登録、agent 連携の位置づけを説明する。</p>
+      </article>
+      <article class="card">
+        <span class="tag">AG-UI</span>
+        <h3><a href="./ag-ui-guide.html">AG-UI ガイド</a></h3>
+        <p>Python agent サービスの AG-UI endpoint、マウント構成、設定と CORS。</p>
+      </article>
+      <article class="card">
+        <span class="tag">A2UI</span>
+        <h3><a href="./a2ui-guide.html">A2UI ガイド</a></h3>
+        <p>このリポジトリにおける A2UI の扱いと、生成 UI の block catalog との対応をまとめる。</p>
+      </article>
+      <article class="card">
+        <span class="tag">Examples</span>
+        <h3><a href="./generative-ui-examples.html">Generative UI サンプルカタログ</a></h3>
+        <p>ユーザー発話に応じてどの frontend tool と block を使うかを具体ケースでまとめる。</p>
+      </article>
+    </div>
+  </div>
+</section><p class="footer-note">
+  <a href="./documentation-guide.html">ドキュメントガイド</a>の順路に沿うと迷いにくい。全体仕様のあと環境・ワークスペース、必要に応じて品質ツールと AI・UI を読む。
+</p>
+
+    </main>
+  </body>
+</html>

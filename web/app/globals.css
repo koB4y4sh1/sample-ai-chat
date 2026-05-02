@@ -129,10 +129,11 @@
     line-height: 1.75;
   }
 
+  /* border/box-shadow はライブラリ既定より詳細度で上書き（!important は Biome noImportantStyles 回避のため使わない） */
   .zenith-copilot-chat .copilotKitInput {
     background: var(--color-sidebar-bg);
-    border: none !important;
-    box-shadow: none !important;
+    border: none;
+    box-shadow: none;
     outline: none;
   }
 

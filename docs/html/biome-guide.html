@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <title>Biome ガイド</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --text: #20242a;
+        --muted: #5b6470;
+        --line: #d8dde3;
+        --accent: #1864ab;
+        --code: #eef2f6;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      header {
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      h2 {
+        border-bottom: 1px solid var(--line);
+        margin-top: 40px;
+        padding-bottom: 8px;
+        font-size: 1.35rem;
+      }
+
+      h3 {
+        margin-top: 24px;
+        font-size: 1.05rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      code,
+      pre {
+        font-family:
+          "SFMono-Regular",
+          Consolas,
+          "Liberation Mono",
+          monospace;
+      }
+
+      code {
+        border-radius: 4px;
+        background: var(--code);
+        padding: 0.1em 0.35em;
+        color: var(--text);
+      }
+
+      pre {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 16px;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef2f6;
+        color: var(--text);
+      }
+
+      .note {
+        border-left: 4px solid var(--accent);
+        background: var(--panel);
+        padding: 12px 16px;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>Zenith AI Chat / Biome Guide</p>
+<h1>Biome ガイド</h1>
+<p>このリポジトリでは TypeScript と JSON 周りの整形および lint に Biome を使う。frontend だけでなくルートからモノレポ全体を対象とするのが位置づけである。</p>
+<h2>1. 役割</h2>
+<ul>
+<li>formatter: インデント幅、行長、シングルクォート、セミコロンなどを統一する。</li>
+<li>linter: 未使用 import、未使用変数、<code>import type</code> の使い分けなどを拾う。</li>
+<li>assist: <code>organizeImports</code> を有効にし、import の並びを整理する。</li>
+</ul>
+<h2>2. 現在の主な設定（<code>biome.json</code>）</h2>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>設定値</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>indentStyle</td>
+<td><code>space</code></td>
+<td>タブではなくスペースを使う。</td>
+</tr>
+<tr>
+<td>indentWidth</td>
+<td><code>2</code></td>
+<td>JS/TS のインデント幅は 2。</td>
+</tr>
+<tr>
+<td>lineWidth</td>
+<td><code>100</code></td>
+<td>長すぎる行を折り返す基準。</td>
+</tr>
+<tr>
+<td>quoteStyle</td>
+<td><code>single</code></td>
+<td>JavaScript 文字列はシングルクォートに寄せる。</td>
+</tr>
+<tr>
+<td>trailingCommas</td>
+<td><code>all</code></td>
+<td>JavaScript では末尾カンマを付ける。</td>
+</tr>
+</tbody></table>
+<h2>3. 代表的な lint rule の読み方</h2>
+<table>
+<thead>
+<tr>
+<th>rule</th>
+<th>level</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>noUnusedImports</code></td>
+<td>error</td>
+<td>未使用 import をコミット前に潰す。</td>
+</tr>
+<tr>
+<td><code>noUnusedVariables</code></td>
+<td>error</td>
+<td>使っていない変数を残さない。</td>
+</tr>
+<tr>
+<td><code>useExhaustiveDependencies</code></td>
+<td>warn</td>
+<td>React の依存配列漏れを警告する。</td>
+</tr>
+<tr>
+<td><code>noExplicitAny</code></td>
+<td>warn</td>
+<td><code>any</code> を濫用しない場合に限定して許容する。</td>
+</tr>
+<tr>
+<td><code>useImportType</code></td>
+<td>error</td>
+<td>type import を明示し、値と型の境界を分ける。</td>
+</tr>
+</tbody></table>
+<h2>4. 対象と除外</h2>
+<p>Biome はワークスペース全体から見るが、生成物や依存、<code>node_modules</code>、キャッシュ、lockfile、<code>*.tsbuildinfo</code>、Next.js の <code>.next</code> などは除外する。</p>
+<pre><code>!**/.venv
+!**/node_modules
+!**/dist
+!**/.ruff_cache
+!**/.mypy_cache
+!uv.lock
+!pnpm-lock.yaml
+!**/*.tsbuildinfo
+!web/.next
+</code></pre>
+<p>テンプレート HTML（<code>docs/template</code>）はプレースホルダのため Biome 対象外としている。</p>
+<h2>5. よく使うコマンド</h2>
+<pre><code>pnpm run format
+pnpm run lint
+pnpm exec biome check .
+pnpm exec biome check --write .
+</code></pre>
+<p><code>format</code> は Biome の自動修正に加え Python 側の Ruff format を続けて実行する。<code>lint</code> は TypeScript 側では Biome check、Python 側では Ruff check を含む。</p>
+<h2>6. 運用メモ</h2>
+<p>このリポジトリでは ESLint ではなく Biome を第一選択としている。frontend の細かい規約の多くは、可能な限り Biome の設定に寄せて一貫して直すのがよい。</p>
+
+    </main>
+  </body>
+</html>

@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <title>mypy ガイド</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --text: #20242a;
+        --muted: #5b6470;
+        --line: #d8dde3;
+        --accent: #1864ab;
+        --code: #eef2f6;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      header {
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      h2 {
+        border-bottom: 1px solid var(--line);
+        margin-top: 40px;
+        padding-bottom: 8px;
+        font-size: 1.35rem;
+      }
+
+      h3 {
+        margin-top: 24px;
+        font-size: 1.05rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      code,
+      pre {
+        font-family:
+          "SFMono-Regular",
+          Consolas,
+          "Liberation Mono",
+          monospace;
+      }
+
+      code {
+        border-radius: 4px;
+        background: var(--code);
+        padding: 0.1em 0.35em;
+        color: var(--text);
+      }
+
+      pre {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 16px;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef2f6;
+        color: var(--text);
+      }
+
+      .note {
+        border-left: 4px solid var(--accent);
+        background: var(--panel);
+        padding: 12px 16px;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>Zenith AI Chat / mypy Guide</p>
+<h1>mypy ガイド</h1>
+<p>このリポジトリでは Python 側の型検査を strict mypy で行う。目的は service 境界、公開関数、設定まわりの型安全性を実装時に潰し込むことにある。</p>
+<h2>1. 現在の設定（ルート <code>pyproject.toml</code> の <code>[tool.mypy]</code>）</h2>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>設定値</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>python_version</code></td>
+<td><code>3.14</code></td>
+<td>解析対象を Python 3.14 前提にする。</td>
+</tr>
+<tr>
+<td><code>strict</code></td>
+<td><code>true</code></td>
+<td>厳格モードを既定とする。</td>
+</tr>
+<tr>
+<td><code>namespace_packages</code></td>
+<td><code>true</code></td>
+<td>workspace 内 package 構成と整合させる。</td>
+</tr>
+<tr>
+<td><code>explicit_package_bases</code></td>
+<td><code>true</code></td>
+<td>package base を明示し import 解決を安定させる。</td>
+</tr>
+<tr>
+<td><code>mypy_path</code></td>
+<td><code>[&quot;agent&quot;, &quot;mcp/src&quot;]</code></td>
+<td>名前解決のベースパスとして使う。</td>
+</tr>
+</tbody></table>
+<h2>2. 対象範囲</h2>
+<p>ルートの script と pre-commit では <code>pnpm run typecheck:py</code> が次を実行する。</p>
+<pre><code>uv run mypy -p src &amp;&amp; uv run mypy mcp/src mcp/tests
+</code></pre>
+<p>（前者は agent package、<code>src</code> は agent 側のレイアウトに依存。）</p>
+<p><code>exclude</code> で <code>^web/</code> と <code>^docs/</code> は型検査から外している。</p>
+<h2>3. 運用上の心得</h2>
+<ul>
+<li>公開関数、service 境界、tool handler には型注釈を付ける。</li>
+<li>境界で <code>dict[str, Any]</code> に逃げない。Pydantic model などで構造化する。</li>
+<li>環境変数は設定モジュールへ集約し、ばらまかない。</li>
+<li>package ごとに <code>py.typed</code> を維持する。</li>
+</ul>
+<h2>4. 実行コマンド</h2>
+<pre><code>pnpm run typecheck:py
+pnpm run typecheck
+pnpm run check
+uv run pre-commit run mypy --all-files
+</code></pre>
+<p><code>typecheck</code> は TypeScript と Python を続けて実行する。mypy のエラーだけ直したいときは <code>pnpm run typecheck:py</code> が読みやすい。</p>
+
+    </main>
+  </body>
+</html>
