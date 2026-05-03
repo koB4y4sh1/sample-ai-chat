@@ -59,6 +59,35 @@ jobs:
       - name: Lint and type check
         run: pnpm run check
 
+      - name: Debug agent-framework __init__
+        run: |
+          uv run python - <<'PY'
+          import agent_framework
+          from pathlib import Path
+
+          path = Path(agent_framework.__file__)
+          print("agent_framework file:", path)
+          print("contains MCPStreamableHTTPTool:", "MCPStreamableHTTPTool" in path.read_text(encoding="utf-8"))
+          print("contains SupportsAgentRun:", "SupportsAgentRun" in path.read_text(encoding="utf-8"))
+          print("--- head ---")
+          print("\n".join(path.read_text(encoding="utf-8").splitlines()[:80]))
+          PY
+
+      - name: Debug installed dist
+        run: |
+          uv run python - <<'PY'
+          import importlib.metadata as m
+
+          dist = m.distribution("agent-framework")
+          print("version:", dist.version)
+          print("location:", dist.locate_file(""))
+          print("files:")
+          for f in dist.files or []:
+              s = str(f)
+              if s.endswith("agent_framework/__init__.py") or s.endswith("agent_framework/_mcp.py") or s.endswith("RECORD"):
+                  print(s)
+          PY
+
       - name: Test
         run: pnpm run test
 
@@ -104,4 +133,9 @@ jobs:
         run: uv sync --all-packages --dev --frozen
 
       - name: Run pre-commit
+        env:
+          SKIP: uv-lock
         run: uv run pre-commit run --all-files
+
+      - name: Check uv lock is up to date
+        run: uv lock --check
