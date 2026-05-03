@@ -70,6 +70,14 @@ exclude = [
     "^docs/",
 ]
 
+# TODO : Remove [[tool.mypy.overrides]] for src.mfa.* when agent-framework package-root typing is stable in CI, or switch to submodule imports (e.g. agent_framework._agents).
+[[tool.mypy.overrides]]
+module = [
+    "src.mfa.agents",
+    "src.mfa.workflow",
+]
+disable_error_code = ["attr-defined"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = [
