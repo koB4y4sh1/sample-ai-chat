@@ -24,17 +24,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.33.0 --activate
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-
-      - name: Enable pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@10.33.0 --activate
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -74,17 +74,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.33.0 --activate
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-
-      - name: Enable pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@10.33.0 --activate
 
       - name: Setup Python
         uses: actions/setup-python@v6
