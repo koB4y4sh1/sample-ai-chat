@@ -88,6 +88,9 @@ jobs:
                   print(s)
           PY
 
+      - name: Check uv lock is up to date
+        run: uv lock --check
+
       - name: Test
         run: pnpm run test
 
