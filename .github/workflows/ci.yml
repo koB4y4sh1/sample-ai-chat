@@ -63,34 +63,42 @@ jobs:
             --reinstall-package agent-framework \
             --reinstall-package agent-framework-ag-ui
 
-      - name: Debug agent-framework dist contents
+      - name: Debug Agent Framework distributions
         run: |
           uv run python - <<'PY'
           import importlib.metadata as m
           import agent_framework
           from pathlib import Path
 
-          dist = m.distribution("agent-framework")
-          init_path = Path(agent_framework.__file__)
+          for name in [
+              "agent-framework",
+              "agent-framework-core",
+              "agent-framework-ag-ui",
+          ]:
+              try:
+                  dist = m.distribution(name)
+                  print("==", name, "==")
+                  print("version:", dist.version)
+                  print("location:", dist.locate_file(""))
+                  files = list(dist.files or [])
+                  print("file count:", len(files))
+                  for f in files:
+                      s = str(f)
+                      if s.startswith("agent_framework/") and (
+                          s.endswith("__init__.py")
+                          or s.endswith("_mcp.py")
+                          or s.endswith("_agents.py")
+                      ):
+                          print(" ", s)
+              except Exception as e:
+                  print("==", name, "==")
+                  print("ERROR:", repr(e))
 
-          print("version:", dist.version)
-          print("agent_framework file:", init_path)
-          print("dist location:", dist.locate_file(""))
-
-          text = init_path.read_text(encoding="utf-8")
-          print("contains MCPStreamableHTTPTool:", "MCPStreamableHTTPTool" in text)
-          print("contains SupportsAgentRun:", "SupportsAgentRun" in text)
-
-          print("--- dist files around agent_framework ---")
-          for f in dist.files or []:
-              s = str(f)
-              if s.startswith("agent_framework/") and (
-                  s.endswith("__init__.py") or s.endswith("_mcp.py") or s.endswith("_agents.py")
-              ):
-                  print(s)
-
-          print("--- __init__.py first 120 lines ---")
-          print("\n".join(text.splitlines()[:120]))
+          path = Path(agent_framework.__file__)
+          print("runtime file:", path)
+          print("runtime size:", path.stat().st_size)
+          print("runtime contains MCPStreamableHTTPTool:", "MCPStreamableHTTPTool" in path.read_text(encoding="utf-8"))
+          print("runtime contains SupportsAgentRun:", "SupportsAgentRun" in path.read_text(encoding="utf-8"))
           PY
 
       - name: Check formatting
