@@ -1,4 +1,4 @@
-from agent_framework import Agent, MCPStreamableHTTPTool  # type: ignore[attr-defined]
+from agent_framework import Agent, MCPStreamableHTTPTool
 from agent_framework.foundry import AnthropicFoundryClient, FoundryChatClient
 from azure.identity.aio import AzureCliCredential, get_bearer_token_provider
 from dedent import dedent

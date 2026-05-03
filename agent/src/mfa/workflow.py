@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Literal, Never
 
-from agent_framework import (  # type: ignore[attr-defined]
+from agent_framework import (
     AgentExecutor,
     AgentExecutorRequest,
     Case,
@@ -27,11 +27,11 @@ class RouteDecision:
     last_user_text: str
 
 
-class InfoCollector(Executor):  # type: ignore[misc]
+class InfoCollector(Executor):
     def __init__(self) -> None:
         super().__init__("collect_context")
 
-    @handler  # type: ignore[untyped-decorator]
+    @handler
     async def collect(self, messages: list[Message], ctx: WorkflowContext[RouteDecision]) -> None:
         last_user_text = ""
         for message in reversed(messages):
@@ -43,12 +43,12 @@ class InfoCollector(Executor):  # type: ignore[misc]
         await ctx.send_message(RouteDecision(route=route, messages=messages, last_user_text=last_user_text))
 
 
-@executor(id="to_chat_request")  # type: ignore[untyped-decorator]
+@executor(id="to_chat_request")
 async def to_chat_request(decision: RouteDecision, ctx: WorkflowContext[AgentExecutorRequest]) -> None:
     await ctx.send_message(AgentExecutorRequest(messages=decision.messages, should_respond=True))
 
 
-@executor(id="empty_request")  # type: ignore[untyped-decorator]
+@executor(id="empty_request")
 async def empty_request(decision: RouteDecision, ctx: WorkflowContext[Never, str]) -> None:
     await ctx.yield_output("Input message is empty.")
 
