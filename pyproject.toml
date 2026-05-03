@@ -70,15 +70,6 @@ exclude = [
     "^docs/",
 ]
 
-# TODO : Remove these overrides when agent-framework ships accurate stubs (Executor base, typed @handler/@executor).
-[[tool.mypy.overrides]]
-module = ["src.mfa.agents"]
-disable_error_code = ["attr-defined"]
-
-[[tool.mypy.overrides]]
-module = ["src.mfa.workflow"]
-disable_error_code = ["attr-defined", "misc", "untyped-decorator"]
-
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = [
