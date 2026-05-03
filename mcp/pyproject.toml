@@ -2,7 +2,7 @@
 name = "zenith-mcp"
 version = "0.1.0"
 description = "FastMCP tool server for Zenith AI Chat."
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 dependencies = [
     "fastmcp[apps]>=3.2.4",
     "pydantic>=2.10",

@@ -3,7 +3,7 @@ name = "zenith-ai-chat"
 version = "0.1.0"
 description = "Monorepo for the Zenith AI chat application."
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 dependencies = []
 
 [dependency-groups]
