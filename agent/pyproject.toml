@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Agent service for Zenith AI Chat."
 requires-python = ">=3.14"
 dependencies = [
-    "agent-framework>=1.2.0",
+    "agent-framework>=1.2.2",
     "fastapi>=0.115",
     "pydantic>=2.10",
     "pydantic-settings>=2.6",
