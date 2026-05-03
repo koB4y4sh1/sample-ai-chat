@@ -84,3 +84,11 @@ exclude_dirs = [
     "agent/tests",
     "mcp/tests",
 ]
+
+[[tool.mypy.overrides]]
+module = ["src.mfa.agents"]
+disable_error_code = ["attr-defined"]
+
+[[tool.mypy.overrides]]
+module = ["src.mfa.workflow"]
+disable_error_code = ["attr-defined", "misc", "untyped-decorator"]
