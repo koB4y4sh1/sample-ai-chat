@@ -67,7 +67,7 @@ uv run pre-commit run --all-files
 | `AG_UI_BASE_URL` | web | 既定は `http://127.0.0.1:8100`。BFF が agent の `/copilotkit` に転送する。 |
 | `ZENITH_OPENAI_MODEL` | agent | 既定は `gpt-5.4-nano`。Azure Foundry 経由で使うモデル名。 |
 | `ZENITH_CORS_ORIGINS` | agent | 既定は `http://127.0.0.1:3000`。カンマ区切りで複数指定できる。 |
-| `MCP_SERVER_URL` / `ZENITH_MCP_SERVER_URL` | agent（lang-chain のみ） | 未設定のときは LangGraph に MCP ツールを載せない。例: `http://127.0.0.1:8101/mcp`（`pnpm run dev:mcp:http` 想定） |
+| `MCP_SERVER_URL` / `ZENITH_MCP_SERVER_URL` | agent（lang-chain のみ） | 未設定のときは LangGraph に MCP ツールを載せない。例: `http://127.0.0.1:8101/mcp`（`pnpm run dev:mcp` 想定） |
 
 ## 7. 運用上の注意
 

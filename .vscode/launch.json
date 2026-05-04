@@ -39,7 +39,7 @@
       "name": "BE: MCP",
       "type": "node-terminal",
       "request": "launch",
-      "command": "pnpm run dev:mcp:http:reload",
+      "command": "pnpm run dev:mcp",
       "cwd": "${workspaceFolder}"
     }
   ],

@@ -49,19 +49,6 @@ The root `check` script runs Biome, Ruff, TypeScript type checks, and strict myp
 pnpm run dev:web
 pnpm run dev:agent
 pnpm run dev:mcp
-pnpm run dev:mcp:reload
-pnpm run dev:mcp:http
-pnpm run dev:mcp:http:reload
-pnpm run dev:mcp:document-review
-pnpm run dev:mcp:document-review:reload
-pnpm run dev:mcp:listing-assist
-pnpm run dev:mcp:listing-assist:reload
-pnpm run dev:mcp:map-view
-pnpm run dev:mcp:map-view:reload
-pnpm run dev:mcp:quote-compare
-pnpm run dev:mcp:quote-compare:reload
-pnpm run dev:mcp:submission-pack
-pnpm run dev:mcp:submission-pack:reload
 ```
 
 The request path is now:
@@ -81,12 +68,11 @@ The source tree is organized around a mounted root server at `mcp/src/server.py`
 with child server packages under `mcp/src/servers/*` and shared helpers under
 `mcp/src/shared`.
 
-The mounted root server supports both transports:
+The mounted root server supports both transports; the default dev script uses HTTP with hot reload:
 
-- `pnpm run dev:mcp` starts the stdio transport for local child-process integrations
-- `pnpm run dev:mcp:http` starts streamable HTTP at `http://127.0.0.1:8101/mcp`
+- `pnpm run dev:mcp` watches `mcp/src` and runs the `root-http` target (streamable HTTP at `http://127.0.0.1:8101/mcp`, restarting on Python changes).
 
-For iterative MCP development, the `*:reload` variants watch `mcp/src` and restart the selected FastMCP process whenever Python files change. The HTTP reload path is usually the smoothest option for Inspector-based work.
+Other targets (stdio `root`, child servers, and so on) use `uv run python mcp/src/dev.py <target>`; see `TARGETS` in `mcp/src/dev.py`.
 
 Set provider credentials in `/.env` before running a real model-backed conversation.
 Set `GOOGLE_MAPS_API_KEY` in `/.env` for the MCP Google Maps app, or in

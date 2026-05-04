@@ -369,7 +369,9 @@
 <h2>起動と確認</h2>
 <pre><code>pnpm run dev:agent
 pnpm run dev:web
+pnpm run dev:mcp
 </code></pre>
+<p><code>dev:mcp</code> は <code>mcp/src/dev.py</code> の <code>root-http</code> をファイル監視付きで起動し、streamable HTTP（例: <code>http://127.0.0.1:8101/mcp</code>）を公開する。別ターゲットは <code>uv run python mcp/src/dev.py &lt;target&gt;</code>（<code>mcp/src/dev.py</code> の定義に従う）。</p>
 <p>ブラウザで<code>http://localhost:3000</code>を開き、次のように依頼する。</p>
 <pre><code>Generative UIで、現在のプロジェクト状況をステータスカードとして表示して。
 メトリクスを3つ、次のアクションを3つ含めて。

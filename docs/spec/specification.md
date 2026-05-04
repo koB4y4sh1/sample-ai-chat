@@ -111,7 +111,10 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
 ```
 pnpm run dev:agent
 pnpm run dev:web
+pnpm run dev:mcp
 ```
+
+`dev:mcp` は `mcp/src/dev.py` の `root-http` をファイル監視付きで起動し、streamable HTTP（例: `http://127.0.0.1:8101/mcp`）を公開する。別ターゲットは `uv run python mcp/src/dev.py <target>`（`mcp/src/dev.py` の定義に従う）。
 
 ブラウザで`http://localhost:3000`を開き、次のように依頼する。
 
