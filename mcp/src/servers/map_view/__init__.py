@@ -1,11 +1,10 @@
 from .models import GoogleMapView, MapCoordinate, MapMarker
-from .server import GOOGLE_MAP_RESOURCE_URI, create_map_view_server, render_google_map_app_html
+from .server import GOOGLE_MAPS_API_KEY_ENV, create_map_view_server
 
 __all__ = [
-    "GOOGLE_MAP_RESOURCE_URI",
+    "GOOGLE_MAPS_API_KEY_ENV",
     "GoogleMapView",
     "MapCoordinate",
     "MapMarker",
     "create_map_view_server",
-    "render_google_map_app_html",
 ]

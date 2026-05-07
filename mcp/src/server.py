@@ -6,6 +6,7 @@ import asyncio
 from typing import Final
 
 from fastmcp import FastMCP
+from servers.apps_example import create_apps_example_mcp
 from servers.document_review import create_document_review_server
 from servers.listing_assist import create_listing_assist_server
 from servers.map_view import create_map_view_server
@@ -14,6 +15,7 @@ from servers.submission_pack import create_submission_pack_server
 from shared.icons import ROOT_SERVER_ICONS
 
 SERVER_NAMESPACES: Final[tuple[str, ...]] = (
+    "apps_example",
     "document_review",
     "listing_assist",
     "map_view",
@@ -31,13 +33,14 @@ def create_server() -> FastMCP:
     server = FastMCP(
         "Zenith MCP",
         instructions=(
-            "Mounted FastMCP server for Zenith AI Chat. Use the document_review, "
+            "Mounted FastMCP server for Zenith AI Chat. Use the apps_example, document_review, "
             "listing_assist, map_view, quote_compare, and submission_pack namespaces to access "
             "domain tools."
         ),
         icons=ROOT_SERVER_ICONS,
         version="0.1.0",
     )
+    server.mount(create_apps_example_mcp(), namespace="apps_example")
     server.mount(create_document_review_server(), namespace="document_review")
     server.mount(create_listing_assist_server(), namespace="listing_assist")
     server.mount(create_map_view_server(), namespace="map_view")

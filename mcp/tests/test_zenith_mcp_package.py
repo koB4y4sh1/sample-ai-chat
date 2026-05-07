@@ -7,6 +7,7 @@ import pytest
 from fastmcp import Client
 from fastmcp.utilities.inspect import inspect_fastmcp
 from server import SERVER_NAMESPACES, create_server
+from servers.apps_example import create_apps_example_mcp
 from servers.document_review import ReviewRepository, create_document_review_server
 from servers.listing_assist import ListingAssistRepository, create_listing_assist_server
 from servers.map_view import create_map_view_server
@@ -84,6 +85,19 @@ async def test_root_server_mounts_expected_namespaced_tools() -> None:
     info = await inspect_fastmcp(create_server())
 
     assert {tool.name for tool in info.tools} == {
+        "apps_example_show_apps_showcase",
+        "apps_example_show_sales_dashboard_app",
+        "apps_example_show_system_monitor_app",
+        "apps_example_record_quiz_answer",
+        "apps_example_record_approval_decision",
+        "apps_example_record_choice_selection",
+        "apps_example_show_quiz_app",
+        "apps_example_show_map_app",
+        "apps_example_show_file_upload_app",
+        "apps_example_show_approval_app",
+        "apps_example_show_choice_app",
+        "apps_example_show_form_input_app",
+        "apps_example_show_generative_ui_app",
         "document_review_create_document_review",
         "document_review_show_document_review_app",
         "document_review_get_document_review",
@@ -103,6 +117,19 @@ async def test_root_server_mounts_expected_namespaced_tools() -> None:
         "submission_pack_update_submission_item_status",
     }
     assert _tool_icon_count_by_name(info) == {
+        "apps_example_show_apps_showcase": 0,
+        "apps_example_show_sales_dashboard_app": 0,
+        "apps_example_show_system_monitor_app": 0,
+        "apps_example_record_quiz_answer": 0,
+        "apps_example_record_approval_decision": 0,
+        "apps_example_record_choice_selection": 0,
+        "apps_example_show_quiz_app": 0,
+        "apps_example_show_map_app": 0,
+        "apps_example_show_file_upload_app": 0,
+        "apps_example_show_approval_app": 0,
+        "apps_example_show_choice_app": 0,
+        "apps_example_show_form_input_app": 0,
+        "apps_example_show_generative_ui_app": 0,
         "document_review_create_document_review": 1,
         "document_review_show_document_review_app": 1,
         "document_review_get_document_review": 1,
@@ -121,6 +148,157 @@ async def test_root_server_mounts_expected_namespaced_tools() -> None:
         "submission_pack_get_submission_pack": 1,
         "submission_pack_update_submission_item_status": 1,
     }
+    map_tool = next(tool for tool in info.tools if tool.name == "map_view_show_google_map")
+    assert map_tool.meta is not None
+    _assert_prefab_app_tool(info, "apps_example_show_apps_showcase")
+    _assert_prefab_app_tool(info, "apps_example_show_sales_dashboard_app")
+    _assert_prefab_app_tool(info, "apps_example_show_system_monitor_app")
+    _assert_prefab_app_tool(info, "apps_example_show_quiz_app")
+    _assert_prefab_app_tool(info, "apps_example_show_map_app")
+    _assert_prefab_app_tool(info, "apps_example_show_file_upload_app")
+    _assert_prefab_app_tool(info, "apps_example_show_approval_app")
+    _assert_prefab_app_tool(info, "apps_example_show_choice_app")
+    _assert_prefab_app_tool(info, "apps_example_show_form_input_app")
+    _assert_prefab_app_tool(info, "apps_example_show_generative_ui_app")
+    _assert_prefab_app_tool(info, "map_view_show_google_map")
+
+
+async def test_apps_example_server_exposes_expected_tools() -> None:
+    info = await inspect_fastmcp(create_apps_example_mcp())
+
+    assert {tool.name for tool in info.tools} == {
+        "show_apps_showcase",
+        "show_sales_dashboard_app",
+        "show_system_monitor_app",
+        "record_quiz_answer",
+        "record_approval_decision",
+        "record_choice_selection",
+        "show_quiz_app",
+        "show_map_app",
+        "show_file_upload_app",
+        "show_approval_app",
+        "show_choice_app",
+        "show_form_input_app",
+        "show_generative_ui_app",
+    }
+    assert _tool_icon_count_by_name(info) == {
+        "show_apps_showcase": 0,
+        "show_sales_dashboard_app": 0,
+        "show_system_monitor_app": 0,
+        "record_quiz_answer": 0,
+        "record_approval_decision": 0,
+        "record_choice_selection": 0,
+        "show_quiz_app": 0,
+        "show_map_app": 0,
+        "show_file_upload_app": 0,
+        "show_approval_app": 0,
+        "show_choice_app": 0,
+        "show_form_input_app": 0,
+        "show_generative_ui_app": 0,
+    }
+    assert _tool_annotations_by_name(info) == {
+        "show_apps_showcase": {
+            "title": "Show Apps Showcase",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": True,
+        },
+        "show_sales_dashboard_app": {
+            "title": "Show Sales Dashboard App",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
+        "show_system_monitor_app": {
+            "title": "Show System Monitor App",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
+        "record_quiz_answer": {
+            "title": "Record Quiz Answer",
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        },
+        "record_approval_decision": {
+            "title": "Record Approval Decision",
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        },
+        "record_choice_selection": {
+            "title": "Record Choice Selection",
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        },
+        "show_quiz_app": {
+            "title": "Show Quiz App",
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        },
+        "show_map_app": {
+            "title": "Show Map App",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": True,
+        },
+        "show_file_upload_app": {
+            "title": "Show File Upload App",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": True,
+        },
+        "show_approval_app": {
+            "title": "Show Approval App",
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        },
+        "show_choice_app": {
+            "title": "Show Choice App",
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        },
+        "show_form_input_app": {
+            "title": "Show Form Input App",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
+        "show_generative_ui_app": {
+            "title": "Show Generative UI App",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": True,
+        },
+    }
+    _assert_prefab_app_tool(info, "show_apps_showcase")
+    _assert_prefab_app_tool(info, "show_sales_dashboard_app")
+    _assert_prefab_app_tool(info, "show_system_monitor_app")
+    _assert_prefab_app_tool(info, "show_quiz_app")
+    _assert_prefab_app_tool(info, "show_map_app")
+    _assert_prefab_app_tool(info, "show_file_upload_app")
+    _assert_prefab_app_tool(info, "show_approval_app")
+    _assert_prefab_app_tool(info, "show_choice_app")
+    _assert_prefab_app_tool(info, "show_form_input_app")
+    _assert_prefab_app_tool(info, "show_generative_ui_app")
 
 
 async def test_document_review_server_exposes_expected_tools() -> None:
@@ -287,14 +465,7 @@ async def test_map_view_server_exposes_google_maps_mcp_app() -> None:
             "openWorldHint": True,
         },
     }
-    assert info.tools[0].meta is not None
-    assert info.tools[0].meta["ui"]["resourceUri"] == "ui://zenith/google-map/view.html"
-    assert "https://maps.googleapis.com" in info.tools[0].meta["ui"]["csp"]["resourceDomains"]
-    assert [(resource.uri, resource.mime_type) for resource in info.resources] == [
-        ("ui://zenith/google-map/view.html", "text/html;profile=mcp-app"),
-    ]
-    assert info.resources[0].meta is not None
-    assert "https://maps.googleapis.com" in info.resources[0].meta["ui"]["csp"]["resourceDomains"]
+    _assert_prefab_app_tool(info, "show_google_map")
 
 
 async def test_quote_compare_server_exposes_expected_tools() -> None:
@@ -442,6 +613,16 @@ async def test_submission_pack_server_exposes_expected_tools() -> None:
 async def test_mcp_app_tools_open_with_default_inputs() -> None:
     async with Client(create_server()) as client:
         for tool_name in [
+            "apps_example_show_apps_showcase",
+            "apps_example_show_sales_dashboard_app",
+            "apps_example_show_system_monitor_app",
+            "apps_example_show_quiz_app",
+            "apps_example_show_map_app",
+            "apps_example_show_file_upload_app",
+            "apps_example_show_approval_app",
+            "apps_example_show_choice_app",
+            "apps_example_show_form_input_app",
+            "apps_example_show_generative_ui_app",
             "quote_compare_show_quote_comparison_app",
             "submission_pack_show_submission_pack_app",
             "document_review_show_document_review_app",
@@ -480,6 +661,7 @@ def test_submission_pack_repository_updates_item_status() -> None:
 
 def test_create_server_mounts_expected_namespaces() -> None:
     assert SERVER_NAMESPACES == (
+        "apps_example",
         "document_review",
         "listing_assist",
         "map_view",

@@ -4,316 +4,130 @@ from __future__ import annotations
 
 import json
 import os
+from textwrap import dedent
 from typing import Annotated, Final
 
 from fastmcp import FastMCP
-from fastmcp.apps import AppConfig, ResourceCSP
 from mcp.types import ToolAnnotations
+from prefab_ui.app import PrefabApp
+from prefab_ui.components import Card, CardContent, Column, Embed, Heading, Text
 from pydantic import Field
 from servers.map_view.models import GoogleMapView, MapCoordinate, MapMarker
 from shared.env import load_repo_env
 from shared.icons import MAP_VIEW_SERVER_ICONS, SHOW_GOOGLE_MAP_TOOL_ICONS
 
-GOOGLE_MAP_RESOURCE_URI: Final = "ui://zenith/google-map/view.html"
 GOOGLE_MAPS_API_KEY_ENV: Final = "GOOGLE_MAPS_API_KEY"
-GOOGLE_MAP_CONNECT_DOMAINS: Final = ["https://maps.googleapis.com", "https://maps.gstatic.com"]
-GOOGLE_MAP_RESOURCE_DOMAINS: Final = [
-    "https://maps.googleapis.com",
-    "https://maps.gstatic.com",
-    "https://*.googleapis.com",
-    "https://*.gstatic.com",
-]
-GOOGLE_MAP_CSP_META: Final = {
-    "ui": {
-        "csp": {
-            "connectDomains": GOOGLE_MAP_CONNECT_DOMAINS,
-            "resourceDomains": GOOGLE_MAP_RESOURCE_DOMAINS,
-        },
-        "prefersBorder": True,
-    }
-}
+DEFAULT_CENTER: Final = MapCoordinate(lat=35.681236, lng=139.767125)
 
 
-def _json_script_value(value: str) -> str:
-    return json.dumps(value)
+def _embed_map_html(view: GoogleMapView, api_key: str) -> str:
+    marker_payload = [{"label": marker.label, "lat": marker.lat, "lng": marker.lng, "note": marker.note or ""} for marker in view.markers]
+    marker_payload_json = json.dumps(marker_payload)
 
+    return dedent(f"""\
+        <!doctype html>
+        <html lang="en">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <style>
+              html, body {{
+                margin: 0;
+                width: 100%;
+                height: 100%;
+                background: #f8fafc;
+                font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+              }}
+              #map {{
+                width: 100%;
+                height: 100%;
+                min-height: 460px;
+              }}
+              #map-error {{
+                display: none;
+                margin: 12px;
+                padding: 12px;
+                border-radius: 8px;
+                border: 1px solid #fecaca;
+                background: #fff1f2;
+                color: #9f1239;
+                font-size: 14px;
+                line-height: 1.4;
+                white-space: pre-wrap;
+              }}
+            </style>
+          </head>
+          <body>
+            <div id="map" role="application" aria-label="Google map"></div>
+            <div id="map-error" role="alert"></div>
+            <script>
+              const markers = {marker_payload_json};
+              const mapElement = document.getElementById("map");
+              const errorElement = document.getElementById("map-error");
+              let mapInitialized = false;
 
-def render_google_map_app_html(api_key: str | None = None) -> str:
-    load_repo_env()
-    resolved_api_key = api_key if api_key is not None else os.getenv(GOOGLE_MAPS_API_KEY_ENV, "")
-    api_key_json = _json_script_value(resolved_api_key)
+              function showMapError(message) {{
+                mapElement.style.display = "none";
+                errorElement.style.display = "block";
+                errorElement.textContent = message;
+              }}
 
-    return f"""<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Google Map View</title>
-    <style>
-      :root {{
-        color-scheme: light;
-        --bg: #f8fafc;
-        --panel: #ffffff;
-        --text: #172026;
-        --muted: #5f6b76;
-        --line: #d9e1e8;
-        --accent: #0f766e;
-        --danger: #b91c1c;
-      }}
-      * {{ box-sizing: border-box; }}
-      html, body {{
-        width: 100%;
-        min-height: 100%;
-        margin: 0;
-        background: var(--bg);
-        color: var(--text);
-        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      }}
-      main {{
-        display: grid;
-        grid-template-rows: auto 420px auto;
-        min-height: 520px;
-        background: var(--panel);
-      }}
-      header {{
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        border-bottom: 1px solid var(--line);
-        padding: 12px 14px;
-      }}
-      h1 {{
-        margin: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-size: 16px;
-        font-weight: 700;
-        letter-spacing: 0;
-      }}
-      .status {{
-        flex: none;
-        border-radius: 999px;
-        background: #ccfbf1;
-        color: #115e59;
-        padding: 4px 8px;
-        font-size: 12px;
-      }}
-      #map {{
-        width: 100%;
-        min-height: 420px;
-        background: #eef2f6;
-      }}
-      .meta {{
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        border-top: 1px solid var(--line);
-        padding: 10px 14px;
-        color: var(--muted);
-        font-size: 12px;
-      }}
-      .meta span {{
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 4px 8px;
-      }}
-      .error {{
-        display: grid;
-        place-items: center;
-        min-height: 420px;
-        padding: 24px;
-        color: var(--danger);
-        text-align: center;
-      }}
-      .error strong {{
-        display: block;
-        margin-bottom: 6px;
-        color: var(--danger);
-      }}
-      @media (max-width: 560px) {{
-        main {{ grid-template-rows: auto 360px auto; min-height: 460px; }}
-        #map, .error {{ min-height: 360px; }}
-      }}
-    </style>
-  </head>
-  <body>
-    <main>
-      <header>
-        <h1 id="title">Google Map View</h1>
-        <div class="status" id="status">Waiting for tool input</div>
-      </header>
-      <div id="map" role="application" aria-label="Google map"></div>
-      <div class="meta" id="meta">
-        <span>Center: pending</span>
-        <span>Markers: 0</span>
-      </div>
-    </main>
-    <script>
-      const GOOGLE_MAPS_API_KEY = {api_key_json};
-      let nextRequestId = 1;
-      let hostReady = false;
-      let googleMapsReady = false;
-      let pendingView = null;
-      let map = null;
-      let markers = [];
+              function initMap() {{
+                mapInitialized = true;
+                const map = new google.maps.Map(mapElement, {{
+                  center: {{ lat: {view.center.lat}, lng: {view.center.lng} }},
+                  zoom: {view.zoom},
+                  mapTypeControl: false,
+                  streetViewControl: false,
+                  fullscreenControl: true
+                }});
+                for (const marker of markers) {{
+                  const googleMarker = new google.maps.Marker({{
+                    position: {{ lat: marker.lat, lng: marker.lng }},
+                    map,
+                    title: marker.label
+                  }});
+                  if (marker.note) {{
+                    const infoWindow = new google.maps.InfoWindow({{
+                      content: `<strong>${{marker.label}}</strong><div>${{marker.note}}</div>`
+                    }});
+                    googleMarker.addListener("click", () => infoWindow.open({{ anchor: googleMarker, map }}));
+                  }}
+                }}
+              }}
 
-      const titleElement = document.getElementById('title');
-      const statusElement = document.getElementById('status');
-      const mapElement = document.getElementById('map');
-      const metaElement = document.getElementById('meta');
+              // Called by Google Maps when API key / referrer is rejected.
+              window.gm_authFailure = function () {{
+                showMapError(
+                  "Google Maps API の認証に失敗しました。\\n" +
+                  "APIキーの制限(HTTP リファラー)に Claude Desktop 側の表示オリジンが含まれているか確認してください。"
+                );
+              }};
 
-      function notify(method, params) {{
-        window.parent.postMessage({{ jsonrpc: '2.0', method, params: params || {{}} }}, '*');
-      }}
+              const script = document.createElement("script");
+              script.src = "https://maps.googleapis.com/maps/api/js?key={api_key}&callback=initMap";
+              script.async = true;
+              script.defer = true;
+              script.onerror = () => {{
+                showMapError(
+                  "Google Maps スクリプトの読み込みに失敗しました。\\n" +
+                  "ネットワーク・CSP・APIキー設定を確認してください。"
+                );
+              }};
+              document.head.appendChild(script);
 
-      function request(method, params) {{
-        const id = nextRequestId++;
-        window.parent.postMessage({{ jsonrpc: '2.0', id, method, params: params || {{}} }}, '*');
-      }}
-
-      function resize() {{
-        notify('ui/notifications/size-changed', {{
-          width: document.documentElement.scrollWidth,
-          height: Math.max(520, document.documentElement.scrollHeight)
-        }});
-      }}
-
-      function setError(title, body) {{
-        statusElement.textContent = 'Configuration required';
-        mapElement.innerHTML = `<div class="error"><div><strong>${{escapeHtml(title)}}</strong><div>${{escapeHtml(body)}}</div></div></div>`;
-        resize();
-      }}
-
-      function escapeHtml(value) {{
-        return String(value)
-          .replaceAll('&', '&amp;')
-          .replaceAll('<', '&lt;')
-          .replaceAll('>', '&gt;')
-          .replaceAll('"', '&quot;')
-          .replaceAll("'", '&#39;');
-      }}
-
-      function normalizeView(raw) {{
-        const fallbackCenter = {{ lat: 35.681236, lng: 139.767125 }};
-        const value = raw && typeof raw === 'object' ? raw : {{}};
-        const center = value.center && typeof value.center === 'object' ? value.center : fallbackCenter;
-        const markersValue = Array.isArray(value.markers) ? value.markers : [];
-
-        return {{
-          title: typeof value.title === 'string' && value.title ? value.title : 'Google Map View',
-          center: {{
-            lat: Number.isFinite(center.lat) ? center.lat : fallbackCenter.lat,
-            lng: Number.isFinite(center.lng) ? center.lng : fallbackCenter.lng
-          }},
-          zoom: Number.isInteger(value.zoom) ? Math.max(1, Math.min(20, value.zoom)) : 13,
-          markers: markersValue.flatMap((marker) => {{
-            if (!marker || typeof marker !== 'object') return [];
-            const lat = Number(marker.lat);
-            const lng = Number(marker.lng);
-            const label = typeof marker.label === 'string' && marker.label ? marker.label : 'Marker';
-            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
-            return [{{ label, lat, lng, note: typeof marker.note === 'string' ? marker.note : '' }}];
-          }})
-        }};
-      }}
-
-      function renderMeta(view) {{
-        metaElement.innerHTML = '';
-        for (const text of [
-          `Center: ${{view.center.lat.toFixed(5)}}, ${{view.center.lng.toFixed(5)}}`,
-          `Zoom: ${{view.zoom}}`,
-          `Markers: ${{view.markers.length}}`
-        ]) {{
-          const span = document.createElement('span');
-          span.textContent = text;
-          metaElement.appendChild(span);
-        }}
-      }}
-
-      function renderMap(view) {{
-        pendingView = view;
-        titleElement.textContent = view.title;
-        renderMeta(view);
-
-        if (!GOOGLE_MAPS_API_KEY) {{
-          setError('Google Maps API key is not configured.', 'Set GOOGLE_MAPS_API_KEY in the repository root .env, then restart the MCP server.');
-          return;
-        }}
-
-        if (!googleMapsReady || !window.google?.maps) {{
-          statusElement.textContent = 'Loading Google Maps';
-          return;
-        }}
-
-        statusElement.textContent = 'Ready';
-        mapElement.innerHTML = '';
-        map = new google.maps.Map(mapElement, {{
-          center: view.center,
-          zoom: view.zoom,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: true
-        }});
-
-        markers.forEach((marker) => marker.setMap(null));
-        markers = view.markers.map((marker) => {{
-          const googleMarker = new google.maps.Marker({{
-            position: {{ lat: marker.lat, lng: marker.lng }},
-            map,
-            title: marker.label
-          }});
-          const infoWindow = new google.maps.InfoWindow({{
-            content: `<strong>${{escapeHtml(marker.label)}}</strong>${{marker.note ? `<div>${{escapeHtml(marker.note)}}</div>` : ''}}`
-          }});
-          googleMarker.addListener('click', () => infoWindow.open({{ anchor: googleMarker, map }}));
-          return googleMarker;
-        }});
-        resize();
-      }}
-
-      window.__initGoogleMapView = function () {{
-        googleMapsReady = true;
-        if (pendingView) renderMap(pendingView);
-      }};
-
-      window.addEventListener('message', (event) => {{
-        const message = event.data;
-        if (!message || typeof message !== 'object' || message.jsonrpc !== '2.0') return;
-
-        if (message.id && message.result && !hostReady) {{
-          hostReady = true;
-          notify('ui/notifications/initialized', {{}});
-          resize();
-          return;
-        }}
-
-        if (message.method === 'ui/notifications/tool-input') {{
-          renderMap(normalizeView(message.params?.arguments));
-        }}
-
-        if (message.method === 'ui/notifications/tool-result') {{
-          const structured = message.params?.structuredContent;
-          if (structured && typeof structured === 'object') {{
-            renderMap(normalizeView(structured));
-          }}
-        }}
-      }});
-
-      request('ui/initialize', {{ protocolVersion: '2025-06-18' }});
-
-      if (GOOGLE_MAPS_API_KEY) {{
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${{encodeURIComponent(GOOGLE_MAPS_API_KEY)}}&callback=__initGoogleMapView`;
-        script.async = true;
-        script.defer = true;
-        script.onerror = () => setError('Google Maps failed to load.', 'Check the browser API key, billing, referrer restrictions, and CSP.');
-        document.head.appendChild(script);
-      }}
-    </script>
-  </body>
-</html>"""
+              setTimeout(() => {{
+                if (!mapInitialized) {{
+                  showMapError(
+                    "地図の初期化が完了しませんでした。\\n" +
+                    "APIキー制限(HTTP リファラー)、または Google Maps 側エラーの可能性があります。"
+                  );
+                }}
+              }}, 8000);
+            </script>
+          </body>
+        </html>
+    """)
 
 
 def create_map_view_server() -> FastMCP:
@@ -327,19 +141,10 @@ def create_map_view_server() -> FastMCP:
         version="0.1.0",
     )
 
-    app_config = AppConfig(
-        resourceUri=GOOGLE_MAP_RESOURCE_URI,
-        csp=ResourceCSP(
-            connectDomains=GOOGLE_MAP_CONNECT_DOMAINS,
-            resourceDomains=GOOGLE_MAP_RESOURCE_DOMAINS,
-        ),
-        prefersBorder=True,
-    )
-
     @server.tool(
         description=(
-            "Render an interactive Google Maps MCP App with a center point, zoom level, and markers. "
-            "Use this for requests that ask to show a map or visualize locations."
+            "中心点、ズームレベル、マーカーを備えたインタラクティブなGoogleマップMCPアプリをレンダリングします。"
+            "地図の表示や位置情報の視覚化を求めるリクエストにご利用ください。"
         ),
         annotations=ToolAnnotations(
             title="Show Google Map",
@@ -349,26 +154,41 @@ def create_map_view_server() -> FastMCP:
             openWorldHint=True,
         ),
         icons=SHOW_GOOGLE_MAP_TOOL_ICONS,
-        app=app_config,
+        app=True,
     )
     def show_google_map(
-        title: Annotated[str, Field(description="Map title shown above the Google Map.")],
-        center: Annotated[MapCoordinate, Field(description="Initial center coordinate.")],
+        title: Annotated[str, Field(description="Map title shown above the Google Map.")] = "Google Map View",
+        center: Annotated[MapCoordinate, Field(description="Initial center coordinate.")] = DEFAULT_CENTER,
         zoom: Annotated[int, Field(ge=1, le=20, description="Initial Google Maps zoom level.")] = 13,
         markers: Annotated[list[MapMarker] | None, Field(description="Markers to show on the map.")] = None,
-    ) -> GoogleMapView:
+    ) -> PrefabApp:
         load_repo_env()
-        return GoogleMapView(
+        resolved = GoogleMapView(
             title=title,
             center=center,
             zoom=zoom,
             markers=markers or [],
             api_key_configured=bool(os.getenv(GOOGLE_MAPS_API_KEY_ENV)),
         )
+        api_key = os.getenv(GOOGLE_MAPS_API_KEY_ENV, "")
 
-    @server.resource(GOOGLE_MAP_RESOURCE_URI, meta=GOOGLE_MAP_CSP_META)
-    def google_map_view() -> str:
-        return render_google_map_app_html()
+        with PrefabApp() as app:
+            with Column(gap=3, cssClass="p-4"):
+                Heading(resolved.title)
+                Text(f"Center: {resolved.center.lat:.5f}, {resolved.center.lng:.5f} / Zoom: {resolved.zoom} / Markers: {len(resolved.markers)}")
+                with Card(cssClass="w-full max-w-full min-w-0 overflow-hidden"):
+                    with CardContent(cssClass="p-0"):
+                        if api_key:
+                            Embed(
+                                html=_embed_map_html(resolved, api_key),
+                                width="100%",
+                                height="500px",
+                                sandbox="allow-scripts allow-same-origin",
+                            )
+                        else:
+                            Text("Google Maps API key is not configured. Set GOOGLE_MAPS_API_KEY in .env and restart MCP server.")
+
+        return app
 
     return server
 

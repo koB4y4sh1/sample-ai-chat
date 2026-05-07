@@ -11,6 +11,7 @@ dependencies = [
 [project.scripts]
 zenith-mcp = "server:main"
 zenith-mcp-http = "server:main_http"
+zenith-mcp-apps-example = "servers.apps_example.server:main"
 zenith-mcp-document-review = "servers.document_review.server:main"
 zenith-mcp-listing-assist = "servers.listing_assist.server:main"
 zenith-mcp-map-view = "servers.map_view.server:main"
