@@ -1,11 +1,17 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
+
+const rootDir = fileURLToPath(new URL('.', import.meta.url));
+const srcDir = fileURLToPath(new URL('./src', import.meta.url));
 
 export default defineConfig({
   resolve: {
     alias: {
-      '@': new URL('.', import.meta.url).pathname,
+      '@': srcDir,
     },
+    dedupe: ['react', 'react-dom'],
   },
+  root: rootDir,
   test: {
     environment: 'jsdom',
     setupFiles: './test/setup.ts',

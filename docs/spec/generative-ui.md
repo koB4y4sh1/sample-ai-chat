@@ -58,7 +58,7 @@
 | --- | --- |
 | tool名 | `show_zenith_panel` / `show_ui_spec` / `show_flight_options` / `Runtime mcpApps.servers` |
 | 登録API | `useFrontendTool` |
-| 登録ファイル | `web/components/chat/GenerativeUIRegistry.tsx` |
+| 登録ファイル | `web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx` |
 | 表示component | `ZenithPanel` / `DeclarativeRenderer` / `StableMcpAppsActivityRenderer` |
 | agent名 | `zenith` |
 | tool実行後の追加応答 | `followUp: false` |
@@ -118,10 +118,10 @@ show_zenith_panel({
 
 | ファイル | 見るポイント |
 | --- | --- |
-| `web/components/chat/GenerativeUIRegistry.tsx` | frontend tool登録。汎用の`show_mcp_app`は登録しない。 |
-| `web/components/chat/App.tsx` | `CopilotKitProvider`配下に`GenerativeUIRegistry`を配置。 |
-| `web/components/generative-ui/declarative/DeclarativeRenderer.tsx` | Declarative UI schemaをReact UIへ変換。 |
-| `web/components/chat/StableMcpAppsActivityRenderer.tsx` | MCP Apps activityを安定したiframe surfaceとして表示。 |
+| `web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx` | frontend tool 登録。汎用の `show_mcp_app` は登録しない。 |
+| `web/src/app/_providers/copilot-provider.tsx` | `CopilotKitProvider` 配下に `GenerativeUIRegistry` を配置。 |
+| `web/src/features/chat/generative-ui/components/declarative/DeclarativeRenderer.tsx` | Declarative UI schema を React UI へ変換。 |
+| `web/src/features/chat/lib/mcp-sandbox-html.ts` | MCP App / Map 用 iframe HTML をクライアント生成。 |
 | `agent/src/app.py` | Generative UI要求時にtoolを呼ぶagent instruction。 |
 
 ## 公式docsとの関係

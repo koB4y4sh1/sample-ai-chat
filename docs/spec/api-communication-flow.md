@@ -17,23 +17,23 @@ Browser UI
   → web 側 renderer が表示
 ```
 
-プロバイダ（OpenAI / Anthropic / LangChain）に応じて `HttpAgent` の接続先 URL が切り替わる（`web/lib/copilotkit/agents.ts`）。
+プロバイダ（OpenAI / Anthropic / LangChain）に応じて `HttpAgent` の接続先 URL が切り替わる（`web/src/lib/copilotkit/agents.ts`）。
 
 ## 2. 通信要素と役割
 
 | 要素 | 場所 | 役割 |
 | --- | --- | --- |
-| チャット UI | `web/components/chat` | ユーザー入力、会話表示、tool 結果の描画。 |
-| Runtime endpoint | `web/app/api/copilotkit/route.ts` | `/api/copilotkit` を公開し CopilotKit Runtime に処理を渡す。 |
-| Agent registry | `web/lib/copilotkit/agents.ts` | `@ag-ui/client` の `HttpAgent` で AG-UI 接続先を解決する。 |
+| チャット UI（Generative UI 含む） | `web/src/features/chat`（画面・状態・`generative-ui/`・`schemas/`） | ユーザー入力、会話表示、tool 結果の描画。MCP iframe 用 HTML はクライアント生成（`lib/mcp-sandbox-html.ts`）。 |
+| Runtime endpoint | `web/src/app/api/copilotkit/route.ts` | `/api/copilotkit` を公開し CopilotKit Runtime に処理を渡す（web が公開する HTTP API はこれのみ）。 |
+| Agent registry | `web/src/lib/copilotkit/agents.ts` | `@ag-ui/client` の `HttpAgent` で AG-UI 接続先を解決する。 |
 | AG-UI endpoint | `agent/src/main.py` ほか | `/mfa/*`、`/lang-chain/*` など agent 側 endpoint。 |
-| Frontend tools | `web/components/chat/GenerativeUIRegistry.tsx` | tool call を React の renderer に変換する。 |
+| Frontend tools | `web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx` | tool call を React の renderer に変換する。 |
 
 ## 3. エンドポイント整理
 
 | URL | 提供側 | 説明 |
 | --- | --- | --- |
-| `/api/copilotkit` | web | ブラウザが叩く BFF。Runtime の入口。 |
+| `/api/copilotkit` | web | ブラウザが叩く BFF。Runtime の入口（チャット向け HTTP はこれのみ）。 |
 | `AG_UI_BASE_URL` + `/mfa/openai` など | agent | CopilotKit Runtime から接続する MFA 側 AG-UI endpoint。 |
 | `AG_UI_BASE_URL` + `/health` | agent | ルートアプリのヘルスチェック。 |
 

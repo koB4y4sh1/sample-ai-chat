@@ -147,20 +147,20 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><code>web/components/chat/App.tsx</code></td>
-<td><code>CopilotKitProvider</code> を配置しチャット全体を包む。</td>
+<td><code>web/src/components/layout/App.tsx</code></td>
+<td>全ページ共通枠。Sidebar と <code>CopilotProvider</code>（内部で <code>CopilotKitProvider</code>）を配置する（<code>src/app/layout.tsx</code> の子がページ）。</td>
 </tr>
 <tr>
-<td><code>web/app/api/copilotkit/route.ts</code></td>
-<td>Next.js App Router 上で CopilotKit Runtime endpoint を公開する。</td>
+<td><code>web/src/app/api/copilotkit/route.ts</code></td>
+<td>Next.js App Router 上で CopilotKit Runtime endpoint を公開する（<strong>web が公開する HTTP API はこれのみ</strong>）。</td>
 </tr>
 <tr>
-<td><code>web/lib/copilotkit/runtime.ts</code></td>
+<td><code>web/src/lib/copilotkit/runtime.ts</code></td>
 <td><code>CopilotRuntime</code> を組み立て、agent 登録や middleware を束ねる。</td>
 </tr>
 <tr>
-<td><code>web/components/chat/GenerativeUIRegistry.tsx</code></td>
-<td><code>useFrontendTool</code> で static / declarative / open-ended の UI tool を登録する。</td>
+<td><code>web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx</code></td>
+<td><code>useFrontendTool</code> で static / declarative / open-ended の UI tool を登録する（チャット機能の一部）。</td>
 </tr>
 </tbody></table>
 <h2>2. 現在の接続イメージ</h2>

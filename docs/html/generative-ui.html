@@ -247,7 +247,7 @@
 </tr>
 <tr>
 <td>登録ファイル</td>
-<td><code>web/components/chat/GenerativeUIRegistry.tsx</code></td>
+<td><code>web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx</code></td>
 </tr>
 <tr>
 <td>表示component</td>
@@ -338,20 +338,20 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><code>web/components/chat/GenerativeUIRegistry.tsx</code></td>
-<td>frontend tool登録。汎用の<code>show_mcp_app</code>は登録しない。</td>
+<td><code>web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx</code></td>
+<td>frontend tool 登録。汎用の <code>show_mcp_app</code> は登録しない。</td>
 </tr>
 <tr>
-<td><code>web/components/chat/App.tsx</code></td>
-<td><code>CopilotKitProvider</code>配下に<code>GenerativeUIRegistry</code>を配置。</td>
+<td><code>web/src/app/_providers/copilot-provider.tsx</code></td>
+<td><code>CopilotKitProvider</code> 配下に <code>GenerativeUIRegistry</code> を配置。</td>
 </tr>
 <tr>
-<td><code>web/components/generative-ui/declarative/DeclarativeRenderer.tsx</code></td>
-<td>Declarative UI schemaをReact UIへ変換。</td>
+<td><code>web/src/features/chat/generative-ui/components/declarative/DeclarativeRenderer.tsx</code></td>
+<td>Declarative UI schema を React UI へ変換。</td>
 </tr>
 <tr>
-<td><code>web/components/chat/StableMcpAppsActivityRenderer.tsx</code></td>
-<td>MCP Apps activityを安定したiframe surfaceとして表示。</td>
+<td><code>web/src/features/chat/lib/mcp-sandbox-html.ts</code></td>
+<td>MCP App / Map 用 iframe HTML をクライアント生成。</td>
 </tr>
 <tr>
 <td><code>agent/src/app.py</code></td>

@@ -212,20 +212,12 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><code>web/app</code></td>
-<td>App Router のページと API route。</td>
+<td><code>web/src/app</code></td>
+<td>App Router。チャット向け公開 HTTP は <code>/api/copilotkit</code> のみ。</td>
 </tr>
 <tr>
-<td><code>web/components/chat</code></td>
-<td>CopilotKit を束ねるチャット UI、<code>GenerativeUIRegistry</code>、会話表示部品。</td>
-</tr>
-<tr>
-<td><code>web/components/generative-ui</code></td>
-<td>static / declarative / open-ended の描画部品。</td>
-</tr>
-<tr>
-<td><code>web/lib/generative-ui/schemas</code></td>
-<td>frontend tool 引数と declarative block catalog の zod schema。</td>
+<td><code>web/src/app/layout.tsx</code>（<code>App</code>）、<code>web/src/features/chat</code></td>
+<td><code>/</code> と <code>/chat/[sessionId]</code>。アプリ枠は <code>components/layout</code>。Generative UI（registry・schema・iframe HTML 生成）は <code>web/src/features/chat</code> に含める。</td>
 </tr>
 <tr>
 <td><code>agent/src</code></td>

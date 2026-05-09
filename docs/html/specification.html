@@ -136,7 +136,7 @@
   <body>
     <main>
       <h1>Zenith AI Chat 仕様書</h1>
-<p>作成日: 2026-04-24 / 更新日: 2026-05-03 / 対象: web, agent, mcp</p>
+<p>作成日: 2026-04-24 / 更新日: 2026-05-09 / 対象: web, agent, mcp</p>
 <h2>関連ドキュメント</h2>
 <ul>
 <li><strong><a href="./documentation-guide.html">ドキュメントガイド</a></strong> … <code>docs/spec</code> の読み順・用途別索引・全ページ一覧。</li>
@@ -155,9 +155,9 @@
 </thead>
 <tbody><tr>
 <td>FE/BFF</td>
-<td><code>web</code></td>
+<td><code>web</code>（Next.js のソースは <code>web/src</code>：<code>web/src/app</code>、<code>web/src/features/chat</code>、<code>web/src/lib</code>）</td>
 <td>TypeScript, Next.js, React, CopilotKit, pnpm</td>
-<td>チャットUI、CopilotKit Runtime endpoint、agentへのBFF route handler</td>
+<td>チャット UI（Generative UI を含む）と、<code>/api/copilotkit</code> のみを公開する BFF。agent への接続は CopilotKit Runtime 経由。</td>
 </tr>
 <tr>
 <td>BE</td>
@@ -181,18 +181,19 @@
 <h2>接続仕様</h2>
 <ul>
 <li><code>web</code> は Next.js App Router で UI と BFF route handler を管理する。</li>
+<li>web が公開するチャット向け HTTP API は <strong><code>/api/copilotkit</code></strong>（CopilotKit Runtime）のみとする。Generative UI（static / declarative / MCP iframe 等）はチャット機能の一部として <strong><code>web/src/features/chat</code></strong> 内で完結し、追加の REST ルートは置かない。</li>
 <li>チャット UI は <code>/api/copilotkit</code> の CopilotKit Runtime へ接続する。</li>
-<li>Runtime は <code>AG_UI_BASE_URL</code> を基準に、チャットで選んだモデルプロバイダに応じて agent へ転送する（例: OpenAI 向け <code>/mfa/openai</code>、Anthropic 向け <code>/mfa/anthropic</code>、LangChain 向け <code>/lang-chain/</code>）。実際の URL 組み立ては <code>web/lib/copilotkit/agents.ts</code> の <code>HttpAgent</code> を参照。</li>
+<li>Runtime は <code>AG_UI_BASE_URL</code> を基準に、チャットで選んだモデルプロバイダに応じて agent へ転送する（例: OpenAI 向け <code>/mfa/openai</code>、Anthropic 向け <code>/mfa/anthropic</code>、LangChain 向け <code>/lang-chain/</code>）。実際の URL 組み立ては <code>web/src/lib/copilotkit/agents.ts</code> の <code>HttpAgent</code> を参照。</li>
 <li><code>agent</code> は <code>agent/src/main.py</code> で FastAPI アプリを組み立て、<code>/mfa</code> に MFA アプリ（<code>/mfa/openai</code>・<code>/mfa/anthropic</code> など）、<code>/lang-chain</code> に LangGraph アプリをマウントする。</li>
 <li>Generative UI は CopilotKit v2 の frontend tool として <code>web</code> 側で登録する。登録例には <code>show_zenith_panel</code>、<code>show_ui_spec</code>、<code>show_flight_options</code>、<code>show_mcp_app</code>（open-ended iframe）、<code>map_view_show_google_map</code> などがある。</li>
-<li>MCP Apps（iframe surface）は <code>web/lib/copilotkit/runtime.ts</code> の <code>MCPAppsMiddleware</code> などで登録する。LangChain（<code>agent/src/lang_chain/app.py</code>）は、環境変数 <code>MCP_SERVER_URL</code> または <code>ZENITH_MCP_SERVER_URL</code> が設定されているとき、Streamable HTTP の MCP（例: <code>http://127.0.0.1:8101/mcp</code>）へ接続して <code>tools/list</code> の<strong>全ツール</strong>を LangGraph の backend tool（<code>server_tools</code>）としてバインドする。BFF 経由で同名ツールが渡った場合は MCP 側を優先する。</li>
+<li>MCP Apps（iframe surface）は <code>web/src/lib/copilotkit/runtime.ts</code> の <code>MCPAppsMiddleware</code> などで登録する。LangChain（<code>agent/src/lang_chain/app.py</code>）は、環境変数 <code>MCP_SERVER_URL</code> または <code>ZENITH_MCP_SERVER_URL</code> が設定されているとき、Streamable HTTP の MCP（例: <code>http://127.0.0.1:8101/mcp</code>）へ接続して <code>tools/list</code> の<strong>全ツール</strong>を LangGraph の backend tool（<code>server_tools</code>）としてバインドする。BFF 経由で同名ツールが渡った場合は MCP 側を優先する。</li>
 </ul>
 <h2>Generative UIの結論</h2>
 <p>このアプリのGenerative UIは、agentがUI部品そのものを直接生成するのではなく、 agentがfrontend toolを呼び出すか、CopilotKit RuntimeがMCP Appsをiframe surfaceとして表示する仕組みである。</p>
 <p>つまり、LLMは「どのUIを、どのデータで出すか」を決める。 実際のDOM、CSS、React componentはfrontendが所有する。</p>
 <h2>なぜ表示できるのか</h2>
 <ol>
-<li><code>App.tsx</code>で<code>CopilotKitProvider</code>を配置し、 CopilotKitがチャット、agent通信、tool callを扱えるcontextを作る。</li>
+<li><code>web/src/app/layout.tsx</code> が <code>App</code>（<code>web/src/components/layout/App.tsx</code>）と <code>AppProviders</code> にページを渡し、<code>CopilotKitProvider</code> を配置して CopilotKit がチャット、agent 通信、tool call を扱える context を作る。</li>
 <li><code>GenerativeUIRegistry.tsx</code>が<code>useFrontendTool</code>を呼び、 static、declarative、custom mapのfrontend toolをCopilotKitへ登録する。</li>
 <li>frontend toolには<code>zod</code> schemaで引数仕様を渡す。 CopilotKit Runtimeはこのtool仕様をagentへ渡せる。</li>
 <li>agent の instruction で、用途に応じて <code>show_zenith_panel</code>、<code>show_ui_spec</code>、<code>show_flight_options</code>、<code>show_mcp_app</code>、<code>map_view_show_google_map</code>、MCP Apps を使い分けるよう指定している。</li>
@@ -266,7 +267,7 @@
 </tr>
 <tr>
 <td>登録場所</td>
-<td><code>web/components/chat/GenerativeUIRegistry.tsx</code></td>
+<td><code>web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx</code></td>
 </tr>
 <tr>
 <td>表示component</td>
@@ -331,32 +332,32 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><code>web/components/chat/App.tsx</code></td>
-<td><code>CopilotKitProvider</code>を配置し、<code>GenerativeUIRegistry</code>をprovider配下へ登録する。</td>
+<td><code>web/src/app/layout.tsx</code> + <code>web/src/app/_providers/app-providers.tsx</code> + <code>web/src/components/layout/App.tsx</code> + <code>web/src/app/_providers/copilot-provider.tsx</code></td>
+<td>ルートレイアウト、<code>App</code>、<code>CopilotKitProvider</code> と <code>GenerativeUIRegistry</code> を束ねる。</td>
 </tr>
 <tr>
-<td><code>web/components/chat/GenerativeUIRegistry.tsx</code></td>
-<td>Generative UI frontend toolsをCopilotKitへ登録する。</td>
+<td><code>web/src/features/chat/hooks/use-chat-session.ts</code> / <code>use-conversation.ts</code> + <code>web/src/features/chat/context/chat-context.tsx</code></td>
+<td>チャットシェル・会話のクライアントロジックと <code>ChatProvider</code> / <code>useChatContext</code>。</td>
 </tr>
 <tr>
-<td><code>web/components/generative-ui/declarative/DeclarativeRenderer.tsx</code></td>
-<td><code>show_ui_spec</code>のUI schemaをReact componentへ変換する。</td>
+<td><code>web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx</code></td>
+<td>Generative UI frontend tools を CopilotKit へ登録する。</td>
 </tr>
 <tr>
-<td><code>web/components/chat/StableMcpAppsActivityRenderer.tsx</code></td>
-<td>CopilotKit RuntimeのMCP Apps activityを安定したiframe surfaceとして描画する。</td>
+<td><code>web/src/features/chat/generative-ui/components/declarative/DeclarativeRenderer.tsx</code></td>
+<td><code>show_ui_spec</code> の UI schema を React component へ変換する。</td>
 </tr>
 <tr>
-<td><code>web/app/api/generative-ui/mcp-apps/[appId]/route.ts</code></td>
-<td>Google Maps MCP App用のsandboxed app HTMLを配信する。</td>
+<td><code>web/src/features/chat/lib/mcp-sandbox-html.ts</code></td>
+<td>MCP App / Google Map 用 sandbox HTML をクライアント生成し iframe に渡す。</td>
 </tr>
 <tr>
 <td><code>agent/src/mfa/agents.py</code></td>
 <td>MFA agent の instruction と OpenAI / Anthropic エージェント構築。</td>
 </tr>
 <tr>
-<td><code>web/components/chat/App.test.tsx</code></td>
-<td>テスト環境で<code>useFrontendTool</code>をmockし、既存チャットテストを維持する。</td>
+<td><code>web/src/components/layout/App.test.tsx</code></td>
+<td>テスト環境で <code>useFrontendTool</code> を mock し、アプリ枠のチャット契約を維持する。</td>
 </tr>
 </tbody></table>
 <h2>公式docsとの対応</h2>

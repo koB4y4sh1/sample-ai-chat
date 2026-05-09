@@ -148,7 +148,7 @@
   → 通常応答または frontend tool call
   → web 側 renderer が表示
 </code></pre>
-<p>プロバイダ（OpenAI / Anthropic / LangChain）に応じて <code>HttpAgent</code> の接続先 URL が切り替わる（<code>web/lib/copilotkit/agents.ts</code>）。</p>
+<p>プロバイダ（OpenAI / Anthropic / LangChain）に応じて <code>HttpAgent</code> の接続先 URL が切り替わる（<code>web/src/lib/copilotkit/agents.ts</code>）。</p>
 <h2>2. 通信要素と役割</h2>
 <table>
 <thead>
@@ -159,18 +159,18 @@
 </tr>
 </thead>
 <tbody><tr>
-<td>チャット UI</td>
-<td><code>web/components/chat</code></td>
-<td>ユーザー入力、会話表示、tool 結果の描画。</td>
+<td>チャット UI（Generative UI 含む）</td>
+<td><code>web/src/features/chat</code>（画面・状態・<code>generative-ui/</code>・<code>schemas/</code>）</td>
+<td>ユーザー入力、会話表示、tool 結果の描画。MCP iframe 用 HTML はクライアント生成（<code>lib/mcp-sandbox-html.ts</code>）。</td>
 </tr>
 <tr>
 <td>Runtime endpoint</td>
-<td><code>web/app/api/copilotkit/route.ts</code></td>
-<td><code>/api/copilotkit</code> を公開し CopilotKit Runtime に処理を渡す。</td>
+<td><code>web/src/app/api/copilotkit/route.ts</code></td>
+<td><code>/api/copilotkit</code> を公開し CopilotKit Runtime に処理を渡す（web が公開する HTTP API はこれのみ）。</td>
 </tr>
 <tr>
 <td>Agent registry</td>
-<td><code>web/lib/copilotkit/agents.ts</code></td>
+<td><code>web/src/lib/copilotkit/agents.ts</code></td>
 <td><code>@ag-ui/client</code> の <code>HttpAgent</code> で AG-UI 接続先を解決する。</td>
 </tr>
 <tr>
@@ -180,7 +180,7 @@
 </tr>
 <tr>
 <td>Frontend tools</td>
-<td><code>web/components/chat/GenerativeUIRegistry.tsx</code></td>
+<td><code>web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx</code></td>
 <td>tool call を React の renderer に変換する。</td>
 </tr>
 </tbody></table>
@@ -196,7 +196,7 @@
 <tbody><tr>
 <td><code>/api/copilotkit</code></td>
 <td>web</td>
-<td>ブラウザが叩く BFF。Runtime の入口。</td>
+<td>ブラウザが叩く BFF。Runtime の入口（チャット向け HTTP はこれのみ）。</td>
 </tr>
 <tr>
 <td><code>AG_UI_BASE_URL</code> + <code>/mfa/openai</code> など</td>

@@ -45,10 +45,8 @@ Zenith AI Chat / Workspace Overview
 
 | 場所 | 中身 |
 | --- | --- |
-| `web/app` | App Router のページと API route。 |
-| `web/components/chat` | CopilotKit を束ねるチャット UI、`GenerativeUIRegistry`、会話表示部品。 |
-| `web/components/generative-ui` | static / declarative / open-ended の描画部品。 |
-| `web/lib/generative-ui/schemas` | frontend tool 引数と declarative block catalog の zod schema。 |
+| `web/src/app` | App Router。チャット向け公開 HTTP は `/api/copilotkit` のみ。 |
+| `web/src/app/layout.tsx`（`App`）、`web/src/features/chat` | `/` と `/chat/[sessionId]`。アプリ枠は `components/layout`。Generative UI（registry・schema・iframe HTML 生成）は `web/src/features/chat` に含める。 |
 | `agent/src` | FastAPI app、agent 構築、設定、endpoint 登録。 |
 | `agent/tests` / `mcp/tests` | Python 側の smoke とアプリ生成確認。 |
 

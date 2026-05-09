@@ -1,6 +1,6 @@
 # Zenith AI Chat 仕様書
 
-作成日: 2026-04-24 / 更新日: 2026-05-03 / 対象: web, agent, mcp
+作成日: 2026-04-24 / 更新日: 2026-05-09 / 対象: web, agent, mcp
 
 ## 関連ドキュメント
 
@@ -14,7 +14,7 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
 
 | 領域 | ディレクトリ | 技術 | 責務 |
 | --- | --- | --- | --- |
-| FE/BFF | `web` | TypeScript, Next.js, React, CopilotKit, pnpm | チャットUI、CopilotKit Runtime endpoint、agentへのBFF route handler |
+| FE/BFF | `web`（Next.js のソースは `web/src`：`web/src/app`、`web/src/features/chat`、`web/src/lib`） | TypeScript, Next.js, React, CopilotKit, pnpm | チャット UI（Generative UI を含む）と、`/api/copilotkit` のみを公開する BFF。agent への接続は CopilotKit Runtime 経由。 |
 | BE | `agent` | Python, Microsoft Agent Framework, uv | agentの実行、agent endpointの公開、LLMへの指示管理 |
 | MCP | `mcp` | Python, FastMCP, uv | agentから利用する外部tool群の公開 |
 | ドキュメント | `docs` | Markdown, HTML | 仕様の正は `docs/spec/*.md`。閲覧用 HTML は `pnpm run docs:build` で `docs/html` に生成する。テンプレートは `docs/template`。 |
@@ -22,11 +22,12 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
 ## 接続仕様
 
 * `web` は Next.js App Router で UI と BFF route handler を管理する。
+* web が公開するチャット向け HTTP API は **`/api/copilotkit`**（CopilotKit Runtime）のみとする。Generative UI（static / declarative / MCP iframe 等）はチャット機能の一部として **`web/src/features/chat`** 内で完結し、追加の REST ルートは置かない。
 * チャット UI は `/api/copilotkit` の CopilotKit Runtime へ接続する。
-* Runtime は `AG_UI_BASE_URL` を基準に、チャットで選んだモデルプロバイダに応じて agent へ転送する（例: OpenAI 向け `/mfa/openai`、Anthropic 向け `/mfa/anthropic`、LangChain 向け `/lang-chain/`）。実際の URL 組み立ては `web/lib/copilotkit/agents.ts` の `HttpAgent` を参照。
+* Runtime は `AG_UI_BASE_URL` を基準に、チャットで選んだモデルプロバイダに応じて agent へ転送する（例: OpenAI 向け `/mfa/openai`、Anthropic 向け `/mfa/anthropic`、LangChain 向け `/lang-chain/`）。実際の URL 組み立ては `web/src/lib/copilotkit/agents.ts` の `HttpAgent` を参照。
 * `agent` は `agent/src/main.py` で FastAPI アプリを組み立て、`/mfa` に MFA アプリ（`/mfa/openai`・`/mfa/anthropic` など）、`/lang-chain` に LangGraph アプリをマウントする。
 * Generative UI は CopilotKit v2 の frontend tool として `web` 側で登録する。登録例には `show_zenith_panel`、`show_ui_spec`、`show_flight_options`、`show_mcp_app`（open-ended iframe）、`map_view_show_google_map` などがある。
-* MCP Apps（iframe surface）は `web/lib/copilotkit/runtime.ts` の `MCPAppsMiddleware` などで登録する。LangChain（`agent/src/lang_chain/app.py`）は、環境変数 `MCP_SERVER_URL` または `ZENITH_MCP_SERVER_URL` が設定されているとき、Streamable HTTP の MCP（例: `http://127.0.0.1:8101/mcp`）へ接続して `tools/list` の**全ツール**を LangGraph の backend tool（`server_tools`）としてバインドする。BFF 経由で同名ツールが渡った場合は MCP 側を優先する。
+* MCP Apps（iframe surface）は `web/src/lib/copilotkit/runtime.ts` の `MCPAppsMiddleware` などで登録する。LangChain（`agent/src/lang_chain/app.py`）は、環境変数 `MCP_SERVER_URL` または `ZENITH_MCP_SERVER_URL` が設定されているとき、Streamable HTTP の MCP（例: `http://127.0.0.1:8101/mcp`）へ接続して `tools/list` の**全ツール**を LangGraph の backend tool（`server_tools`）としてバインドする。BFF 経由で同名ツールが渡った場合は MCP 側を優先する。
 
 ## Generative UIの結論
 
@@ -36,7 +37,7 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
 
 ## なぜ表示できるのか
 
-1.  `App.tsx`で`CopilotKitProvider`を配置し、 CopilotKitがチャット、agent通信、tool callを扱えるcontextを作る。
+1.  `web/src/app/layout.tsx` が `App`（`web/src/components/layout/App.tsx`）と `AppProviders` にページを渡し、`CopilotKitProvider` を配置して CopilotKit がチャット、agent 通信、tool call を扱える context を作る。
 2.  `GenerativeUIRegistry.tsx`が`useFrontendTool`を呼び、 static、declarative、custom mapのfrontend toolをCopilotKitへ登録する。
 3.  frontend toolには`zod` schemaで引数仕様を渡す。 CopilotKit Runtimeはこのtool仕様をagentへ渡せる。
 4.  agent の instruction で、用途に応じて `show_zenith_panel`、`show_ui_spec`、`show_flight_options`、`show_mcp_app`、`map_view_show_google_map`、MCP Apps を使い分けるよう指定している。
@@ -72,7 +73,7 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
 | --- | --- |
 | tool名 | `show_zenith_panel` |
 | agent | `zenith` |
-| 登録場所 | `web/components/chat/GenerativeUIRegistry.tsx` |
+| 登録場所 | `web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx` |
 | 表示component | `ZenithPanel` |
 | 用途 | 視覚サマリー、ステータスカード、メトリクス、アクションプラン、dashboard風応答 |
 | follow-up | `false`。tool実行後に追加のLLM応答を要求しない。 |
@@ -91,13 +92,13 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
 
 | ファイル | 役割 |
 | --- | --- |
-| `web/components/chat/App.tsx` | `CopilotKitProvider`を配置し、`GenerativeUIRegistry`をprovider配下へ登録する。 |
-| `web/components/chat/GenerativeUIRegistry.tsx` | Generative UI frontend toolsをCopilotKitへ登録する。 |
-| `web/components/generative-ui/declarative/DeclarativeRenderer.tsx` | `show_ui_spec`のUI schemaをReact componentへ変換する。 |
-| `web/components/chat/StableMcpAppsActivityRenderer.tsx` | CopilotKit RuntimeのMCP Apps activityを安定したiframe surfaceとして描画する。 |
-| `web/app/api/generative-ui/mcp-apps/[appId]/route.ts` | Google Maps MCP App用のsandboxed app HTMLを配信する。 |
+| `web/src/app/layout.tsx` + `web/src/app/_providers/app-providers.tsx` + `web/src/components/layout/App.tsx` + `web/src/app/_providers/copilot-provider.tsx` | ルートレイアウト、`App`、`CopilotKitProvider` と `GenerativeUIRegistry` を束ねる。 |
+| `web/src/features/chat/hooks/use-chat-session.ts` / `use-conversation.ts` + `web/src/features/chat/context/chat-context.tsx` | チャットシェル・会話のクライアントロジックと `ChatProvider` / `useChatContext`。 |
+| `web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx` | Generative UI frontend tools を CopilotKit へ登録する。 |
+| `web/src/features/chat/generative-ui/components/declarative/DeclarativeRenderer.tsx` | `show_ui_spec` の UI schema を React component へ変換する。 |
+| `web/src/features/chat/lib/mcp-sandbox-html.ts` | MCP App / Google Map 用 sandbox HTML をクライアント生成し iframe に渡す。 |
 | `agent/src/mfa/agents.py` | MFA agent の instruction と OpenAI / Anthropic エージェント構築。 |
-| `web/components/chat/App.test.tsx` | テスト環境で`useFrontendTool`をmockし、既存チャットテストを維持する。 |
+| `web/src/components/layout/App.test.tsx` | テスト環境で `useFrontendTool` を mock し、アプリ枠のチャット契約を維持する。 |
 
 ## 公式docsとの対応
 

@@ -8,10 +8,10 @@ Zenith AI Chat / CopilotKit Guide
 
 | 場所 | 用途 |
 | --- | --- |
-| `web/components/chat/App.tsx` | `CopilotKitProvider` を配置しチャット全体を包む。 |
-| `web/app/api/copilotkit/route.ts` | Next.js App Router 上で CopilotKit Runtime endpoint を公開する。 |
-| `web/lib/copilotkit/runtime.ts` | `CopilotRuntime` を組み立て、agent 登録や middleware を束ねる。 |
-| `web/components/chat/GenerativeUIRegistry.tsx` | `useFrontendTool` で static / declarative / open-ended の UI tool を登録する。 |
+| `web/src/components/layout/App.tsx` | 全ページ共通枠。Sidebar と `CopilotProvider`（内部で `CopilotKitProvider`）を配置する（`src/app/layout.tsx` の子がページ）。 |
+| `web/src/app/api/copilotkit/route.ts` | Next.js App Router 上で CopilotKit Runtime endpoint を公開する（**web が公開する HTTP API はこれのみ**）。 |
+| `web/src/lib/copilotkit/runtime.ts` | `CopilotRuntime` を組み立て、agent 登録や middleware を束ねる。 |
+| `web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx` | `useFrontendTool` で static / declarative / open-ended の UI tool を登録する（チャット機能の一部）。 |
 
 ## 2. 現在の接続イメージ
 

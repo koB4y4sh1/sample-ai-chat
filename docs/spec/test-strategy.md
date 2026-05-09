@@ -18,7 +18,7 @@ Zenith AI Chat / Test Strategy
 uv run pytest
 pnpm --filter @zenith/web test
 pnpm run test
-pnpm --filter @zenith/web exec vitest run components/chat/App.test.tsx
+pnpm --filter @zenith/web exec vitest run App.test.tsx
 ```
 
 ルートの `pnpm run test` は Python と frontend を続けて実行する。個別の失敗を潰すときはパッケージ単位で切るとよい。

@@ -14,7 +14,7 @@ Zenith AI Chat / A2UI Guide
 
 | 参照 | 説明 |
 | --- | --- |
-| `web/lib/generative-ui/schemas/declarative.ts` | block type を定義した zod schema を置き、agent に渡す引数仕様を合わせる。 |
+| `web/src/features/chat/schemas/declarative.ts` | block type を定義した zod schema を置き、agent に渡す引数仕様を合わせる。 |
 | `DeclarativeRenderer` | schema を React UI に変換する renderer。catalog の選択に対応する。 |
 | `docs/spec/generative-ui.md` | 生成 HTML は `docs/html/generative-ui.html`。Basic / Custom Catalog と block の対応を記載する。 |
 
