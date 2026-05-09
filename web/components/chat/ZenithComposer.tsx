@@ -1,7 +1,6 @@
 import { CopilotChatInput, type CopilotChatInputProps } from '@copilotkit/react-core/v2';
 import { Paperclip } from 'lucide-react';
-import type React from 'react';
-import { forwardRef, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { ChatModelId, ChatToolId } from '../../lib/chat-controls';
 import { cn } from '../../lib/utils';
 import { ModelSelector } from '../common/ModelSelector';
@@ -17,60 +16,7 @@ interface ZenithComposerProps extends Omit<CopilotChatInputProps, 'children'> {
   sticky?: boolean;
 }
 
-const resizeTextareaElement = (textarea: HTMLTextAreaElement | null) => {
-  if (!textarea) {
-    return;
-  }
-
-  const maxHeight = 200;
-  textarea.style.height = 'auto';
-  textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
-  textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
-};
-
-const AutoResizeTextArea = forwardRef<
-  HTMLTextAreaElement,
-  React.TextareaHTMLAttributes<HTMLTextAreaElement>
->(function AutoResizeTextArea({ className, onChange, value, ...props }, forwardedRef) {
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  const setTextareaRef = useCallback(
-    (node: HTMLTextAreaElement | null) => {
-      textareaRef.current = node;
-
-      if (typeof forwardedRef === 'function') {
-        forwardedRef(node);
-      } else if (forwardedRef) {
-        forwardedRef.current = node;
-      }
-    },
-    [forwardedRef],
-  );
-
-  useLayoutEffect(() => {
-    void value;
-    resizeTextareaElement(textareaRef.current);
-  }, [value]);
-
-  return (
-    <textarea
-      {...props}
-      ref={setTextareaRef}
-      value={value}
-      onChange={(event) => {
-        onChange?.(event);
-        resizeTextareaElement(event.currentTarget);
-      }}
-      rows={1}
-      className={cn(
-        className,
-        'min-h-9 w-full resize-none border-none bg-transparent px-2 py-2 text-[15px] leading-relaxed text-text-primary outline-none placeholder:text-text-secondary focus:outline-none focus:ring-0',
-      )}
-    />
-  );
-});
-
-export const ZenithComposer = Object.assign(function ZenithComposer({
+export function ZenithComposer({
   placeholder,
   selectedModel,
   setSelectedModel,
@@ -85,15 +31,6 @@ export const ZenithComposer = Object.assign(function ZenithComposer({
   const submitWithCurrentControls = (value: string) => {
     props.onSubmitMessage?.(value);
   };
-  const textAreaSlot = useMemo(
-    () =>
-      forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(
-        function ZenithAutoResizeTextArea(textAreaProps, ref) {
-          return <AutoResizeTextArea {...textAreaProps} ref={ref} placeholder={placeholder} />;
-        },
-      ),
-    [placeholder],
-  );
   const updateComposerHeight = useCallback(() => {
     const composerRoot = composerRootRef.current;
     if (!composerRoot) {
@@ -143,7 +80,6 @@ export const ZenithComposer = Object.assign(function ZenithComposer({
       bottomAnchored={anchored}
       showDisclaimer={false}
       className={className}
-      textArea={textAreaSlot}
       sendButton="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-gradient text-white shadow-sm"
       startTranscribeButton="rounded-full p-2 text-text-secondary transition-colors hover:text-text-primary"
       addMenuButton="rounded-full p-2 text-text-secondary transition-colors hover:text-text-primary disabled:opacity-40"
@@ -202,7 +138,7 @@ export const ZenithComposer = Object.assign(function ZenithComposer({
       )}
     </CopilotChatInput>
   );
-}, CopilotChatInput);
+}
 
 function FallbackAttachButton() {
   return (

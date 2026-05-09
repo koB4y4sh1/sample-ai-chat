@@ -64,6 +64,7 @@ type MockCopilotChatViewProps = {
 };
 
 type MockCopilotChatProps = {
+  autoScroll?: 'pin-to-bottom' | 'pin-to-send' | 'none' | boolean;
   chatView?: React.ComponentType<MockCopilotChatViewProps>;
   className?: string;
   labels?: {
@@ -77,6 +78,7 @@ type MockCopilotChatProps = {
 
 let capturedRuntimeUrl: string | undefined;
 let capturedHeaders: Record<string, string> | undefined;
+let capturedAutoScroll: MockCopilotChatProps['autoScroll'];
 
 const agentListeners = new Set<() => void>();
 const notifyAgentListeners = () => {
@@ -324,6 +326,7 @@ vi.mock('@copilotkit/react-core/v2', async () => {
 
   const MockCopilotChat = Object.assign(
     function MockCopilotChat({
+      autoScroll,
       chatView,
       className,
       labels,
@@ -331,6 +334,7 @@ vi.mock('@copilotkit/react-core/v2', async () => {
       onSubmitMessage,
       welcomeScreen,
     }: MockCopilotChatProps) {
+      capturedAutoScroll = autoScroll;
       const [draft, setDraft] = React.useState('');
       useAgentMock();
 
@@ -461,6 +465,7 @@ describe('App', () => {
     pushMock.mockClear();
     capturedRuntimeUrl = undefined;
     capturedHeaders = undefined;
+    capturedAutoScroll = undefined;
   });
 
   beforeEach(() => {
@@ -781,6 +786,14 @@ describe('App', () => {
 
     expect(capturedRuntimeUrl).toBe('/api/copilotkit');
     expect(capturedHeaders).toMatchObject({ 'x-zenith-provider': 'lang-chain' });
+  });
+
+  it('anchors the just-sent user message to the top via pin-to-send autoScroll', async () => {
+    render(<App activeSessionId="session-pin-to-send" />);
+
+    await screen.findByPlaceholderText('Type a message...');
+
+    expect(capturedAutoScroll).toBe('pin-to-send');
   });
 
   it('restores stored conversation messages for an existing session', async () => {

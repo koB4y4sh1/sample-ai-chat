@@ -505,7 +505,7 @@ export default function App({ activeSessionId = null }: AppProps) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.4, ease: 'easeOut' }}
-                      className="w-full max-w-3xl px-6"
+                      className="mx-auto w-full max-w-3xl px-6"
                     >
                       <HomeView
                         onSendMessage={startConversation}
@@ -521,7 +521,7 @@ export default function App({ activeSessionId = null }: AppProps) {
                       exit={{ opacity: 0 }}
                       className="flex h-full w-full flex-1 min-h-0 "
                     >
-                      <div className="flex h-full min-h-0 flex-1 flex-col border border-border bg-sidebar-bg shadow-sm">
+                      <div className="flex h-full min-h-0 flex-1 flex-col border border-border bg-bg shadow-sm">
                         <div className="border-b border-border px-5 py-2">
                           <h2 className="text-base font-semibold text-text-primary">
                             {currentSession.title}

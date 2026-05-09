@@ -4,18 +4,17 @@ import {
   CopilotChat,
   CopilotChatAssistantMessage,
   type CopilotChatAssistantMessageProps,
+  CopilotChatInput,
   type CopilotChatInputProps,
   CopilotChatUserMessage,
   type CopilotChatUserMessageProps,
-  CopilotChatView,
-  type CopilotChatViewProps,
   type Message,
   UseAgentUpdate,
   type UserMessage,
   useAgent,
   useCopilotKit,
 } from '@copilotkit/react-core/v2';
-import { CheckCircle2, ChevronDown, Loader2, Wrench, XCircle } from 'lucide-react';
+import { CheckCircle2, Loader2, Wrench, XCircle } from 'lucide-react';
 import {
   forwardRef,
   memo,
@@ -30,8 +29,10 @@ import {
 import { type ChatControlsState, getModelOption } from '../../lib/chat-controls';
 import { resolveAgentUrl } from '../../lib/copilotkit/agents';
 import { cn } from '../../lib/utils';
+import { ModelSelector } from '../common/ModelSelector';
+import { ToolSelector } from '../common/ToolSelector';
 import { useChatControls } from './ChatControlsContext';
-import { ZenithComposer } from './ZenithComposer';
+import { ChatInput } from './ChatInput';
 
 interface ConversationViewProps {
   sessionId: string;
@@ -192,25 +193,6 @@ const findPreviousUserMessageIndex = (messages: Message[], fromIndex: number) =>
 
   return -1;
 };
-
-function ZenithScrollToBottomButton({
-  className,
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      type="button"
-      {...props}
-      className={cn(
-        className,
-        'pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-border bg-sidebar-bg text-text-primary shadow-lg transition-colors hover:bg-bg',
-      )}
-      aria-label="Scroll to bottom"
-    >
-      <ChevronDown className="h-4 w-4" />
-    </button>
-  );
-}
 
 const getToolCallName = (toolCall: unknown) => {
   if (!isRecord(toolCall)) {
@@ -452,19 +434,24 @@ function ZenithChatInputSlot(props: CopilotChatInputProps) {
   const { controls, setControls } = useChatControls();
 
   return (
-    <ZenithComposer
-      {...props}
-      placeholder="Type a message..."
-      selectedModel={controls.selectedModel}
-      setSelectedModel={(selectedModel) =>
-        setControls((current) => ({ ...current, selectedModel }))
-      }
-      selectedTools={controls.selectedTools}
-      setSelectedTools={(selectedTools) =>
-        setControls((current) => ({ ...current, selectedTools }))
-      }
-      sticky
-    />
+    <div className="px-4 pb-5 pt-3 sm:px-6">
+      <ChatInput
+        onSend={(message) => props.onSubmitMessage?.(message)}
+        placeholder="Type a message..."
+        toolSelector={
+          <ToolSelector
+            value={controls.selectedTools}
+            onChange={(selectedTools) => setControls((current) => ({ ...current, selectedTools }))}
+          />
+        }
+        modelSelector={
+          <ModelSelector
+            value={controls.selectedModel}
+            onChange={(selectedModel) => setControls((current) => ({ ...current, selectedModel }))}
+          />
+        }
+      />
+    </div>
   );
 }
 
@@ -510,89 +497,9 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
     const skipNextPersistRef = useRef(false);
     const restoredSessionIdRef = useRef<string | null>(null);
     const agentMessagesRef = useRef(agent.messages);
-    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-    const shouldStickToBottomRef = useRef(true);
     const [editingDraft, setEditingDraft] = useState<EditingDraft | null>(null);
-    const [showScrollToBottom, setShowScrollToBottom] = useState(false);
     const [guaranteedMessages, setGuaranteedMessages] = useState<Message[]>([]);
     agentMessagesRef.current = mergeMessages(guaranteedMessages, agent.messages);
-
-    const updateScrollButton = useCallback(() => {
-      const scrollContainer = scrollContainerRef.current;
-      if (!scrollContainer) {
-        return;
-      }
-
-      const distanceFromBottom =
-        scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight;
-      const isAtBottom = distanceFromBottom < 24;
-      shouldStickToBottomRef.current = isAtBottom;
-      setShowScrollToBottom(!isAtBottom);
-    }, []);
-
-    const scrollToConversationBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
-      const scrollContainer = scrollContainerRef.current;
-      if (!scrollContainer) {
-        return;
-      }
-
-      if (typeof scrollContainer.scrollTo === 'function') {
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior,
-        });
-        return;
-      }
-
-      scrollContainer.scrollTop = scrollContainer.scrollHeight;
-    }, []);
-
-    useEffect(() => {
-      const scrollContainer = scrollContainerRef.current;
-      if (!scrollContainer) {
-        return;
-      }
-
-      updateScrollButton();
-      scrollContainer.addEventListener('scroll', updateScrollButton, { passive: true });
-
-      const handleResize = () => {
-        if (shouldStickToBottomRef.current) {
-          scrollToConversationBottom('auto');
-        }
-        updateScrollButton();
-      };
-
-      if (typeof ResizeObserver === 'undefined') {
-        window.addEventListener('resize', handleResize);
-
-        return () => {
-          scrollContainer.removeEventListener('scroll', updateScrollButton);
-          window.removeEventListener('resize', handleResize);
-        };
-      }
-
-      const observer = new ResizeObserver(handleResize);
-      observer.observe(scrollContainer);
-
-      return () => {
-        scrollContainer.removeEventListener('scroll', updateScrollButton);
-        observer.disconnect();
-      };
-    }, [scrollToConversationBottom, updateScrollButton]);
-
-    useEffect(() => {
-      void agent.messages;
-      if (!shouldStickToBottomRef.current) {
-        updateScrollButton();
-        return;
-      }
-
-      requestAnimationFrame(() => {
-        scrollToConversationBottom('auto');
-        updateScrollButton();
-      });
-    }, [agent.messages, scrollToConversationBottom, updateScrollButton]);
 
     useEffect(() => {
       restoredSessionIdRef.current = sessionId;
@@ -730,24 +637,9 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
 
     useImperativeHandle(ref, () => handleRef.current, []);
 
-    const inputSlot = useMemo(() => Object.assign(ZenithChatInputSlot, ZenithComposer), []);
-
-    const chatViewSlot = useMemo(
-      () =>
-        Object.assign(function ZenithChatView(props: CopilotChatViewProps) {
-          return (
-            <CopilotChatView
-              {...props}
-              messages={mergeMessages(guaranteedMessages, props.messages ?? [])}
-            />
-          );
-        }, CopilotChatView),
-      [guaranteedMessages],
-    );
-
     const assistantMessageSlot = useMemo(
       () =>
-        Object.assign(function ZenithAssistantMessage(props: CopilotChatAssistantMessageProps) {
+        ((props: CopilotChatAssistantMessageProps) => {
           return (
             <>
               <CopilotChatAssistantMessage {...props} onRegenerate={regenerateAssistantMessage} />
@@ -758,39 +650,46 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
               />
             </>
           );
-        }, CopilotChatAssistantMessage),
+        }) as typeof CopilotChatAssistantMessage,
       [agent.isRunning, regenerateAssistantMessage],
     );
 
     const userMessageSlot = useMemo(
       () =>
-        Object.assign(function ZenithUserMessage(props: CopilotChatUserMessageProps) {
+        ((props: CopilotChatUserMessageProps) => {
           return (
             <CopilotChatUserMessage
               {...props}
               onEditMessage={({ message }) => void editUserMessage(message)}
             />
           );
-        }, CopilotChatUserMessage),
+        }) as typeof CopilotChatUserMessage,
       [editUserMessage],
+    );
+
+    const inputSlot = useMemo(
+      () =>
+        Object.assign(
+          (props: CopilotChatInputProps) => <ZenithChatInputSlot {...props} />,
+          CopilotChatInput,
+        ),
+      [],
     );
 
     return (
       <div className="zenith-conversation-shell relative flex h-full min-h-0 flex-1">
         <AgentStateSync agent={agent} />
         <AgentEndpointSync agent={agent} />
-        <div ref={scrollContainerRef} className="h-full min-h-0 flex-1 overflow-y-auto">
+        <div className="h-full min-h-0 flex-1 overflow-y-auto">
           <CopilotChat
             agentId={agentId}
             threadId={sessionId}
             className="zenith-copilot-chat flex min-h-full flex-col"
             welcomeScreen={false}
-            chatView={chatViewSlot}
-            autoScroll="none"
+            autoScroll
             suggestionView="flex flex-wrap gap-2"
             scrollView={{
-              className:
-                '!h-auto !max-h-none !min-h-0 !flex-none !overflow-visible px-4 pt-6 pb-2 sm:px-6 lg:px-8',
+              className: 'px-4 pt-6 sm:px-6 lg:px-8',
               feather: 'hidden',
             }}
             input={inputSlot}
@@ -812,11 +711,6 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
             }}
           />
         </div>
-        {showScrollToBottom ? (
-          <div className="pointer-events-none absolute inset-x-0 bottom-[calc(var(--zenith-composer-height,7.25rem)+1rem)] z-30 flex justify-center">
-            <ZenithScrollToBottomButton onClick={() => scrollToConversationBottom()} />
-          </div>
-        ) : null}
         {editingDraft ? (
           <div className="absolute inset-0 z-40 flex items-end justify-center bg-black/20 px-4 py-6 backdrop-blur-[1px] sm:items-center">
             <div className="w-full max-w-2xl rounded-2xl border border-border bg-sidebar-bg p-4 shadow-2xl">

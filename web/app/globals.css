@@ -144,6 +144,14 @@
   .zenith-copilot-chat textarea::placeholder {
     color: var(--color-text-secondary);
   }
+
+  .zenith-copilot-chat [data-testid="copilot-input-overlay"] {
+    pointer-events: none;
+  }
+
+  .zenith-copilot-chat [data-testid="copilot-input-overlay"] * {
+    pointer-events: auto;
+  }
 }
 
 .icon-gradient {
