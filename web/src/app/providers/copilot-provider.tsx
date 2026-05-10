@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 import type { ChatContextValue } from '@/features/chat/context/chat-context';
 import { ChatProvider } from '@/features/chat/context/chat-context';
 import { ChatControlsProvider } from '@/features/chat/context/chat-controls-context';
+import { useA2UIProgress } from '@/features/chat/generative-ui/a2ui/progressive';
 import { a2uiCatalog } from '@/features/chat/generative-ui/a2ui/renderers';
 import { DisplayComponent } from '@/features/chat/generative-ui/component';
 import { FrontendTool } from '@/features/chat/generative-ui/frontend-tool';
@@ -38,6 +39,8 @@ function ChatControlsBridge({ controls }: { controls: ChatControlsState }) {
     },
     [controls.selectedTools.join(',')],
   );
+
+  useA2UIProgress(); // A2UI の進行状況を表示するカスタムフック
 
   return null;
 }
