@@ -18,6 +18,10 @@ def build_foundry_chat_model(settings: Settings | None = None) -> BaseChatModel:
             project_endpoint=settings.foundry_project_endpoint,
             credential=AzureCliCredential(),
             model=settings.openai_model,
+            reasoning={
+                "effort": "medium",  # low | medium | high など。モデル依存
+                "summary": "auto",  # auto | concise | detailed
+            },
             store=False,
         ),
     )

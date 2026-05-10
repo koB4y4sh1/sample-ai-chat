@@ -18,6 +18,7 @@ const runtime = new CopilotRuntime({
       model: 'openai:gpt-5.4-nano',
       prompt: 'You are a helpful assistant.',
       apiKey: process.env.OPENAI_API_KEY ?? '',
+      providerOptions: { openai: { reasoningEffort: 'medium' } },
     }),
     'mfa-openai': new HttpAgent({ url: `${AGENT_BASE_URL}/mfa/openai` }),
     'mfa-anthropic': new HttpAgent({ url: `${AGENT_BASE_URL}/mfa/anthropic` }),
