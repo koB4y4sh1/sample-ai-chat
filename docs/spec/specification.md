@@ -1,6 +1,6 @@
 # Zenith AI Chat 仕様書
 
-作成日: 2026-04-24 / 更新日: 2026-05-09 / 対象: web, agent, mcp
+作成日: 2026-04-24 / 更新日: 2026-05-10 / 対象: web, agent, mcp
 
 ## 関連ドキュメント
 
@@ -24,10 +24,10 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
 * `web` は Next.js App Router で UI と BFF route handler を管理する。
 * web が公開するチャット向け HTTP API は **`/api/copilotkit`**（CopilotKit Runtime）のみとする。Generative UI（static / declarative / custom tool・および Runtime の MCP Apps iframe）はチャット機能の一部として **`web/src/features/chat`** 内で完結し、追加の REST ルートは置かない。
 * チャット UI は `/api/copilotkit` の CopilotKit Runtime へ接続する。
-* Runtime は `AG_UI_BASE_URL` を基準に、チャットで選んだモデルプロバイダに応じて agent へ転送する（例: OpenAI 向け `/mfa/openai`、Anthropic 向け `/mfa/anthropic`、LangChain 向け `/lang-chain/`）。実際の URL 組み立ては `web/src/lib/copilotkit/agents.ts` の `HttpAgent` を参照。
+* Runtime は `AG_UI_BASE_URL` を基準に、チャットで選んだモデルプロバイダに応じて agent へ転送する（例: OpenAI 向け `/mfa/openai`、Anthropic 向け `/mfa/anthropic`、LangGraph 向け `/lang-chain`）。MFA は `HttpAgent`、self-hosted LangGraph は `LangGraphHttpAgent` を使う。
 * `agent` は `agent/src/main.py` で FastAPI アプリを組み立て、`/mfa` に MFA アプリ（`/mfa/openai`・`/mfa/anthropic` など）、`/lang-chain` に LangGraph アプリをマウントする。
 * Generative UI は CopilotKit v2 の frontend tool として `web` 側で登録する。登録されているのは `show_zenith_panel`、`show_ui_spec`、`show_flight_options` のみである（別経路として CopilotKit Runtime の MCP Apps iframe がある）。
-* MCP Apps（iframe surface）は `web/src/lib/copilotkit/runtime.ts` の `MCPAppsMiddleware` などで登録する。LangChain（`agent/src/lang_chain/app.py`）は、環境変数 `MCP_SERVER_URL` または `ZENITH_MCP_SERVER_URL` が設定されているとき、Streamable HTTP の MCP（例: `http://127.0.0.1:8101/mcp`）へ接続して `tools/list` の**全ツール**を LangGraph の backend tool（`server_tools`）としてバインドする。BFF 経由で同名ツールが渡った場合は MCP 側を優先する。
+* MCP Apps（iframe surface）は Runtime 側で登録する。LangGraph（`agent/src/lang_chain/app.py`）は `LangGraphAGUIAgent` と `add_langgraph_fastapi_endpoint` で AG-UI endpoint を公開し、frontend tool は `CopilotKitMiddleware` が LangGraph state の `copilotkit.actions` からモデルへ渡す。Backend tool は `agent/src/lang_chain/tool.py` の `build_tools(settings)` で MCP から取得し、`build_graph(..., server_tools=[...])` へバインドする。
 
 ## Generative UIの結論
 
@@ -49,7 +49,7 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
 ユーザー
   → CopilotChat / CopilotKitProvider
   → /api/copilotkit（CopilotKit Runtime）
-  → HttpAgent（AG_UI_BASE_URL + プロバイダ別パス、例: /mfa/openai）
+  → HttpAgent / LangGraphHttpAgent（AG_UI_BASE_URL + プロバイダ別パス、例: /mfa/openai, /lang-chain）
   → agent（tool call を決定）
   → CopilotKit Runtime が web の frontend tool registry へ
   → React（Static / Declarative / Custom）
@@ -95,7 +95,9 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
 | `web/src/features/chat/generative-ui/components/CopilotFrontendTools.tsx` | Generative UI frontend tools を CopilotKit へ登録する。 |
 | `web/src/features/chat/generative-ui/lib/ui-spec-from-tool-args.ts` | `show_ui_spec` の tool 引数を `UISpec` / block 定義へ正規化する。 |
 | `web/src/features/chat/generative-ui/components/declarative/DeclarativeRenderer.tsx` | `show_ui_spec` の UI schema を React component へ変換する。 |
+| `web/src/app/api/copilotkit/route.ts` | CopilotKit Runtime を構築し、MFA は `HttpAgent`、LangGraph は `LangGraphHttpAgent` で agent へ接続する。 |
 | `agent/src/mfa/agents.py` | MFA agent の instruction と OpenAI / Anthropic エージェント構築。 |
+| `agent/src/lang_chain/app.py` + `agent/src/lang_chain/graph.py` | LangGraph AG-UI endpoint と `CopilotKitMiddleware` 付き LangGraph agent を構築する。 |
 | `web/src/components/layout/App.test.tsx` | テスト環境で `useFrontendTool` を mock し、アプリ枠のチャット契約を維持する。 |
 
 ## 公式docsとの対応

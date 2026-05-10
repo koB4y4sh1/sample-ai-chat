@@ -29,10 +29,10 @@ export const MODEL_OPTIONS = [
     description: 'Azure Foundry Anthropic agent endpoint.',
   },
   {
-    id: 'mfa-lang-chain',
+    id: 'lang-chain',
     provider: 'lang-chain',
     model: 'langgraph',
-    agentId: 'mfa-lang-chain',
+    agentId: 'lang-chain',
     name: 'LangGraph',
     icon: 'LG',
     description: 'Python LangChain LangGraph AG-UI endpoint.',

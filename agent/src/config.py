@@ -19,11 +19,11 @@ DEFAULT_MCP_URL = "http://127.0.0.1:8101/mcp"
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_prefix="ZENITH_",
         env_file=ENV_FILE_PATH,
         env_file_encoding="utf-8",
         extra="ignore",
     )
+    cors_origins: str = "http://127.0.0.1:3000"
 
     openai_model: str = DEFAULT_MODEL
     anthropic_model: str = DEFAULT_ANTHROPIC_MODEL
@@ -40,7 +40,6 @@ class Settings(BaseSettings):
             "AZURE_AI_PROJECT_ENDPOINT",
         ),
     )
-    cors_origins: str = "http://127.0.0.1:3000"
     mcp_enabled: bool = True
     mcp_url: str = DEFAULT_MCP_URL
     mcp_request_timeout_seconds: int = 30

@@ -30,6 +30,27 @@ wheels = [
 ]
 
 [[package]]
+name = "ag-ui-langgraph"
+version = "0.0.35"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ag-ui-protocol" },
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "langgraph" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a8/89/43c27a0aad293f4c033161d70b62db208fe55c4690c696c6ad701aa6494a/ag_ui_langgraph-0.0.35.tar.gz", hash = "sha256:34ee82e30bf110e36d0bc0819e733d70452d1e1069ee26cb08f3483645e9e5f4", size = 296988, upload-time = "2026-04-29T09:19:08.446Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/27/1f/eac9284ec294192b87a92da6e57807c4a155696424074aa907c27b7eeb0d/ag_ui_langgraph-0.0.35-py3-none-any.whl", hash = "sha256:49c7de8e230bd3e55afcb8ff62be438f2b33f6acfb2803d3bda8d5214d5870dc", size = 27584, upload-time = "2026-04-29T09:19:07.386Z" },
+]
+
+[package.optional-dependencies]
+fastapi = [
+    { name = "fastapi" },
+]
+
+[[package]]
 name = "ag-ui-protocol"
 version = "0.1.18"
 source = { registry = "https://pypi.org/simple" }
@@ -947,6 +968,25 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44", size = 27697, upload-time = "2022-10-25T02:36:22.414Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6", size = 25335, upload-time = "2022-10-25T02:36:20.889Z" },
+]
+
+[[package]]
+name = "copilotkit"
+version = "0.1.88"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ag-ui-langgraph", extra = ["fastapi"] },
+    { name = "ag-ui-protocol" },
+    { name = "fastapi" },
+    { name = "langchain" },
+    { name = "langgraph" },
+    { name = "partialjson" },
+    { name = "pydantic-core" },
+    { name = "toml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/be/f1/aacbd51eb36fd794650e924aeda4fb5dbb427178c0c931e0376b9debf502/copilotkit-0.1.88.tar.gz", hash = "sha256:4e5e8cfb8833940b61684f73baacab2e0c11d72258fa5c6d01f5e8b87b3ebab5", size = 39415, upload-time = "2026-05-01T10:31:40.789Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/dd/26/9f4c37c55efb53953bb42adbb1ea3a8ed834e0cc2bea7e459e7ae7e43a8c/copilotkit-0.1.88-py3-none-any.whl", hash = "sha256:85bf80655963d6cc6ef177e723da5fbe9296411dcb48185e8276610595fa1e2b", size = 48033, upload-time = "2026-05-01T10:31:39.324Z" },
 ]
 
 [[package]]
@@ -2427,6 +2467,15 @@ wheels = [
 ]
 
 [[package]]
+name = "partialjson"
+version = "0.0.8"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5d/b2/59669fdc3ecbc724a077c598c1c9b4068549af0cd8c3b5add9337bd4d93a/partialjson-0.0.8.tar.gz", hash = "sha256:91217e19a15049332df534477f56420065ad1729cedee7d8c7433e1d2acc7dca", size = 4142, upload-time = "2024-08-03T18:03:15.798Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8a/fb/453af21468774dbd0954853735a4fc7841544c3022ff86e5d93252d7ea72/partialjson-0.0.8-py3-none-any.whl", hash = "sha256:22c6c60944137f931a7033fa0eeee2d74b49114f3d45c25a560b07a6ebf22b76", size = 4549, upload-time = "2024-08-03T18:03:14.447Z" },
+]
+
+[[package]]
 name = "pathable"
 version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3235,6 +3284,15 @@ wheels = [
 ]
 
 [[package]]
+name = "toml"
+version = "0.10.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/be/ba/1f744cdc819428fc6b5084ec34d9b30660f6f9daaf70eead706e3203ec3c/toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f", size = 22253, upload-time = "2020-11-01T01:40:22.204Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b", size = 16588, upload-time = "2020-11-01T01:40:20.672Z" },
+]
+
+[[package]]
 name = "tqdm"
 version = "4.67.3"
 source = { registry = "https://pypi.org/simple" }
@@ -3557,8 +3615,10 @@ name = "zenith-agent"
 version = "0.1.0"
 source = { editable = "agent" }
 dependencies = [
+    { name = "ag-ui-langgraph" },
     { name = "agent-framework" },
     { name = "azure-identity" },
+    { name = "copilotkit" },
     { name = "dedent" },
     { name = "dotenv" },
     { name = "fastapi" },
@@ -3574,8 +3634,10 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "ag-ui-langgraph", specifier = ">=0.0.35" },
     { name = "agent-framework", specifier = ">=1.2.0" },
     { name = "azure-identity", specifier = ">=1.25.3" },
+    { name = "copilotkit", specifier = ">=0.1.88" },
     { name = "dedent", specifier = ">=0.8.0" },
     { name = "dotenv", specifier = ">=0.9.9" },
     { name = "fastapi", specifier = ">=0.115" },
