@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import '@copilotkit/react-core/v2/styles.css';
 import './globals.css';
-import App from '@/components/layout/App';
-import { AppProviders } from './_providers/app-providers';
+import App from '@/components/layout/app';
+import { AppProviders } from './providers/app-providers';
 
 export const metadata: Metadata = {
   title: 'Zenith AI Chat',

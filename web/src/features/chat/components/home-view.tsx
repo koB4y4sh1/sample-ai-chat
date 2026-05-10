@@ -1,8 +1,8 @@
 'use client';
 
 import { Sparkles } from 'lucide-react';
-import { ModelSelector } from '@/components/common/ModelSelector';
-import { ToolSelector } from '@/components/common/ToolSelector';
+import { ModelSelector } from '@/components/common/model-selector';
+import { ToolSelector } from '@/components/common/tool-selector';
 import { ChatInput } from '@/features/chat/components/chat-input';
 import { type ChatControlsState, HOME_PROMPT_SUGGESTIONS } from '@/lib/chat-controls';
 

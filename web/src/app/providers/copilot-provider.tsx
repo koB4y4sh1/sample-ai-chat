@@ -12,7 +12,7 @@ import { ChatControlsProvider } from '@/features/chat/context/chat-controls-cont
 import { a2uiCatalog } from '@/features/chat/generative-ui/a2ui/renderers';
 import { DisplayComponent } from '@/features/chat/generative-ui/component';
 import { FrontendTool } from '@/features/chat/generative-ui/frontend-tool';
-import { HumanInTheLoop } from '@/features/chat/generative-ui/hitl/humanInTheLoop';
+import { HumanInTheLoop } from '@/features/chat/generative-ui/hitl/human-in-the-loop';
 import { ToolRender } from '@/features/chat/generative-ui/tool-render';
 import {
   buildChatControlContext,
@@ -63,9 +63,9 @@ export function CopilotProvider({
       headers={{
         'x-zenith-provider': getModelOption(chatControls.selectedModel).provider,
       }}
-      useSingleEndpoint
-      a2ui={{ catalog: a2uiCatalog }}
+      useSingleEndpoint={true}
       showDevConsole={true}
+      a2ui={{ catalog: a2uiCatalog }}
     >
       <ChatControlsProvider value={{ controls: chatControls, setControls: updateChatControls }}>
         <ChatProvider value={chatContextValue}>

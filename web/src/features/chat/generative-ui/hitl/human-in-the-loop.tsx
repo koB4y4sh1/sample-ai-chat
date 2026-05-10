@@ -1,12 +1,10 @@
 import { useHumanInTheLoop } from '@copilotkit/react-core/v2';
 import { ApprovalCard } from './approval/approval-card';
-import { StepsFeedback } from './setps-feedback/steps-feedback';
-import { type GenerateTaskStepsArgs, generateTaskStepsParameters } from './setps-feedback/types';
+import { StepsFeedback } from './steps-feedback/steps-feedback';
+import { type GenerateTaskStepsArgs, generateTaskStepsParameters } from './steps-feedback/types';
 
 export function HumanInTheLoop() {
-  /** Human-In-the-Loop: 「東京の天気について調べて」など
-   *  「承認」後、Server Tool が実行される
-   */
+  // Human-in-the-loop approval for weather tool execution.
   useHumanInTheLoop({
     name: 'get_weather',
     description: 'Get the current weather',
@@ -21,7 +19,7 @@ export function HumanInTheLoop() {
     },
   });
 
-  /** Human-In-the-Loop: コマンド承認・タスクステップ選択など */
+  // Human-in-the-loop flow for selecting task steps.
   useHumanInTheLoop({
     name: 'generate_task_steps',
     description: 'Generates a list of steps for the user to perform',

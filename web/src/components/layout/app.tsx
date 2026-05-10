@@ -1,8 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { CopilotProvider } from '@/app/_providers/copilot-provider';
-import { Sidebar } from '@/components/common/Sidebar';
+import { CopilotProvider } from '@/app/providers/copilot-provider';
+import { Sidebar } from '@/components/common/sidebar';
 import { useChatSession } from '@/features/chat/hooks/use-chat-session';
 
 /**

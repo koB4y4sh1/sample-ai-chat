@@ -75,6 +75,23 @@ uv run pre-commit run --all-files
 
 ## TypeScript / React
 
+### 命名規則
+
+`web` ディレクトリでは以下の命名規則を統一する。
+
+| 対象 | 規則 | 例 |
+|------|------|------|
+| ディレクトリ | kebab-case | `components`, `common`, `generative-ui` |
+| ファイル | kebab-case | `chat-input.tsx`, `use-chat-session.ts` |
+| React component 名 | PascalCase | `ChatInput`, `HumanInTheLoop` |
+| hooks 名 | camelCase + `use` 接頭辞 | `useChatSession`, `useConversation` |
+| 関数 | camelCase | `buildChatControlContext`, `fetchHistory` |
+| 変数 | camelCase | `chatControls`, `selectedModel` |
+| 型 | PascalCase | `ChatContextValue`, `Message` |
+| 定数 | UPPER_SNAKE_CASE | `DEFAULT_MODEL`, `MAX_MESSAGE_LENGTH` |
+
+### その他ルール
+
 - formatter/linter は Biome を使う。
 - 型検査は `tsc --noEmit` を通す。
 - `any` は原則禁止。外部ライブラリ境界で避けられない場合は、最小範囲に閉じ込める。

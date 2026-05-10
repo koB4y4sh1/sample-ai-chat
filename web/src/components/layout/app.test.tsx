@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
 import React, { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ChatSessionPageBody } from '@/app/chat/[sessionId]/page';
+import { ChatSessionPageBody } from '@/app/chat/[session-id]/page';
 import { HomePageBody } from '@/app/page';
-import App from './App';
+import App from './app';
 
 const { pathnameMock } = vi.hoisted(() => ({
   pathnameMock: vi.fn(() => '/'),
