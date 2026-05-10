@@ -8,7 +8,7 @@ import { useFrontendTool } from '@copilotkit/react-core/v2';
 import { z } from 'zod';
 
 const sayHelloParameters = z.object({
-  name: z.string().describe('The name of the user to greet'),
+  name: z.string().describe('The name of the user to greet').default('World'),
 });
 
 export function FrontendTool() {
