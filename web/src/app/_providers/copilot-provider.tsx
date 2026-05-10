@@ -9,8 +9,11 @@ import type { ReactNode } from 'react';
 import type { ChatContextValue } from '@/features/chat/context/chat-context';
 import { ChatProvider } from '@/features/chat/context/chat-context';
 import { ChatControlsProvider } from '@/features/chat/context/chat-controls-context';
-import { GenerativeUIRegistry } from '@/features/chat/generative-ui/components/GenerativeUIRegistry';
-import { GenerativeUIInteractionProvider } from '@/features/chat/generative-ui/context/generative-ui-interaction-context';
+import { a2uiCatalog } from '@/features/chat/generative-ui/a2ui/renderers';
+import { DisplayComponent } from '@/features/chat/generative-ui/component';
+import { FrontendTool } from '@/features/chat/generative-ui/frontend-tool';
+import { HumanInTheLoop } from '@/features/chat/generative-ui/hitl/humanInTheLoop';
+import { ToolRender } from '@/features/chat/generative-ui/tool-render';
 import {
   buildChatControlContext,
   buildToolAwareSuggestions,
@@ -46,8 +49,6 @@ type CopilotProviderProps = {
     next: ChatControlsState | ((current: ChatControlsState) => ChatControlsState),
   ) => void;
   chatContextValue: ChatContextValue;
-  activeToolCallIds: Set<string>;
-  submitGenerativeUIInteraction: (content: string) => Promise<void> | void;
 };
 
 export function CopilotProvider({
@@ -55,8 +56,6 @@ export function CopilotProvider({
   chatControls,
   updateChatControls,
   chatContextValue,
-  activeToolCallIds,
-  submitGenerativeUIInteraction,
 }: CopilotProviderProps) {
   return (
     <CopilotKitProvider
@@ -65,18 +64,17 @@ export function CopilotProvider({
         'x-zenith-provider': getModelOption(chatControls.selectedModel).provider,
       }}
       useSingleEndpoint
-      showDevConsole={false}
+      a2ui={{ catalog: a2uiCatalog }}
+      showDevConsole={true}
     >
       <ChatControlsProvider value={{ controls: chatControls, setControls: updateChatControls }}>
         <ChatProvider value={chatContextValue}>
           <ChatControlsBridge controls={chatControls} />
-          <GenerativeUIInteractionProvider
-            onSubmit={submitGenerativeUIInteraction}
-            activeToolCallIds={activeToolCallIds}
-          >
-            <GenerativeUIRegistry agentId="zenith" />
-            {children}
-          </GenerativeUIInteractionProvider>
+          <FrontendTool />
+          <HumanInTheLoop />
+          <DisplayComponent />
+          <ToolRender />
+          {children}
         </ChatProvider>
       </ChatControlsProvider>
     </CopilotKitProvider>

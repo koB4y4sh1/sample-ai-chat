@@ -178,7 +178,7 @@ pyproject.toml
 </tr>
 <tr>
 <td><code>web/src/features/chat</code></td>
-<td><strong>チャット機能の単一の縦割り領域</strong>。会話 UI、<code>generative-ui/</code>（registry・declarative・iframe）、<code>schemas/</code>（zod）、hooks、context、型。</td>
+<td><strong>チャット機能の単一の縦割り領域</strong>。会話 UI、<code>generative-ui/</code>（Copilot frontend tool・declarative）、<code>schemas/</code>（zod）、hooks、context、型。</td>
 </tr>
 <tr>
 <td><code>web/src/lib/copilotkit</code></td>
@@ -212,7 +212,7 @@ pyproject.toml
 <h2>3. 実装を置くときの入口</h2>
 <ul>
 <li>アプリ共通の枠は <code>web/src/app/layout.tsx</code> が <code>web/src/components/layout/App.tsx</code> を呼ぶ。ページは <code>/</code> でホーム、<code>/chat/[sessionId]</code> で会話。</li>
-<li>Generative UI（frontend tool・declarative・MCP iframe 用 HTML 生成など）はすべて <strong><code>web/src/features/chat</code></strong> 配下に置く。別 feature ディレクトリや <code>/api/generative-ui</code> のような追加 route は置かない。</li>
+<li>Generative UI（frontend tool・declarative renderer など）はすべて <strong><code>web/src/features/chat</code></strong> 配下に置く。別 feature ディレクトリや <code>/api/generative-ui</code> のような追加 route は置かない。</li>
 <li>CopilotKit endpoint は <strong><code>web/src/app/api/copilotkit/route.ts</code> のみ</strong>。</li>
 <li>agent 接続 URL は <code>web/src/lib/copilotkit/agents.ts</code>。</li>
 <li>agent 本体は <code>agent/src/mfa</code>、<code>agent/src/lang_chain</code>、<code>agent/src/main.py</code>。</li>

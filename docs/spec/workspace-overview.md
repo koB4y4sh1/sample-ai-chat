@@ -39,7 +39,7 @@ Zenith AI Chat / Workspace Overview
 
 **Step 4** agent は通常応答または frontend tool 呼び出しを返す。
 
-**Step 5** web は static / declarative / open-ended のいずれかの UI surface で結果を描画する。
+**Step 5** web は static / declarative / custom（例: flight options）のいずれかの UI surface で結果を描画する。
 
 ## 5. 主要サブディレクトリの狙い
 

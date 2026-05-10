@@ -19,8 +19,6 @@ export default function App({ children }: { children: ReactNode }) {
     chatControls,
     updateChatControls,
     chatContextValue,
-    activeToolCallIds,
-    submitGenerativeUIInteraction,
     showHome,
     selectSession,
     deleteSession,
@@ -50,8 +48,6 @@ export default function App({ children }: { children: ReactNode }) {
             chatControls={chatControls}
             updateChatControls={updateChatControls}
             chatContextValue={chatContextValue}
-            activeToolCallIds={activeToolCallIds}
-            submitGenerativeUIInteraction={submitGenerativeUIInteraction}
           >
             {children}
           </CopilotProvider>

@@ -29,6 +29,9 @@ importers:
       '@ag-ui/client':
         specifier: 0.0.53
         version: 0.0.53
+      '@copilotkit/a2ui-renderer':
+        specifier: ^1.57.1
+        version: 1.57.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@copilotkit/react-core':
         specifier: ^1.57.0
         version: 1.57.0(@types/mdast@4.0.4)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(graphql@16.13.2)(micromark-util-types@2.0.2)(micromark@4.0.2)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zod@3.25.76)
@@ -349,6 +352,12 @@ packages:
 
   '@copilotkit/a2ui-renderer@1.57.0':
     resolution: {integrity: sha512-5Fn48h02oj1e0gGHc+lSnKvh4yrP4MPS4lpnBMSnif/kUzuNcyxGblnBRdxfjZo8gWj9Un8Who5Wy513CdToMg==}
+    peerDependencies:
+      react: ^18 || ^19 || ^19.0.0-rc
+      react-dom: ^18 || ^19 || ^19.0.0-rc
+
+  '@copilotkit/a2ui-renderer@1.57.1':
+    resolution: {integrity: sha512-PR5wm5oKDJCqewS0wwdxwcjYDBtPnRCjgJkPMGB0oq6mja2uVsk1tAdg2xq7RlWgASBXG6Dxhx55JaCxmN51oA==}
     peerDependencies:
       react: ^18 || ^19 || ^19.0.0-rc
       react-dom: ^18 || ^19 || ^19.0.0-rc
@@ -4892,6 +4901,15 @@ snapshots:
   '@chevrotain/utils@12.0.0': {}
 
   '@copilotkit/a2ui-renderer@1.57.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+    dependencies:
+      '@a2ui/web_core': 0.9.0
+      clsx: 2.1.1
+      react: 19.2.5
+      react-dom: 19.2.5(react@19.2.5)
+      zod: 3.25.76
+      zod-to-json-schema: 3.25.2(zod@3.25.76)
+
+  '@copilotkit/a2ui-renderer@1.57.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@a2ui/web_core': 0.9.0
       clsx: 2.1.1

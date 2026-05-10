@@ -22,11 +22,11 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
 ## 接続仕様
 
 * `web` は Next.js App Router で UI と BFF route handler を管理する。
-* web が公開するチャット向け HTTP API は **`/api/copilotkit`**（CopilotKit Runtime）のみとする。Generative UI（static / declarative / MCP iframe 等）はチャット機能の一部として **`web/src/features/chat`** 内で完結し、追加の REST ルートは置かない。
+* web が公開するチャット向け HTTP API は **`/api/copilotkit`**（CopilotKit Runtime）のみとする。Generative UI（static / declarative / custom tool・および Runtime の MCP Apps iframe）はチャット機能の一部として **`web/src/features/chat`** 内で完結し、追加の REST ルートは置かない。
 * チャット UI は `/api/copilotkit` の CopilotKit Runtime へ接続する。
 * Runtime は `AG_UI_BASE_URL` を基準に、チャットで選んだモデルプロバイダに応じて agent へ転送する（例: OpenAI 向け `/mfa/openai`、Anthropic 向け `/mfa/anthropic`、LangChain 向け `/lang-chain/`）。実際の URL 組み立ては `web/src/lib/copilotkit/agents.ts` の `HttpAgent` を参照。
 * `agent` は `agent/src/main.py` で FastAPI アプリを組み立て、`/mfa` に MFA アプリ（`/mfa/openai`・`/mfa/anthropic` など）、`/lang-chain` に LangGraph アプリをマウントする。
-* Generative UI は CopilotKit v2 の frontend tool として `web` 側で登録する。登録例には `show_zenith_panel`、`show_ui_spec`、`show_flight_options`、`show_mcp_app`（open-ended iframe）、`map_view_show_google_map` などがある。
+* Generative UI は CopilotKit v2 の frontend tool として `web` 側で登録する。登録されているのは `show_zenith_panel`、`show_ui_spec`、`show_flight_options` のみである（別経路として CopilotKit Runtime の MCP Apps iframe がある）。
 * MCP Apps（iframe surface）は `web/src/lib/copilotkit/runtime.ts` の `MCPAppsMiddleware` などで登録する。LangChain（`agent/src/lang_chain/app.py`）は、環境変数 `MCP_SERVER_URL` または `ZENITH_MCP_SERVER_URL` が設定されているとき、Streamable HTTP の MCP（例: `http://127.0.0.1:8101/mcp`）へ接続して `tools/list` の**全ツール**を LangGraph の backend tool（`server_tools`）としてバインドする。BFF 経由で同名ツールが渡った場合は MCP 側を優先する。
 
 ## Generative UIの結論
@@ -38,9 +38,9 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
 ## なぜ表示できるのか
 
 1.  `web/src/app/layout.tsx` が `App`（`web/src/components/layout/App.tsx`）と `AppProviders` にページを渡し、`CopilotKitProvider` を配置して CopilotKit がチャット、agent 通信、tool call を扱える context を作る。
-2.  `GenerativeUIRegistry.tsx`が`useFrontendTool`を呼び、 static、declarative、custom mapのfrontend toolをCopilotKitへ登録する。
+2.  `CopilotFrontendTools.tsx`が`useFrontendTool`を呼び、 static、declarative、custom（flight options）のfrontend toolをCopilotKitへ登録する。
 3.  frontend toolには`zod` schemaで引数仕様を渡す。 CopilotKit Runtimeはこのtool仕様をagentへ渡せる。
-4.  agent の instruction で、用途に応じて `show_zenith_panel`、`show_ui_spec`、`show_flight_options`、`show_mcp_app`、`map_view_show_google_map`、MCP Apps を使い分けるよう指定している。
+4.  agent の instruction で、用途に応じて `show_zenith_panel`、`show_ui_spec`、`show_flight_options`、および MCP Apps（Runtime 登録）を使い分けるよう指定している。
 5.  agentがtool callを返すと、CopilotKitが対応するfrontend toolの`render`を実行する。 その結果、チャットメッセージ内に`ZenithPanel`が表示される。
 
 ## 実行フロー
@@ -52,7 +52,7 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
   → HttpAgent（AG_UI_BASE_URL + プロバイダ別パス、例: /mfa/openai）
   → agent（tool call を決定）
   → CopilotKit Runtime が web の frontend tool registry へ
-  → React（Static / Declarative / open-ended iframe / Maps 等）
+  → React（Static / Declarative / Custom）
   → チャット内に UI を表示
 ```
 
@@ -63,8 +63,6 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
 | `show_zenith_panel` | Static | 固定コンポーネントによるステータスカード・メトリクス・アクションプラン |
 | `show_ui_spec` | Declarative | versioned UI schema による grid / list / table / callout / actions など |
 | `show_flight_options` | Custom | フライト検索結果などドメイン固有カード |
-| `show_mcp_app` | Open-ended | 事前定義ブロックに収まらない埋め込みアプリ（sandbox iframe） |
-| `map_view_show_google_map` | MCP Apps 連携 | Google Maps を iframe で表示 |
 | `Runtime mcpApps.servers` | MCP Apps | Runtime に登録された MCP App を iframe surface として表示 |
 
 ### Static Tool詳細
@@ -73,7 +71,7 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
 | --- | --- |
 | tool名 | `show_zenith_panel` |
 | agent | `zenith` |
-| 登録場所 | `web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx` |
+| 登録場所 | `web/src/features/chat/generative-ui/components/CopilotFrontendTools.tsx` |
 | 表示component | `ZenithPanel` |
 | 用途 | 視覚サマリー、ステータスカード、メトリクス、アクションプラン、dashboard風応答 |
 | follow-up | `false`。tool実行後に追加のLLM応答を要求しない。 |
@@ -92,11 +90,11 @@ Zenith AI Chatは、Next.jsのチャットUIからCopilotKit Runtimeを経由し
 
 | ファイル | 役割 |
 | --- | --- |
-| `web/src/app/layout.tsx` + `web/src/app/_providers/app-providers.tsx` + `web/src/components/layout/App.tsx` + `web/src/app/_providers/copilot-provider.tsx` | ルートレイアウト、`App`、`CopilotKitProvider` と `GenerativeUIRegistry` を束ねる。 |
+| `web/src/app/layout.tsx` + `web/src/app/_providers/app-providers.tsx` + `web/src/components/layout/App.tsx` + `web/src/app/_providers/copilot-provider.tsx` | ルートレイアウト、`App`、`CopilotKitProvider` と `CopilotFrontendTools` を束ねる。 |
 | `web/src/features/chat/hooks/use-chat-session.ts` / `use-conversation.ts` + `web/src/features/chat/context/chat-context.tsx` | チャットシェル・会話のクライアントロジックと `ChatProvider` / `useChatContext`。 |
-| `web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx` | Generative UI frontend tools を CopilotKit へ登録する。 |
+| `web/src/features/chat/generative-ui/components/CopilotFrontendTools.tsx` | Generative UI frontend tools を CopilotKit へ登録する。 |
+| `web/src/features/chat/generative-ui/lib/ui-spec-from-tool-args.ts` | `show_ui_spec` の tool 引数を `UISpec` / block 定義へ正規化する。 |
 | `web/src/features/chat/generative-ui/components/declarative/DeclarativeRenderer.tsx` | `show_ui_spec` の UI schema を React component へ変換する。 |
-| `web/src/features/chat/lib/mcp-sandbox-html.ts` | MCP App / Google Map 用 sandbox HTML をクライアント生成し iframe に渡す。 |
 | `agent/src/mfa/agents.py` | MFA agent の instruction と OpenAI / Anthropic エージェント構築。 |
 | `web/src/components/layout/App.test.tsx` | テスト環境で `useFrontendTool` を mock し、アプリ枠のチャット契約を維持する。 |
 

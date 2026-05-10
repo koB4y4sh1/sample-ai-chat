@@ -23,11 +23,11 @@ Browser UI
 
 | 要素 | 場所 | 役割 |
 | --- | --- | --- |
-| チャット UI（Generative UI 含む） | `web/src/features/chat`（画面・状態・`generative-ui/`・`schemas/`） | ユーザー入力、会話表示、tool 結果の描画。MCP iframe 用 HTML はクライアント生成（`lib/mcp-sandbox-html.ts`）。 |
+| チャット UI（Generative UI 含む） | `web/src/features/chat`（画面・状態・`generative-ui/`・`schemas/`） | ユーザー入力、会話表示、tool 結果の描画。MCP Apps の iframe surface は CopilotKit Runtime 側の経路。 |
 | Runtime endpoint | `web/src/app/api/copilotkit/route.ts` | `/api/copilotkit` を公開し CopilotKit Runtime に処理を渡す（web が公開する HTTP API はこれのみ）。 |
 | Agent registry | `web/src/lib/copilotkit/agents.ts` | `@ag-ui/client` の `HttpAgent` で AG-UI 接続先を解決する。 |
 | AG-UI endpoint | `agent/src/main.py` ほか | `/mfa/*`、`/lang-chain/*` など agent 側 endpoint。 |
-| Frontend tools | `web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx` | tool call を React の renderer に変換する。 |
+| Frontend tools | `web/src/features/chat/generative-ui/components/CopilotFrontendTools.tsx` | tool call を React の renderer に変換する。 |
 
 ## 3. エンドポイント整理
 
@@ -43,5 +43,5 @@ Browser UI
 
 1. agent がユーザー発話を解釈し frontend tool を呼ぶ。
 2. tool 名と引数が CopilotKit Runtime 経由で web に返る。
-3. web の `GenerativeUIRegistry` が登録済み tool にディスパッチする。
-4. static / declarative / open-ended のいずれかで描画する。
+3. web の `CopilotFrontendTools` が登録済み tool にディスパッチする。
+4. static / declarative / custom のいずれかで描画する。

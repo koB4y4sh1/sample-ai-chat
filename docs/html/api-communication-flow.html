@@ -161,7 +161,7 @@
 <tbody><tr>
 <td>チャット UI（Generative UI 含む）</td>
 <td><code>web/src/features/chat</code>（画面・状態・<code>generative-ui/</code>・<code>schemas/</code>）</td>
-<td>ユーザー入力、会話表示、tool 結果の描画。MCP iframe 用 HTML はクライアント生成（<code>lib/mcp-sandbox-html.ts</code>）。</td>
+<td>ユーザー入力、会話表示、tool 結果の描画。MCP Apps の iframe surface は CopilotKit Runtime 側の経路。</td>
 </tr>
 <tr>
 <td>Runtime endpoint</td>
@@ -180,7 +180,7 @@
 </tr>
 <tr>
 <td>Frontend tools</td>
-<td><code>web/src/features/chat/generative-ui/components/GenerativeUIRegistry.tsx</code></td>
+<td><code>web/src/features/chat/generative-ui/components/CopilotFrontendTools.tsx</code></td>
 <td>tool call を React の renderer に変換する。</td>
 </tr>
 </tbody></table>
@@ -214,8 +214,8 @@
 <ol>
 <li>agent がユーザー発話を解釈し frontend tool を呼ぶ。</li>
 <li>tool 名と引数が CopilotKit Runtime 経由で web に返る。</li>
-<li>web の <code>GenerativeUIRegistry</code> が登録済み tool にディスパッチする。</li>
-<li>static / declarative / open-ended のいずれかで描画する。</li>
+<li>web の <code>CopilotFrontendTools</code> が登録済み tool にディスパッチする。</li>
+<li>static / declarative / custom のいずれかで描画する。</li>
 </ol>
 
     </main>
