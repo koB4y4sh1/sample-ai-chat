@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="zenith-bg" x1="4" y1="5" x2="28" y2="27" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ff7f6f" />
+      <stop offset="0.46" stop-color="#f3cf95" />
+      <stop offset="1" stop-color="#66c7b8" />
+    </linearGradient>
+    <radialGradient id="zenith-glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(16 15.5) rotate(90) scale(12.5)">
+      <stop stop-color="#ffffff" stop-opacity="0.5" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+    <filter id="zenith-shadow" x="5" y="4" width="22" height="23" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#14544c" flood-opacity="0.28" />
+    </filter>
+  </defs>
+  <rect width="32" height="32" rx="7" fill="url(#zenith-bg)" />
+  <rect x="1" y="1" width="30" height="30" rx="6.5" fill="url(#zenith-glow)" />
+  <g filter="url(#zenith-shadow)">
+    <path
+      fill="#ffffff"
+      d="M16 6.5c.42 3.96 1.2 6.02 2.55 7.37S21.96 16 25.5 16c-3.54.42-5.6 1.2-6.95 2.55S16.42 21.96 16 25.5c-.42-3.54-1.2-5.6-2.55-6.95S10.04 16.42 6.5 16c3.54-.42 5.6-1.2 6.95-2.55S15.58 10.46 16 6.5Z"
+    />
+    <path
+      fill="#ffffff"
+      fill-opacity="0.86"
+      d="M23.4 6.6c.18 1.5.5 2.25 1 2.75.5.49 1.25.81 2.7 1-1.45.19-2.2.51-2.7 1-.5.5-.82 1.25-1 2.75-.18-1.5-.5-2.25-1-2.75-.5-.49-1.25-.81-2.7-1 1.45-.19 2.2-.51 2.7-1 .5-.5.82-1.25 1-2.75Z"
+    />
+  </g>
+</svg>
