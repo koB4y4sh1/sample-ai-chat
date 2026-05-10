@@ -24,6 +24,15 @@ const runtime = new CopilotRuntime({
     'mfa-anthropic': new HttpAgent({ url: `${AGENT_BASE_URL}/mfa/anthropic` }),
     'lang-chain': new LangGraphHttpAgent({ url: `${AGENT_BASE_URL}/lang-chain/ag-ui` }),
   },
+  mcpApps: {
+    servers: [
+      {
+        type: 'http',
+        url: process.env.MCP_SERVER_URL ?? 'http://localhost:8101/mcp',
+        serverId: 'mcp-app-server',
+      },
+    ],
+  },
 });
 
 async function handleRequest(req: NextRequest) {
