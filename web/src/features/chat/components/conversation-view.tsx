@@ -1,6 +1,5 @@
 'use client';
 
-import { HttpAgent } from '@ag-ui/client';
 import {
   CopilotChat,
   CopilotChatAssistantMessage,
@@ -10,7 +9,15 @@ import {
   CopilotChatUserMessage,
   type CopilotChatUserMessageProps,
 } from '@copilotkit/react-core/v2';
-import { forwardRef, memo, type RefObject, useEffect, useImperativeHandle, useMemo } from 'react';
+import {
+  forwardRef,
+  memo,
+  type RefObject,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+} from 'react';
 import { ChatInputWithControls } from '@/features/chat/components/chat-input';
 import { EditMessageForm } from '@/features/chat/components/edit-message-form';
 import { MessageItemToolStatus } from '@/features/chat/components/message-item';
@@ -19,7 +26,6 @@ import { useConversation } from '@/features/chat/hooks/use-conversation';
 import { buildRunState } from '@/features/chat/lib/build-message';
 import type { ConversationViewHandle } from '@/features/chat/types/message';
 import type { ChatControlsState } from '@/lib/chat-controls';
-import { resolveAgentUrl } from '@/lib/copilotkit/agents';
 
 export type { ConversationViewHandle } from '@/features/chat/types/message';
 
@@ -55,23 +61,12 @@ function AgentStateSync({
   return null;
 }
 
-function AgentEndpointSync({ agent }: { agent: unknown }) {
-  const { controls } = useChatControls();
-
-  useEffect(() => {
-    if (agent instanceof HttpAgent) {
-      agent.url = resolveAgentUrl(controls);
-    }
-  }, [agent, controls]);
-
-  return null;
-}
-
 const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationViewProps>(
   function ConversationView(
     { sessionId, controlsRef, onActiveToolCallIdsChange }: ConversationViewProps,
     ref,
   ) {
+    const { controls } = useChatControls();
     const {
       agent,
       agentId,
@@ -82,9 +77,22 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
       submitEditedUserMessage,
       regenerateAssistantMessage,
       editUserMessage,
-    } = useConversation({ sessionId, controlsRef, onActiveToolCallIdsChange });
+    } = useConversation({
+      sessionId,
+      selectedModel: controls.selectedModel,
+      controlsRef,
+      onActiveToolCallIdsChange,
+    });
+    const sendMessageRef = useRef(sendMessage);
+    sendMessageRef.current = sendMessage;
 
-    useImperativeHandle(ref, () => ({ sendMessage }), [sendMessage]);
+    useImperativeHandle(
+      ref,
+      () => ({
+        sendMessage: (content, options) => sendMessageRef.current(content, options),
+      }),
+      [],
+    );
 
     const assistantMessageSlot = useMemo(
       () =>
@@ -128,7 +136,6 @@ const ConversationViewBase = forwardRef<ConversationViewHandle, ConversationView
     return (
       <div className="zenith-conversation-shell relative flex h-full min-h-0 flex-1">
         <AgentStateSync agent={agent} />
-        <AgentEndpointSync agent={agent} />
         <div className="h-full min-h-0 flex-1 overflow-y-auto">
           <CopilotChat
             agentId={agentId}

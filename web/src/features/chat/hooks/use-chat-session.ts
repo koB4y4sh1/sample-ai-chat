@@ -7,7 +7,6 @@ import type { ChatContextValue } from '@/features/chat/context/chat-context';
 import type { ConversationViewHandle } from '@/features/chat/types/message';
 import type { Session } from '@/features/chat/types/session';
 import { type ChatControlsState, DEFAULT_CHAT_CONTROLS, isChatModelId } from '@/lib/chat-controls';
-import { syncAgentProvider } from '@/lib/copilotkit/agents';
 
 type PendingInitialMessage = {
   id: string;
@@ -218,7 +217,6 @@ export function useChatSession() {
     (next: ChatControlsState | ((current: ChatControlsState) => ChatControlsState)) => {
       setChatControls((current) => {
         const resolved = typeof next === 'function' ? next(current) : next;
-        syncAgentProvider(resolved);
         chatControlsRef.current = resolved;
         return resolved;
       });
@@ -235,7 +233,6 @@ export function useChatSession() {
     }
 
     const storedControls = loadStoredChatControls();
-    syncAgentProvider(storedControls);
     setChatControls(storedControls);
     setHasLoadedClientState(true);
   }, []);
@@ -348,8 +345,9 @@ export function useChatSession() {
   ]);
 
   const attachConversationViewHandle = useCallback((handle: ConversationViewHandle | null) => {
+    const wasDetached = conversationViewHandleRef.current === null;
     conversationViewHandleRef.current = handle;
-    if (handle) {
+    if (handle && wasDetached) {
       setConversationViewReadyTick((tick) => tick + 1);
     }
   }, []);

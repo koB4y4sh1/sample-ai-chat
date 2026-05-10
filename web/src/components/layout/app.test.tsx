@@ -1,5 +1,5 @@
 import { useFrontendTool } from '@copilotkit/react-core/v2';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
 import React, { StrictMode } from 'react';
@@ -70,15 +70,18 @@ type MockCopilotChatViewProps = {
 };
 
 type MockCopilotChatProps = {
+  agentId?: string;
   autoScroll?: 'pin-to-bottom' | 'pin-to-send' | 'none' | boolean;
   chatView?: React.ComponentType<MockCopilotChatViewProps>;
   className?: string;
+  input?: React.ComponentType<MockCopilotChatInputProps>;
   labels?: {
     chatInputPlaceholder?: string;
     modalHeaderTitle?: string;
   };
   messageView?: MockCopilotChatViewProps['messageView'];
   onSubmitMessage?: (message: string) => void;
+  threadId?: string;
   welcomeScreen?: MockCopilotChatViewProps['welcomeScreen'];
 };
 
@@ -112,7 +115,7 @@ const runAgentMessageSnapshots: MockMessage[][] = [];
 const runAgent = vi.fn(() => {
   runAgentMessageSnapshots.push([...agent.messages]);
 });
-const useAgentMock = vi.fn(() => {
+const useAgentMock = vi.fn((_args?: unknown) => {
   const [, forceRender] = React.useState(0);
 
   React.useLayoutEffect(() => {
@@ -331,21 +334,26 @@ vi.mock('@copilotkit/react-core/v2', async () => {
 
   const MockCopilotChat = Object.assign(
     function MockCopilotChat({
+      agentId,
       autoScroll,
       chatView,
       className,
+      input,
       labels,
       messageView,
       onSubmitMessage,
+      threadId,
       welcomeScreen,
     }: MockCopilotChatProps) {
       capturedAutoScroll = autoScroll;
       const [draft, setDraft] = React.useState('');
-      useAgentMock();
+      useAgentMock({ agentId, threadId });
 
       const submit = () => {
         onSubmitMessage?.(draft);
       };
+      const customInputElement =
+        typeof input === 'function' ? React.createElement(input, { onSubmitMessage }) : null;
 
       const messageListElement = (
         <div>
@@ -413,14 +421,21 @@ vi.mock('@copilotkit/react-core/v2', async () => {
               messages: agent.messages,
               onSubmitMessage,
             })}
-            {composerElement}
+            {customInputElement ?? composerElement}
           </div>
         );
       }
 
       return (
         <div>
-          {inputElement}
+          {customInputElement ? (
+            <div>
+              {messageListElement}
+              {customInputElement}
+            </div>
+          ) : (
+            inputElement
+          )}
           <div>Tools ??</div>
         </div>
       );
@@ -457,11 +472,14 @@ vi.mock('@copilotkit/react-core/v2', async () => {
       OnMessagesChanged: 'OnMessagesChanged',
       OnRunStatusChanged: 'OnRunStatusChanged',
     },
-    useAgent: () => useAgentMock(),
+    useComponent: vi.fn(),
+    useAgent: (args?: unknown) => useAgentMock(args),
     useAgentContext: vi.fn(),
     useConfigureSuggestions: vi.fn(),
     useCopilotKit: () => useCopilotKitMock(),
     useFrontendTool: vi.fn(),
+    useHumanInTheLoop: vi.fn(),
+    useRenderTool: vi.fn(),
   };
 });
 
@@ -620,18 +638,20 @@ describe('App', () => {
     ]);
     expect(agent.setState).toHaveBeenCalledWith({ model: 'gpt-5.4-nano', provider: 'openai' });
 
-    agent.setMessages([
-      {
-        id: '00000000-0000-0000-0000-000000000002',
-        role: 'user',
-        content: 'test',
-      },
-      {
-        id: 'assistant-1',
-        role: 'assistant',
-        content: 'answer',
-      },
-    ]);
+    act(() => {
+      agent.setMessages([
+        {
+          id: '00000000-0000-0000-0000-000000000002',
+          role: 'user',
+          content: 'test',
+        },
+        {
+          id: 'assistant-1',
+          role: 'assistant',
+          content: 'answer',
+        },
+      ]);
+    });
 
     expect(await screen.findByText('answer')).toBeInTheDocument();
     expect(await screen.findByText('test')).toBeInTheDocument();
@@ -694,7 +714,7 @@ describe('App', () => {
   it('loads stored controls before sending a pending initial message', async () => {
     localStorage.setItem(
       'zenith_chat_controls',
-      JSON.stringify({ selectedModel: 'anthropic', selectedTools: [] }),
+      JSON.stringify({ selectedModel: 'mfa-anthropic', selectedTools: [] }),
     );
     sessionStorage.setItem(
       'zenith_pending_initial_message',
@@ -738,6 +758,36 @@ describe('App', () => {
       model: 'claude-sonnet-4-5',
       provider: 'anthropic',
     });
+  });
+
+  it('switches the useAgent agentId when the selected model changes', async () => {
+    const user = userEvent.setup();
+    render(makeSessionTree('session-switch'));
+
+    await screen.findByPlaceholderText('Type a message...');
+
+    expect(useAgentMock.mock.calls.map(([args]) => args)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          agentId: 'default',
+          threadId: 'session-switch',
+        }),
+      ]),
+    );
+
+    useAgentMock.mockClear();
+    await user.click(screen.getByRole('button', { name: /Microsoft Agent Framework Anthropic/ }));
+
+    await waitFor(() =>
+      expect(useAgentMock.mock.calls.map(([args]) => args)).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            agentId: 'mfa-anthropic',
+            threadId: 'session-switch',
+          }),
+        ]),
+      ),
+    );
   });
 
   it('shows a running tool status inside the assistant message', async () => {
@@ -801,7 +851,7 @@ describe('App', () => {
   it('passes x-zenith-provider: anthropic header when anthropic model is stored', () => {
     localStorage.setItem(
       'zenith_chat_controls',
-      JSON.stringify({ selectedModel: 'anthropic', selectedTools: [] }),
+      JSON.stringify({ selectedModel: 'mfa-anthropic', selectedTools: [] }),
     );
 
     render(makeHomeTree());
@@ -813,7 +863,7 @@ describe('App', () => {
   it('passes x-zenith-provider: lang-chain header when LangGraph model is stored', () => {
     localStorage.setItem(
       'zenith_chat_controls',
-      JSON.stringify({ selectedModel: 'lang-chain', selectedTools: [] }),
+      JSON.stringify({ selectedModel: 'mfa-lang-chain', selectedTools: [] }),
     );
 
     render(makeHomeTree());

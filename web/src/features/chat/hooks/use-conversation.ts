@@ -21,23 +21,25 @@ import {
   replaceMessageText,
   saveStoredMessages,
 } from '@/features/chat/lib/build-message';
-import type { ChatControlsState } from '@/lib/chat-controls';
+import type { ChatControlsState, ChatModelId } from '@/lib/chat-controls';
 import { getModelOption } from '@/lib/chat-controls';
 
 export type { EditingDraft } from '@/features/chat/types/message';
 
 export interface UseConversationArgs {
   sessionId: string;
+  selectedModel: ChatModelId;
   controlsRef: RefObject<ChatControlsState>;
   onActiveToolCallIdsChange?: (toolCallIds: Set<string>) => void;
 }
 
 export function useConversation({
   sessionId,
+  selectedModel: selectedModelId,
   controlsRef,
   onActiveToolCallIdsChange,
 }: UseConversationArgs) {
-  const selectedModel = getModelOption(controlsRef.current.selectedModel);
+  const selectedModel = getModelOption(selectedModelId);
   const agentId = selectedModel.agentId;
   const { agent } = useAgent({
     agentId,
