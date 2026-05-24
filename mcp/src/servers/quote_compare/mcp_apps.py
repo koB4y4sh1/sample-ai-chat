@@ -48,7 +48,7 @@ def quote_comparison_app(
         PrefabApp() as app,
         Column(
             gap=4,
-            cssClass="w-full max-w-full min-w-0 overflow-hidden p-4",
+            css_class="w-full max-w-full min-w-0 overflow-hidden p-4",
         ),
     ):
         Heading(comparison.procurement_title)
@@ -57,8 +57,8 @@ def quote_comparison_app(
             for focus in comparison.comparison_focus:
                 Badge(focus, variant="outline")
 
-        with Card(cssClass="w-full max-w-full min-w-0 overflow-hidden"):
-            with CardContent(cssClass="max-w-full min-w-0 overflow-hidden"):
+        with Card(css_class="w-full max-w-full min-w-0 overflow-hidden"):
+            with CardContent(css_class="max-w-full min-w-0 overflow-hidden"):
                 BarChart(
                     data=chart_rows,
                     series=[ChartSeries(dataKey="price", label="Price")],
@@ -66,8 +66,8 @@ def quote_comparison_app(
                     height=240,
                 )
 
-        with Card(cssClass="w-full max-w-full min-w-0 overflow-hidden"):
-            with CardContent(cssClass="max-w-full min-w-0 overflow-x-auto"):
+        with Card(css_class="w-full max-w-full min-w-0 overflow-hidden"):
+            with CardContent(css_class="max-w-full min-w-0 overflow-x-auto"):
                 DataTable(
                     columns=[
                         DataTableColumn(key="vendor", header="Vendor", sortable=True),
@@ -100,10 +100,10 @@ def quote_comparison_app(
                 )
 
         with Column(gap=2):
-            Text("Negotiation Points", cssClass="text-sm font-medium")
+            Text("Negotiation Points", css_class="text-sm font-medium")
             for point in comparison.negotiation_points:
                 Text(f"- {point}")
-            Text("Current Recommendation", cssClass="text-sm font-medium")
+            Text("Current Recommendation", css_class="text-sm font-medium")
             Text(comparison.recommended_vendor or "Not selected")
             Text(comparison.decision_rationale or "Decision rationale is pending.")
 

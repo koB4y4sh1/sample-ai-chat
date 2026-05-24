@@ -49,24 +49,24 @@ def submission_pack_app(
         PrefabApp() as app,
         Column(
             gap=4,
-            cssClass="w-full max-w-full min-w-0 overflow-hidden p-4",
+            css_class="w-full max-w-full min-w-0 overflow-hidden p-4",
         ),
     ):
         Heading(pack.pack_name)
         Text(pack.summary)
 
         with Grid(min_column_width="140px", gap=4):
-            with Card(cssClass="min-w-0"):
+            with Card(css_class="min-w-0"):
                 with CardHeader():
                     H3("Ready")
                 with CardContent():
                     Text(str(pack.ready_count), bold=True)
-            with Card(cssClass="min-w-0"):
+            with Card(css_class="min-w-0"):
                 with CardHeader():
                     H3("Missing")
                 with CardContent():
                     Text(str(pack.missing_count), bold=True)
-            with Card(cssClass="min-w-0"):
+            with Card(css_class="min-w-0"):
                 with CardHeader():
                     H3("Due")
                 with CardContent():
@@ -74,8 +74,8 @@ def submission_pack_app(
 
         Progress(value=ready_percent, variant="success")
 
-        with Card(cssClass="w-full max-w-full min-w-0 overflow-hidden"):
-            with CardContent(cssClass="max-w-full min-w-0 overflow-x-auto"):
+        with Card(css_class="w-full max-w-full min-w-0 overflow-hidden"):
+            with CardContent(css_class="max-w-full min-w-0 overflow-x-auto"):
                 DataTable(
                     columns=[
                         DataTableColumn(key="item", header="Item", sortable=True),
@@ -109,7 +109,7 @@ def submission_pack_app(
                         ),
                     )
 
-        Text("Next Actions", cssClass="text-sm font-medium")
+        Text("Next Actions", css_class="text-sm font-medium")
         for action in pack.next_actions:
             Text(f"- {action}")
 

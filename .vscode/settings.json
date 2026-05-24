@@ -66,5 +66,6 @@
   },
   "[markdown]": {
     "editor.defaultFormatter": "biomejs.biome"
-  }
+  },
+  "copilotkit.playground.model": "gpt-5.2"
 }

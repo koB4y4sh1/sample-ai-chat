@@ -239,7 +239,7 @@ def _build_search_section() -> None:
     Muted("Search by name across all inventory items.")
 
     with Form(
-        onSubmit=CallTool(
+        on_submit=CallTool(
             search_items,
             arguments={"query": STATE.query},
             on_success=SetState("search_results", RESULT),
@@ -249,10 +249,10 @@ def _build_search_section() -> None:
         Button("Search")
 
     with ForEach("search_results"):
-        with Card(cssClass="mb-2"):
+        with Card(css_class="mb-2"):
             with CardContent():
                 with Row(gap=3, align="center"):
-                    Text("{{ result.name }}", cssClass="font-medium")
+                    Text("{{ result.name }}", css_class="font-medium")
                     Badge("{{ result.category }}")
                     Text("{{ result.quantity }}")
                     Muted("in stock")
@@ -285,7 +285,7 @@ def _build_actions_section() -> None:
     Muted("Select a category to see matching items.")
 
     with Form(
-        onSubmit=CallTool(
+        on_submit=CallTool(
             filter_by_category,
             arguments={"category": STATE.selected_category},
             on_success=SetState("filtered_items", RESULT),
@@ -297,9 +297,9 @@ def _build_actions_section() -> None:
         Button("Apply Filter")
 
     with ForEach("filtered_items"):
-        with Row(gap=3, align="center", cssClass="py-1"):
+        with Row(gap=3, align="center", css_class="py-1"):
             Badge("{{ item.id }}", variant="outline")
-            Text("{{ item.name }}", cssClass="font-medium")
+            Text("{{ item.name }}", css_class="font-medium")
             Badge("{{ item.category }}")
             Muted("{{ item.quantity }}")
 
@@ -309,7 +309,7 @@ def _build_actions_section() -> None:
     Heading("Adjust Quantity", level=3)
     Muted("Enter an item ID and use the buttons to adjust stock levels.")
 
-    Input(name="adjust_id", inputType="number", placeholder="Item ID (e.g. 1)")
+    Input(name="adjust_id", input_type="number", placeholder="Item ID (e.g. 1)")
 
     with Row(gap=2):
         Button(
@@ -358,7 +358,7 @@ def _build_actions_section() -> None:
     Muted("Permanently remove an item by its ID.")
 
     with Form(
-        onSubmit=CallTool(
+        on_submit=CallTool(
             delete_item,
             arguments={"item_id": STATE.delete_id},
             on_success=[
@@ -368,7 +368,7 @@ def _build_actions_section() -> None:
             on_error=ShowToast("{{ $error }}", variant="error"),
         )
     ):
-        Input(name="delete_id", inputType="number", placeholder="Item ID to delete")
+        Input(name="delete_id", input_type="number", placeholder="Item ID to delete")
         Button("Delete", variant="destructive")
 
 
@@ -380,7 +380,7 @@ def _build_actions_section() -> None:
 @app.ui()
 def inventory_manager() -> PrefabApp:
     """Open the inventory manager. The model calls this to launch the app."""
-    with Column(gap=6, cssClass="p-6") as view:
+    with Column(gap=6, css_class="w-full max-w-full min-w-0 overflow-x-auto p-6") as view:
         with Row(gap=3, align="center"):
             Heading("Inventory Tracker")
             Badge(
@@ -398,7 +398,7 @@ def inventory_manager() -> PrefabApp:
                 total_qty = sum(it["quantity"] for it in _inventory if it["category"] == cat)
                 with Card():
                     with CardContent():
-                        Text(cat, cssClass="font-medium")
+                        Text(cat, css_class="font-medium")
                         Muted(f"{count} items, {total_qty} units")
 
         with Tabs():

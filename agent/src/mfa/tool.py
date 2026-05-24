@@ -10,7 +10,7 @@ from ..config import Settings
 
 # Example: Function tool
 @tool(approval_mode="always_require")
-def get_weather(
+def mfa_get_weather(
     location: Annotated[str, "Weather target city such as Tokyo, New York, Paris"],
 ) -> str:
     conditions = ["sunny", "cloudy", "rainy", "stormy"]

@@ -2,7 +2,7 @@
   "name": "zenith-ai-chat",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@10.33.3",
+  "packageManager": "pnpm@11.3.0",
   "type": "module",
   "scripts": {
     "setup": "pnpm install && uv sync --all-packages --dev",
@@ -31,9 +31,9 @@
     "docs:migrate-html": "node scripts/migrate-html-to-spec.mjs"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.6",
+    "@biomejs/biome": "^2.4.15",
     "cheerio": "^1.2.0",
-    "marked": "^18.0.3",
+    "marked": "^18.0.4",
     "turndown": "^7.2.4",
     "turndown-plugin-gfm": "^1.0.2"
   }

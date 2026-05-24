@@ -173,11 +173,11 @@ def create_map_view_server() -> FastMCP:
         api_key = os.getenv(GOOGLE_MAPS_API_KEY_ENV, "")
 
         with PrefabApp() as app:
-            with Column(gap=3, cssClass="p-4"):
+            with Column(gap=3, css_class="p-4"):
                 Heading(resolved.title)
                 Text(f"Center: {resolved.center.lat:.5f}, {resolved.center.lng:.5f} / Zoom: {resolved.zoom} / Markers: {len(resolved.markers)}")
-                with Card(cssClass="w-full max-w-full min-w-0 overflow-hidden"):
-                    with CardContent(cssClass="p-0"):
+                with Card(css_class="w-full max-w-full min-w-0 overflow-hidden"):
+                    with CardContent(css_class="p-0"):
                         if api_key:
                             Embed(
                                 html=_embed_map_html(resolved, api_key),

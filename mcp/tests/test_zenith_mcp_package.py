@@ -85,19 +85,19 @@ async def test_root_server_mounts_expected_namespaced_tools() -> None:
     info = await inspect_fastmcp(create_server())
 
     assert {tool.name for tool in info.tools} == {
-        "apps_example_show_apps_showcase",
+        "apps_example_choose",
+        "apps_example_collect_bugreport",
+        "apps_example_file_manager",
+        "apps_example_generate_prefab_ui",
+        "apps_example_inventory_manager",
+        "apps_example_list_files",
+        "apps_example_read_file",
+        "apps_example_request_approval",
+        "apps_example_search_prefab_components",
         "apps_example_show_sales_dashboard_app",
         "apps_example_show_system_monitor_app",
-        "apps_example_record_quiz_answer",
-        "apps_example_record_approval_decision",
-        "apps_example_record_choice_selection",
         "apps_example_show_quiz_app",
         "apps_example_show_map_app",
-        "apps_example_show_file_upload_app",
-        "apps_example_show_approval_app",
-        "apps_example_show_choice_app",
-        "apps_example_show_form_input_app",
-        "apps_example_show_generative_ui_app",
         "document_review_create_document_review",
         "document_review_show_document_review_app",
         "document_review_get_document_review",
@@ -117,19 +117,19 @@ async def test_root_server_mounts_expected_namespaced_tools() -> None:
         "submission_pack_update_submission_item_status",
     }
     assert _tool_icon_count_by_name(info) == {
-        "apps_example_show_apps_showcase": 0,
+        "apps_example_choose": 0,
+        "apps_example_collect_bugreport": 0,
+        "apps_example_file_manager": 0,
+        "apps_example_generate_prefab_ui": 0,
+        "apps_example_inventory_manager": 0,
+        "apps_example_list_files": 0,
+        "apps_example_read_file": 0,
+        "apps_example_request_approval": 0,
+        "apps_example_search_prefab_components": 0,
         "apps_example_show_sales_dashboard_app": 0,
         "apps_example_show_system_monitor_app": 0,
-        "apps_example_record_quiz_answer": 0,
-        "apps_example_record_approval_decision": 0,
-        "apps_example_record_choice_selection": 0,
         "apps_example_show_quiz_app": 0,
         "apps_example_show_map_app": 0,
-        "apps_example_show_file_upload_app": 0,
-        "apps_example_show_approval_app": 0,
-        "apps_example_show_choice_app": 0,
-        "apps_example_show_form_input_app": 0,
-        "apps_example_show_generative_ui_app": 0,
         "document_review_create_document_review": 1,
         "document_review_show_document_review_app": 1,
         "document_review_get_document_review": 1,
@@ -150,16 +150,15 @@ async def test_root_server_mounts_expected_namespaced_tools() -> None:
     }
     map_tool = next(tool for tool in info.tools if tool.name == "map_view_show_google_map")
     assert map_tool.meta is not None
-    _assert_prefab_app_tool(info, "apps_example_show_apps_showcase")
+    _assert_prefab_app_tool(info, "apps_example_choose")
+    _assert_prefab_app_tool(info, "apps_example_collect_bugreport")
+    _assert_prefab_app_tool(info, "apps_example_file_manager")
+    _assert_prefab_app_tool(info, "apps_example_inventory_manager")
+    _assert_prefab_app_tool(info, "apps_example_request_approval")
     _assert_prefab_app_tool(info, "apps_example_show_sales_dashboard_app")
     _assert_prefab_app_tool(info, "apps_example_show_system_monitor_app")
     _assert_prefab_app_tool(info, "apps_example_show_quiz_app")
     _assert_prefab_app_tool(info, "apps_example_show_map_app")
-    _assert_prefab_app_tool(info, "apps_example_show_file_upload_app")
-    _assert_prefab_app_tool(info, "apps_example_show_approval_app")
-    _assert_prefab_app_tool(info, "apps_example_show_choice_app")
-    _assert_prefab_app_tool(info, "apps_example_show_form_input_app")
-    _assert_prefab_app_tool(info, "apps_example_show_generative_ui_app")
     _assert_prefab_app_tool(info, "map_view_show_google_map")
 
 
@@ -167,43 +166,45 @@ async def test_apps_example_server_exposes_expected_tools() -> None:
     info = await inspect_fastmcp(create_apps_example_mcp())
 
     assert {tool.name for tool in info.tools} == {
-        "show_apps_showcase",
+        "choose",
+        "collect_bugreport",
+        "file_manager",
+        "generate_prefab_ui",
+        "inventory_manager",
+        "list_files",
+        "read_file",
+        "request_approval",
+        "search_prefab_components",
         "show_sales_dashboard_app",
         "show_system_monitor_app",
-        "record_quiz_answer",
-        "record_approval_decision",
-        "record_choice_selection",
         "show_quiz_app",
         "show_map_app",
-        "show_file_upload_app",
-        "show_approval_app",
-        "show_choice_app",
-        "show_form_input_app",
-        "show_generative_ui_app",
     }
     assert _tool_icon_count_by_name(info) == {
-        "show_apps_showcase": 0,
+        "choose": 0,
+        "collect_bugreport": 0,
+        "file_manager": 0,
+        "generate_prefab_ui": 0,
+        "inventory_manager": 0,
+        "list_files": 0,
+        "read_file": 0,
+        "request_approval": 0,
+        "search_prefab_components": 0,
         "show_sales_dashboard_app": 0,
         "show_system_monitor_app": 0,
-        "record_quiz_answer": 0,
-        "record_approval_decision": 0,
-        "record_choice_selection": 0,
         "show_quiz_app": 0,
         "show_map_app": 0,
-        "show_file_upload_app": 0,
-        "show_approval_app": 0,
-        "show_choice_app": 0,
-        "show_form_input_app": 0,
-        "show_generative_ui_app": 0,
     }
     assert _tool_annotations_by_name(info) == {
-        "show_apps_showcase": {
-            "title": "Show Apps Showcase",
-            "readOnlyHint": True,
-            "destructiveHint": False,
-            "idempotentHint": True,
-            "openWorldHint": True,
-        },
+        "choose": None,
+        "collect_bugreport": None,
+        "file_manager": None,
+        "generate_prefab_ui": None,
+        "inventory_manager": None,
+        "list_files": None,
+        "read_file": None,
+        "request_approval": None,
+        "search_prefab_components": None,
         "show_sales_dashboard_app": {
             "title": "Show Sales Dashboard App",
             "readOnlyHint": True,
@@ -216,27 +217,6 @@ async def test_apps_example_server_exposes_expected_tools() -> None:
             "readOnlyHint": True,
             "destructiveHint": False,
             "idempotentHint": True,
-            "openWorldHint": False,
-        },
-        "record_quiz_answer": {
-            "title": "Record Quiz Answer",
-            "readOnlyHint": False,
-            "destructiveHint": False,
-            "idempotentHint": False,
-            "openWorldHint": False,
-        },
-        "record_approval_decision": {
-            "title": "Record Approval Decision",
-            "readOnlyHint": False,
-            "destructiveHint": False,
-            "idempotentHint": False,
-            "openWorldHint": False,
-        },
-        "record_choice_selection": {
-            "title": "Record Choice Selection",
-            "readOnlyHint": False,
-            "destructiveHint": False,
-            "idempotentHint": False,
             "openWorldHint": False,
         },
         "show_quiz_app": {
@@ -253,52 +233,16 @@ async def test_apps_example_server_exposes_expected_tools() -> None:
             "idempotentHint": True,
             "openWorldHint": True,
         },
-        "show_file_upload_app": {
-            "title": "Show File Upload App",
-            "readOnlyHint": True,
-            "destructiveHint": False,
-            "idempotentHint": True,
-            "openWorldHint": True,
-        },
-        "show_approval_app": {
-            "title": "Show Approval App",
-            "readOnlyHint": False,
-            "destructiveHint": False,
-            "idempotentHint": False,
-            "openWorldHint": False,
-        },
-        "show_choice_app": {
-            "title": "Show Choice App",
-            "readOnlyHint": False,
-            "destructiveHint": False,
-            "idempotentHint": False,
-            "openWorldHint": False,
-        },
-        "show_form_input_app": {
-            "title": "Show Form Input App",
-            "readOnlyHint": True,
-            "destructiveHint": False,
-            "idempotentHint": True,
-            "openWorldHint": False,
-        },
-        "show_generative_ui_app": {
-            "title": "Show Generative UI App",
-            "readOnlyHint": True,
-            "destructiveHint": False,
-            "idempotentHint": True,
-            "openWorldHint": True,
-        },
     }
-    _assert_prefab_app_tool(info, "show_apps_showcase")
+    _assert_prefab_app_tool(info, "choose")
+    _assert_prefab_app_tool(info, "collect_bugreport")
+    _assert_prefab_app_tool(info, "file_manager")
+    _assert_prefab_app_tool(info, "inventory_manager")
+    _assert_prefab_app_tool(info, "request_approval")
     _assert_prefab_app_tool(info, "show_sales_dashboard_app")
     _assert_prefab_app_tool(info, "show_system_monitor_app")
     _assert_prefab_app_tool(info, "show_quiz_app")
     _assert_prefab_app_tool(info, "show_map_app")
-    _assert_prefab_app_tool(info, "show_file_upload_app")
-    _assert_prefab_app_tool(info, "show_approval_app")
-    _assert_prefab_app_tool(info, "show_choice_app")
-    _assert_prefab_app_tool(info, "show_form_input_app")
-    _assert_prefab_app_tool(info, "show_generative_ui_app")
 
 
 async def test_document_review_server_exposes_expected_tools() -> None:
@@ -613,16 +557,11 @@ async def test_submission_pack_server_exposes_expected_tools() -> None:
 async def test_mcp_app_tools_open_with_default_inputs() -> None:
     async with Client(create_server()) as client:
         for tool_name in [
-            "apps_example_show_apps_showcase",
+            "apps_example_inventory_manager",
             "apps_example_show_sales_dashboard_app",
             "apps_example_show_system_monitor_app",
             "apps_example_show_quiz_app",
             "apps_example_show_map_app",
-            "apps_example_show_file_upload_app",
-            "apps_example_show_approval_app",
-            "apps_example_show_choice_app",
-            "apps_example_show_form_input_app",
-            "apps_example_show_generative_ui_app",
             "quote_compare_show_quote_comparison_app",
             "submission_pack_show_submission_pack_app",
             "document_review_show_document_review_app",

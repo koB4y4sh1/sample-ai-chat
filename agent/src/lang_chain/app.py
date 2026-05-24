@@ -44,6 +44,7 @@ def create_app(
     *,
     graph: CompiledStateGraph[Any, Any, Any, Any] | None = None,
     chat_model: ChatModel | None = None,
+    server_tools: list[BaseTool] | None = None,
     settings: Settings | None = None,
 ) -> FastAPI:
     resolved_settings = settings or get_settings()
@@ -59,7 +60,9 @@ def create_app(
     resolved_graph = graph or build_graph(
         chat_model=chat_model,
         settings=resolved_settings,
-        server_tools=_resolve_server_tools(
+        server_tools=server_tools
+        if server_tools is not None
+        else _resolve_server_tools(
             graph=graph,
             settings=resolved_settings,
         ),

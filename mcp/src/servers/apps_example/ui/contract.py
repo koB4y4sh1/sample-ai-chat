@@ -51,19 +51,19 @@ def save_contact(
 @app.ui()
 def contact_form() -> PrefabApp:
     """Contact list with an add form."""
-    with Column(gap=6, cssClass="p-6") as view:
+    with Column(gap=6, css_class="p-6") as view:
         Heading("Contacts")
 
         with ForEach("contacts"):
             with Row(gap=2, align="center"):
-                Text("{{ contact.name }}", cssClass="font-medium")
+                Text("{{ contact.name }}", css_class="font-medium")
                 Muted("{{ contact.email }}")
                 Badge("{{ contact.category }}")
 
         Separator()
 
         with Form(
-            onSubmit=CallTool(
+            on_submit=CallTool(
                 "save_contact",
                 on_success=[
                     SetState("contacts", RESULT),
@@ -73,7 +73,7 @@ def contact_form() -> PrefabApp:
             )
         ):
             Input(name="name", placeholder="Full Name", required=True)
-            Input(name="email", placeholder="Email", inputType="email", required=True)
+            Input(name="email", placeholder="Email", input_type="email", required=True)
             with Select(name="category", placeholder="Category"):
                 SelectOption("Customer", value="Customer")
                 SelectOption("Vendor", value="Vendor")

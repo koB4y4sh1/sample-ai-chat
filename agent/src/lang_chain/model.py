@@ -22,6 +22,7 @@ def build_foundry_chat_model(settings: Settings | None = None) -> BaseChatModel:
                 "effort": "medium",  # low | medium | high など。モデル依存
                 "summary": "auto",  # auto | concise | detailed
             },
+            include=["reasoning.encrypted_content"],
             store=False,
         ),
     )

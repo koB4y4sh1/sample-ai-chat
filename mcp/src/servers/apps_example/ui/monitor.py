@@ -44,7 +44,7 @@ def system_monitor_app() -> PrefabApp:
     chart_rows = [{"node": item["node"], "cpu": item["cpu"]} for item in system_samples]
 
     with PrefabApp() as app:
-        with Column(gap=4, cssClass="w-full max-w-full min-w-0 overflow-hidden p-4"):
+        with Column(gap=4, css_class="w-full max-w-full min-w-0 overflow-hidden p-4"):
             Heading("System Monitor")
             Text("Cluster health snapshot.")
             with Row(gap=2):
@@ -53,10 +53,10 @@ def system_monitor_app() -> PrefabApp:
                 Badge("Avg Memory: 66.4%", variant="outline")
 
             with Row(gap=4):
-                with Card(cssClass="w-full max-w-full min-w-0 overflow-hidden"):
+                with Card(css_class="w-full max-w-full min-w-0 overflow-hidden"):
                     with CardHeader():
-                        Text("CPU by Node", cssClass="font-medium")
-                    with CardContent(cssClass="max-w-full min-w-0 overflow-hidden"):
+                        Text("CPU by Node", css_class="font-medium")
+                    with CardContent(css_class="max-w-full min-w-0 overflow-hidden"):
                         BarChart(
                             data=chart_rows,
                             series=[ChartSeries(dataKey="cpu", label="CPU %")],
@@ -64,10 +64,10 @@ def system_monitor_app() -> PrefabApp:
                             height=220,
                         )
 
-                with Card(cssClass="w-full max-w-full min-w-0 overflow-hidden"):
+                with Card(css_class="w-full max-w-full min-w-0 overflow-hidden"):
                     with CardHeader():
-                        Text("Infrastructure Status", cssClass="font-medium")
-                    with CardContent(cssClass="max-w-full min-w-0 overflow-x-auto"):
+                        Text("Infrastructure Status", css_class="font-medium")
+                    with CardContent(css_class="max-w-full min-w-0 overflow-x-auto"):
                         DataTable(
                             columns=[
                                 DataTableColumn(key="node", header="Node", sortable=True),

@@ -12,7 +12,7 @@ async def build_tools(settings: Settings) -> list[BaseTool]:
 
     client = MultiServerMCPClient(
         {
-            "mcp-server": {
+            "zenith": {
                 "transport": "streamable_http",
                 "url": settings.mcp_url,
                 "timeout": timedelta(seconds=settings.mcp_request_timeout_seconds),

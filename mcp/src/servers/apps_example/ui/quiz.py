@@ -13,6 +13,16 @@ from pydantic import Field
 app = FastMCPApp("Quiz App")
 
 
+@app.tool(
+    name="record_quiz_answer",
+    description="Record a quiz answer selected from the quiz app.",
+)
+def record_quiz_answer(question_id: str, answer: str) -> dict[str, str]:
+    """Record the selected quiz answer."""
+
+    return {"question_id": question_id, "answer": answer}
+
+
 @app.ui(
     name="show_quiz_app",
     description="Open a quiz-style MCP App with action buttons.",
@@ -29,7 +39,7 @@ def show_quiz_app(
     question: Annotated[str, Field(description="Quiz question text.")] = "FastMCP Apps are primarily for?",
 ) -> PrefabApp:
     with PrefabApp() as app:
-        with Column(gap=4, cssClass="w-full max-w-full min-w-0 overflow-hidden p-4"):
+        with Column(gap=4, css_class="w-full max-w-full min-w-0 overflow-hidden p-4"):
             Heading("Quiz App Example")
             Text(question)
             with Row(gap=2):
@@ -48,7 +58,7 @@ def show_quiz_app(
                         ),
                     )
             Separator()
-            with Card(cssClass="w-full max-w-full min-w-0 overflow-hidden"):
-                with CardContent(cssClass="max-w-full min-w-0 overflow-x-auto"):
+            with Card(css_class="w-full max-w-full min-w-0 overflow-hidden"):
+                with CardContent(css_class="max-w-full min-w-0 overflow-x-auto"):
                     Text("This pattern demonstrates in-app actions via CallTool + ShowToast.")
     return app

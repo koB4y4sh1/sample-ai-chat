@@ -46,11 +46,11 @@ def show_map_app(
         """
     )
     with PrefabApp() as app:
-        with Column(gap=4, cssClass="w-full max-w-full min-w-0 overflow-hidden p-4"):
+        with Column(gap=4, css_class="w-full max-w-full min-w-0 overflow-hidden p-4"):
             Heading("Map Example")
             Text(f"Center: {lat:.5f}, {lng:.5f} / Zoom: {zoom}")
-            with Card(cssClass="w-full max-w-full min-w-0 overflow-hidden"):
-                with CardContent(cssClass="p-0 overflow-x-auto"):
+            with Card(css_class="w-full max-w-full min-w-0 overflow-hidden"):
+                with CardContent(css_class="p-0 overflow-x-auto"):
                     Embed(
                         html=map_html,
                         width="100%",

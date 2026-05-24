@@ -46,31 +46,31 @@ def document_review_app(
         PrefabApp() as app,
         Column(
             gap=4,
-            cssClass="w-full max-w-full min-w-0 overflow-hidden p-4",
+            css_class="w-full max-w-full min-w-0 overflow-hidden p-4",
         ),
     ):
         Heading(f"Document Review: {review.document_id}")
         Text(review.summary)
 
         with Grid(min_column_width="140px", gap=4):
-            with Card(cssClass="min-w-0"):
+            with Card(css_class="min-w-0"):
                 with CardHeader():
                     H3("Changes")
                 with CardContent():
                     Text(str(review.change_count), bold=True)
-            with Card(cssClass="min-w-0"):
+            with Card(css_class="min-w-0"):
                 with CardHeader():
                     H3("Lines")
                 with CardContent():
                     Text(str(review.changed_line_count), bold=True)
-            with Card(cssClass="min-w-0"):
+            with Card(css_class="min-w-0"):
                 with CardHeader():
                     H3("Decision")
                 with CardContent():
                     Badge(review.decision.decision, variant="info")
 
-        with Card(cssClass="w-full max-w-full min-w-0 overflow-hidden"):
-            with CardContent(cssClass="max-w-full min-w-0 overflow-x-auto"):
+        with Card(css_class="w-full max-w-full min-w-0 overflow-hidden"):
+            with CardContent(css_class="max-w-full min-w-0 overflow-x-auto"):
                 DataTable(
                     columns=[
                         DataTableColumn(key="type", header="Type", sortable=True),
@@ -112,10 +112,10 @@ def document_review_app(
             )
 
         with Column(gap=2):
-            Text("Focus Points", cssClass="text-sm font-medium")
+            Text("Focus Points", css_class="text-sm font-medium")
             for point in review.focus_points:
                 Text(f"- {point}")
-            Text("Required Actions", cssClass="text-sm font-medium")
+            Text("Required Actions", css_class="text-sm font-medium")
             for action in review.decision.required_actions:
                 Text(f"- {action}")
 

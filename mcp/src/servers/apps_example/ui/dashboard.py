@@ -50,7 +50,7 @@ def sales_dashboard_app() -> PrefabApp:
     ]
 
     with PrefabApp() as app:
-        with Column(gap=4, cssClass="w-full max-w-full min-w-0 overflow-hidden p-4"):
+        with Column(gap=4, css_class="w-full max-w-full min-w-0 overflow-hidden p-4"):
             Heading("Sales Dashboard")
             Text("FY2026 overview with revenue trend and segment mix.")
             with Row(gap=2):
@@ -59,10 +59,10 @@ def sales_dashboard_app() -> PrefabApp:
                 Badge("Active Customers: 1,847", variant="outline")
 
             with Row(gap=4):
-                with Card(cssClass="w-full max-w-full min-w-0 overflow-hidden"):
+                with Card(css_class="w-full max-w-full min-w-0 overflow-hidden"):
                     with CardHeader():
-                        Text("Monthly Revenue", cssClass="font-medium")
-                    with CardContent(cssClass="max-w-full min-w-0 overflow-hidden"):
+                        Text("Monthly Revenue", css_class="font-medium")
+                    with CardContent(css_class="max-w-full min-w-0 overflow-hidden"):
                         BarChart(
                             data=monthly_sales,
                             series=[
@@ -72,10 +72,10 @@ def sales_dashboard_app() -> PrefabApp:
                             xAxis="month",
                             height=260,
                         )
-                with Card(cssClass="w-full max-w-full min-w-0 overflow-hidden"):
+                with Card(css_class="w-full max-w-full min-w-0 overflow-hidden"):
                     with CardHeader():
-                        Text("Revenue by Segment", cssClass="font-medium")
-                    with CardContent(cssClass="max-w-full min-w-0 overflow-hidden"):
+                        Text("Revenue by Segment", css_class="font-medium")
+                    with CardContent(css_class="max-w-full min-w-0 overflow-hidden"):
                         PieChart(
                             data=segment_mix,
                             nameKey="segment",
@@ -83,10 +83,10 @@ def sales_dashboard_app() -> PrefabApp:
                             height=260,
                         )
 
-            with Card(cssClass="w-full max-w-full min-w-0 overflow-hidden"):
+            with Card(css_class="w-full max-w-full min-w-0 overflow-hidden"):
                 with CardHeader():
-                    Text("Recent Deals", cssClass="font-medium")
-                with CardContent(cssClass="max-w-full min-w-0 overflow-x-auto"):
+                    Text("Recent Deals", css_class="font-medium")
+                with CardContent(css_class="max-w-full min-w-0 overflow-x-auto"):
                     DataTable(
                         columns=[
                             DataTableColumn(key="month", header="Month", sortable=True),
