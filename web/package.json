@@ -19,7 +19,7 @@
     "@copilotkit/a2ui-renderer": "^1.57.1",
     "@copilotkit/react-core": "^1.57.0",
     "@copilotkit/runtime": "^1.57.0",
-    "@copilotkit/runtime-client-gql": "^1.57.0",
+    "@copilotkit/runtime-client-gql": "^1.57.4",
     "@tailwindcss/postcss": "^4.2.4",
     "clsx": "^2.1.1",
     "lucide-react": "^0.546.0",
